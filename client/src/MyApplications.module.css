@@ -1,0 +1,82 @@
+.container {
+  padding: 20px;
+  background-color: #f9fafb;
+  min-height: 80vh;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #111827;
+  margin-bottom: 20px;
+}
+
+.tableContainer {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.table th {
+  background-color: #f3f4f6;
+  padding: 12px 16px;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  color: #4b5563;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.statusApplied {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.statusInterview {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.statusRejected {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.statusOffered {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.loading, .error, .empty {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+}
+
+.error {
+  color: #ef4444;
+}

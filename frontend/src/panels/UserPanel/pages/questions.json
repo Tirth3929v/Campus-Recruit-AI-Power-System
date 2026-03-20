@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "question": "What is the Virtual DOM in React?",
+    "answer": "The Virtual DOM is a lightweight copy of the actual DOM. React uses it to identify changes (diffing) and efficiently update the real DOM (reconciliation) only where necessary.",
+    "keywords": ["lightweight", "copy", "diffing", "reconciliation", "efficient"]
+  },
+  {
+    "id": 2,
+    "question": "Explain the difference between state and props.",
+    "answer": "State is internal data managed by the component itself and can change over time. Props are external data passed to the component from its parent and are read-only (immutable).",
+    "keywords": ["internal", "managed by component", "external", "passed from parent", "immutable", "read-only"]
+  },
+  {
+    "id": 3,
+    "question": "What is the purpose of the useEffect hook?",
+    "answer": "useEffect is used to perform side effects in functional components, such as data fetching, subscriptions, or manually changing the DOM. It runs after the render.",
+    "keywords": ["side effects", "functional components", "data fetching", "after render"]
+  }
+]

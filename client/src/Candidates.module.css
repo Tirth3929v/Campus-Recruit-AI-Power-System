@@ -1,0 +1,244 @@
+.container {
+  padding: 20px;
+  background-color: #f9fafb;
+  min-height: 80vh;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #111827;
+  margin-bottom: 20px;
+}
+
+.backLink {
+  display: inline-block;
+  margin-bottom: 20px;
+  color: #3b82f6;
+  text-decoration: none;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+}
+
+.searchContainer {
+  max-width: 600px;
+  margin-bottom: 20px;
+}
+
+.searchWrapper {
+  display: flex;
+  gap: 10px;
+}
+
+.searchInput {
+  flex-grow: 1;
+  padding: 10px 15px;
+  border: 1px solid #d1d5db;
+  border-radius: 9999px;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.bulkActionsContainer {
+  background-color: #eef2ff;
+  padding: 10px 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.filterSelect {
+  padding: 10px 15px;
+  border: 1px solid #d1d5db;
+  border-radius: 9999px;
+  background-color: white;
+  font-size: 0.95rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.exportButton {
+  background-color: #10b981;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 9999px;
+  cursor: pointer;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.exportButton:hover {
+  background-color: #059669;
+}
+
+.tableContainer {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.table th {
+  background-color: #f3f4f6;
+  padding: 12px 16px;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  color: #4b5563;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.sortableHeader {
+  cursor: pointer;
+  user-select: none;
+}
+
+.sortableHeader:hover {
+  background-color: #e5e7eb;
+}
+
+.downloadButton {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.downloadButton:hover {
+  background-color: #2563eb;
+}
+
+.statusSelect {
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid #d1d5db;
+  background-color: white;
+  font-size: 0.9rem;
+}
+
+.loading, .error, .empty {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+}
+
+.error {
+  color: #ef4444;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  gap: 15px;
+}
+
+.pageButton {
+  padding: 8px 16px;
+  border: 1px solid #d1d5db;
+  background-color: white;
+  color: #374151;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pageButton:hover:not(:disabled) {
+  background-color: #f3f4f6;
+}
+
+.pageButton:disabled {
+  background-color: #f9fafb;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.pageInfo {
+  color: #4b5563;
+  font-size: 0.9rem;
+}
+
+.notesArea {
+  width: 100%;
+  min-width: 150px;
+  padding: 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  resize: vertical;
+}
+
+.saveNoteButton {
+  margin-top: 5px;
+  padding: 4px 8px;
+  background-color: #4b5563;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.skeleton {
+  animation: shimmer 1.5s infinite linear;
+  background: linear-gradient(to right, #f6f7f8 8%, #edeef1 18%, #f6f7f8 33%);
+  background-size: 800px 100%;
+}
+
+.skeletonText {
+  height: 16px;
+  border-radius: 4px;
+  width: 100%;
+}
+
+@keyframes shimmer {
+  0% { background-position: -800px 0; }
+  100% { background-position: 800px 0; }
+}
+
+.scheduleButton {
+  background-color: #8b5cf6;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  margin-left: 5px;
+}
+
+.scheduleButton:hover {
+  background-color: #7c3aed;
+}
+
+.modalFormGroup {
+  margin-bottom: 15px;
+}
+}

@@ -1,0 +1,42 @@
+.group {
+  margin-bottom: 20px;
+}
+
+.label {
+  display: block;
+  margin-bottom: 5px;
+  color: #374151;
+}
+
+.inputWrapper {
+  position: relative;
+}
+
+.input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid #d1d5db;
+  box-sizing: border-box;
+}
+
+.passwordInput {
+  padding-right: 50px;
+}
+
+.toggleButton {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  font-size: 0.875rem;
+  padding: 0;
+}
+
+.toggleButton:hover {
+  color: #111827;
+}

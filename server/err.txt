@@ -1,0 +1,22 @@
+node:internal/modules/cjs/loader:1372
+  throw err;
+  ^
+
+Error: Cannot find module 'express-rate-limit'
+Require stack:
+- D:\SEM-6\Team Project\server\index.js
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1369:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1025:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1030:22)
+    at Module._load (node:internal/modules/cjs/loader:1179:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.require (node:internal/modules/cjs/loader:1449:12)
+    at require (node:internal/modules/helpers:135:16)
+    at Object.<anonymous> (D:\SEM-6\Team Project\server\index.js:10:19)
+    at Module._compile (node:internal/modules/cjs/loader:1692:14) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [ 'D:\\SEM-6\\Team Project\\server\\index.js' ]
+}
+
+Node.js v24.4.1

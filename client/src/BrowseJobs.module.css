@@ -1,0 +1,138 @@
+.container {
+  padding: 40px 20px;
+  background-color: #f9fafb;
+  min-height: 80vh;
+}
+
+.title {
+  text-align: center;
+  margin-bottom: 40px;
+  color: #111827;
+  font-size: 2rem;
+}
+
+.searchContainer {
+  max-width: 600px;
+  margin: 0 auto 40px;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 12px 20px;
+  border: 1px solid #d1d5db;
+  border-radius: 9999px;
+  font-size: 1rem;
+  outline: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.card {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 25px;
+  transition: transform 0.2s;
+  display: flex;
+  flex-direction: column;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+.jobTitle {
+  font-size: 1.25rem;
+  color: #1f2937;
+  margin-bottom: 5px;
+}
+
+.company {
+  color: #6b7280;
+  font-weight: 500;
+  margin-bottom: 15px;
+}
+
+.details {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+  font-size: 0.9rem;
+  color: #4b5563;
+}
+
+.description {
+  color: #6b7280;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: 20px;
+  flex-grow: 1;
+}
+
+.applyButton {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  width: 100%;
+}
+
+.applyButton:hover {
+  background-color: #2563eb;
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.viewCandidatesButton {
+  background-color: #6b7280;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  width: 100%;
+}
+
+.deleteButton {
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  width: 100%;
+}
+
+.deleteButton:hover {
+  background-color: #dc2626;
+}
+
+.loading, .error, .empty {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+  font-size: 1.1rem;
+}
+
+.error {
+  color: #ef4444;
+}

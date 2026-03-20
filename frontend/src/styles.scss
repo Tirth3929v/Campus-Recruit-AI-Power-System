@@ -1,0 +1,72 @@
+// Global styles and CSS variable definitions
+
+:root {
+  --primary-color: #007bff;
+  --secondary-color: #6c757d;
+  --background-color: #ffffff;
+  --text-color: #333333;
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+  --card-hover-transform: translateY(-5px) scale(1.02);
+}
+
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: 100vh;
+  color: var(--text-color);
+  overflow-x: hidden;
+}
+
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  box-shadow: var(--glass-shadow);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.glass-panel:hover {
+  box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.25);
+}
+
+.btn-primary {
+  background: linear-gradient(45deg, var(--primary-color), #00d2ff);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 25px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+/* Global Input Styles */
+input {
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0;
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 8px;
+  background: rgba(255,255,255,0.5);
+  transition: all 0.3s;
+
+  &:focus {
+    outline: none;
+    background: rgba(255,255,255,0.9);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+  }
+}

@@ -1,0 +1,22 @@
+# Set default behavior to automatically detect text files and normalize line endings to LF.
+# This prevents issues with line endings between different operating systems.
+* text=auto eol=lf
+
+# Explicitly declare text files to ensure they are normalized.
+*.html      text eol=lf
+*.css       text eol=lf
+*.js        text eol=lf
+*.jsx       text eol=lf
+*.json      text eol=lf
+*.md        text eol=lf
+.gitignore  text eol=lf
+
+# Denote files that are truly binary and should not be modified.
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.svg       binary
+*.ico       binary
+*.woff      binary
+*.woff2     binary
