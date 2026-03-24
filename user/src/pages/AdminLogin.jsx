@@ -31,7 +31,7 @@ const AdminLogin = () => {
       });
       const data = await res.json();
       if (res.ok) {
-        if (data.token) localStorage.setItem('token', data.token);
+        if (data.token) localStorage.setItem('adminToken', data.token);
         navigate('/admin');
       } else {
         setError(data.error || 'Invalid email or password');

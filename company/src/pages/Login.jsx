@@ -22,18 +22,21 @@ const Login = () => {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/auth/company-login', {
+      const res = await fetch('/api/company/login', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData), credentials: 'include'
       });
       const data = await res.json();
       if (res.ok) {
-        localStorage.clear();
+        localStorage.removeItem('companyToken');
         if (data.token) localStorage.setItem('companyToken', data.token);
-        localStorage.setItem('role', 'company');
         await checkAuth();
         navigate('/company/dashboard');
-      } else { setError(data.error || 'Login failed'); }
+      } else if (data.pending) {
+        setError('⏳ Your company account is pending approval by an employee. You will receive an email once approved.');
+      } else {
+        setError(data.error || 'Login failed');
+      }
     } catch (err) { setError('Failed to connect to server'); }
     finally { setLoading(false); }
   };
@@ -110,7 +113,7 @@ const Login = () => {
               <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Email</label>
               <div className="relative group">
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-amber-500 transition-colors" size={18} />
-                <input type="email" required autoComplete="email" placeholder="Enter your email"
+                <input type="email" id="email" name="email" required autoComplete="email" placeholder="Enter your email"
                   className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl py-3.5 pl-11 pr-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all"
                   value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
               </div>
@@ -119,7 +122,7 @@ const Login = () => {
               <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Password</label>
               <div className="relative group">
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-amber-500 transition-colors" size={18} />
-                <input type="password" required autoComplete="current-password" placeholder="Enter your password"
+                <input type="password" id="password" name="password" required autoComplete="current-password" placeholder="Enter your password"
                   className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl py-3.5 pl-11 pr-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all"
                   value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
               </div>

@@ -8,7 +8,7 @@ const StreakModal = ({ isOpen, onClose, streak }) => {
         if (isOpen) {
             // Trigger confetti
             const end = Date.now() + 2 * 1000;
-            const colors = ['#f59e0b', '#10b981', '#3b82f6', '#8b5cf6'];
+            const colors = ['#f59e0b', '#10b981', '#3b82f6', '#14b8a6'];
 
             (function frame() {
                 confetti({

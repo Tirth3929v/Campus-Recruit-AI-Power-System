@@ -118,7 +118,7 @@ const CourseHistory = () => {
                     className="w-full h-40 object-cover rounded-xl"
                   />
                 ) : (
-                  <div className="w-full h-40 bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl flex items-center justify-center group-hover:from-indigo-50 group-hover:to-purple-50 transition-all">
+                  <div className="w-full h-40 bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl flex items-center justify-center group-hover:from-indigo-50 group-hover:to-teal-50 transition-all">
                     <BookOpen size={32} className="text-slate-400 group-hover:text-indigo-500" />
                   </div>
                 )}

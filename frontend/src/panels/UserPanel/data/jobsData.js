@@ -33,7 +33,7 @@ export const jobsData = [
     tags: ["SQL", "Excel", "PowerBI"],
     posted: "3 days ago",
     logo: "FG",
-    color: "bg-purple-600"
+    color: "bg-teal-600"
   },
   {
     id: 4,

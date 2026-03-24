@@ -5,7 +5,7 @@ import axiosInstance from './axiosInstance';
 
 const typeColors = {
     'Full-time': 'bg-blue-500/15 text-blue-400 border border-blue-500/20',
-    'Internship': 'bg-purple-500/15 text-purple-400 border border-purple-500/20',
+    'Internship': 'bg-teal-500/15 text-teal-400 border border-teal-500/20',
     'Part-time': 'bg-orange-500/15 text-orange-400 border border-orange-500/20',
     'Contract': 'bg-rose-500/15 text-rose-400 border border-rose-500/20',
 };
@@ -13,7 +13,7 @@ const typeColors = {
 const statusColors = {
     pending: 'bg-yellow-500/15 text-yellow-400 border border-yellow-500/20',
     'employee_review': 'bg-blue-500/15 text-blue-400 border border-blue-500/20',
-    'admin_review': 'bg-purple-500/15 text-purple-400 border border-purple-500/20',
+    'admin_review': 'bg-teal-500/15 text-teal-400 border border-teal-500/20',
     approved: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20',
     rejected: 'bg-red-500/15 text-red-400 border border-red-500/20',
 };
@@ -54,10 +54,22 @@ const EmployeeJobBoard = () => {
 
     const fetchJobs = async () => {
         try {
+            // Fetch both: jobs assigned to this employee + all pending jobs in the queue
             const userRes = await axiosInstance.get('/currentuser');
             const userId = userRes.data._id;
-            const res = await axiosInstance.get(`/jobs/employee/${userId}`);
-            setJobs(res.data || []);
+            const [assignedRes, pendingRes] = await Promise.all([
+                axiosInstance.get(`/jobs/employee/${userId}`),
+                axiosInstance.get('/jobs/employee/pending')
+            ]);
+            // Merge, deduplicate by _id
+            const merged = [...(pendingRes.data || []), ...(assignedRes.data || [])];
+            const seen = new Set();
+            const unique = merged.filter(j => {
+                if (seen.has(j._id)) return false;
+                seen.add(j._id);
+                return true;
+            });
+            setJobs(unique);
         } catch (err) {
             console.error('Error fetching jobs:', err);
         } finally {
@@ -74,9 +86,22 @@ const EmployeeJobBoard = () => {
         if (!selectedJob) return;
         setSubmitting(true);
         try {
+            // Check if job can be submitted
+            if (!['pending', 'employee_review'].includes(selectedJob.status)) {
+                alert(`Cannot submit job in '${selectedJob.status}' status. Only pending or employee_review jobs can be submitted.`);
+                setSubmitting(false);
+                return;
+            }
+
+            // If job is still pending (not yet assigned), claim it first
+            if (selectedJob.status === 'pending') {
+                await axiosInstance.put(`/jobs/${selectedJob._id}/assign`);
+            }
+            
             const res = await axiosInstance.put(`/jobs/${selectedJob._id}/submit-to-admin`, {
                 employeeNotes: notes
             });
+            
             if (res.data.success) {
                 alert('Job submitted to admin for review!');
                 setShowModal(false);
@@ -85,7 +110,8 @@ const EmployeeJobBoard = () => {
             }
         } catch (err) {
             console.error('Error submitting:', err);
-            alert('Failed to submit job');
+            const errorMsg = err.response?.data?.message || 'Failed to submit job';
+            alert(errorMsg);
         } finally {
             setSubmitting(false);
         }
@@ -133,7 +159,7 @@ const EmployeeJobBoard = () => {
                 className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
                     <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/25" />
-                    <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search jobs, companies, locations..."
+                    <input aria-label="Input field"  value={search} onChange={e => setSearch(e.target.value)} placeholder="Search jobs, companies, locations..."
                         className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
                         style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }} />
                 </div>
@@ -198,9 +224,14 @@ const EmployeeJobBoard = () => {
                                 </div>
                                 <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
                                     onClick={() => handleView(job)}
-                                    className="mt-1 w-full py-2.5 text-white text-sm font-bold rounded-xl flex items-center justify-center gap-2"
-                                    style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)', boxShadow: '0 4px 16px rgba(99,102,241,0.25)' }}>
-                                    <Eye size={13} /> Review Job
+                                    className={`mt-1 w-full py-2.5 text-sm font-bold rounded-xl flex items-center justify-center gap-2 ${
+                                        ['approved', 'rejected'].includes(job.status.toLowerCase())
+                                            ? 'bg-transparent border-2 border-gray-500 text-gray-300 hover:border-gray-400 hover:bg-gray-800/50'
+                                            : 'bg-gradient-to-r from-blue-500 to-indigo-500 shadow-lg shadow-indigo-500/25 text-white'
+                                    }`}
+                                    style={{ boxShadow: ['approved', 'rejected'].includes(job.status.toLowerCase()) ? 'none' : '0 4px 16px rgba(99,102,241,0.25)' }}>
+                                    <Eye size={13} />
+                                    {['approved', 'rejected'].includes(job.status.toLowerCase()) ? 'View Details' : 'Review Job'}
                                 </motion.button>
                             </motion.div>
                         ))}
@@ -282,40 +313,66 @@ const EmployeeJobBoard = () => {
                                     </div>
                                 )}
 
-                                {/* Notes Input */}
-                                <div className="pt-4 border-t border-white/10">
-                                    <h5 className="text-sm font-bold text-white/80 mb-3">Add Notes / Confirmation</h5>
-                                    <textarea
-                                        rows="3"
-                                        placeholder="Add your review notes, confirmation details, or any feedback for admin..."
-                                        value={notes}
-                                        onChange={(e) => setNotes(e.target.value)}
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white placeholder-white/30 focus:ring-2 focus:ring-green-500 outline-none resize-none"
-                                    />
-                                </div>
+                                {/* Notes Input - Only for pending/employee_review */}
+                                {['approved', 'rejected'].includes(selectedJob.status.toLowerCase()) ? null : (
+                                    <div className="pt-4 border-t border-white/10">
+                                        <h5 className="text-sm font-bold text-white/80 mb-3">Add Notes / Confirmation</h5>
+                                        <textarea
+                                            rows="3"
+                                            placeholder="Add your review notes, confirmation details, or any feedback for admin..."
+                                            value={notes}
+                                            onChange={(e) => setNotes(e.target.value)}
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white placeholder-white/30 focus:ring-2 focus:ring-green-500 outline-none resize-none"
+                                        />
+                                    </div>
+                                )}
                             </div>
 
-                            {/* Submit Button */}
+                            {/* Action Buttons */}
                             <div className="mt-6">
-                                <motion.button
-                                    onClick={handleSubmitToAdmin}
-                                    disabled={submitting}
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
-                                    className="w-full py-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 font-semibold text-white flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    {submitting ? (
-                                        <>
-                                            <Loader2 size={16} className="animate-spin" />
-                                            Processing...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Send size={18} />
-                                            Submit to Admin for Review
-                                        </>
-                                    )}
-                                </motion.button>
+                                {['approved', 'rejected'].includes(selectedJob.status.toLowerCase()) ? (
+                                    <motion.button
+                                        onClick={() => setShowModal(false)}
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
+                                        className="w-full py-3 rounded-xl bg-gray-600 hover:bg-gray-500 font-semibold text-white flex items-center justify-center gap-2"
+                                    >
+                                        <X size={18} />
+                                        Close
+                                    </motion.button>
+                                ) : (
+                                    <>
+                                        {['pending', 'employee_review'].includes(selectedJob.status) ? (
+                                            <motion.button
+                                                onClick={handleSubmitToAdmin}
+                                                disabled={submitting}
+                                                whileHover={{ scale: 1.02 }}
+                                                whileTap={{ scale: 0.98 }}
+                                                className="w-full py-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 font-semibold text-white flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                {submitting ? (
+                                                    <>
+                                                        <Loader2 size={16} className="animate-spin" />
+                                                        Processing...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Send size={18} />
+                                                        Submit to Admin for Review
+                                                    </>
+                                                )}
+                                            </motion.button>
+                                        ) : (
+                                            <div className="w-full py-3 rounded-xl bg-white/5 border border-white/10 font-semibold text-white/40 flex items-center justify-center gap-2">
+                                                <CheckCircle size={18} />
+                                                {selectedJob.status === 'admin_review' && 'Already Submitted to Admin'}
+                                                {selectedJob.status === 'approved' && 'Job Already Approved'}
+                                                {selectedJob.status === 'rejected' && 'Job Rejected'}
+                                                {!['admin_review', 'approved', 'rejected'].includes(selectedJob.status) && 'Cannot Submit'}
+                                            </div>
+                                        )}
+                                    </>
+                                )}
                             </div>
                         </motion.div>
                     </motion.div>

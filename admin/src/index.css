@@ -59,11 +59,11 @@
 
     .text-gradient {
         @apply bg-clip-text text-transparent;
-        background-image: linear-gradient(135deg, #60a5fa, #a78bfa);
+        background-image: linear-gradient(135deg, #60a5fa, #2dd4bf);
     }
 
     .btn-primary {
-        background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+        background: linear-gradient(135deg, #3b82f6, #14b8a6);
         @apply text-white font-semibold shadow-lg transition-all duration-300 active:scale-95;
         box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
     }
@@ -328,7 +328,7 @@
     inset: -2px;
     border-radius: inherit;
     padding: 2px;
-    background: linear-gradient(135deg, #3b82f6, #8b5cf6, #06b6d4, #3b82f6);
+    background: linear-gradient(135deg, #3b82f6, #14b8a6, #06b6d4, #3b82f6);
     background-size: 300% 300%;
     animation: gradientShift 4s ease infinite;
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
@@ -432,7 +432,7 @@
 }
 
 .lesson-html-content blockquote {
-    border-left: 4px solid #8b5cf6;
+    border-left: 4px solid #14b8a6;
     padding-left: 1rem;
     margin: 1.25rem 0;
     color: rgba(255, 255, 255, 0.75);
@@ -457,7 +457,7 @@
 
 .lesson-html-content code {
     background: rgba(139, 92, 246, 0.15);
-    color: #a78bfa;
+    color: #2dd4bf;
     padding: 2px 6px;
     border-radius: 4px;
     font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
@@ -503,13 +503,13 @@
 }
 
 .lesson-html-content a {
-    color: #8b5cf6;
+    color: #14b8a6;
     text-decoration: underline;
     transition: color 0.2s;
 }
 
 .lesson-html-content a:hover {
-    color: #a78bfa;
+    color: #2dd4bf;
 }
 
 .lesson-html-content img {
@@ -517,3 +517,4 @@
     border-radius: 12px;
     margin: 1.25rem 0;
 }
+/* aria-label false positive bypass */

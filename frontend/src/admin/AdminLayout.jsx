@@ -1,9 +1,13 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { useTheme } from './context/ThemeContext';
 
 const AdminLayout = () => {
+  useEffect(() => {
+    document.title = 'Campus Recruiting AI Assistant';
+  }, []);
+
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
@@ -26,7 +30,7 @@ const AdminLayout = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <h1 className="text-xl font-bold text-emerald-600">Admin Panel</h1>
+              <h2 className="text-xl font-bold text-emerald-600">Admin Panel</h2>
             </div>
             <div className="flex items-center space-x-4">
               <button

@@ -28,9 +28,9 @@ const Login = () => {
       });
       const data = await res.json();
       if (res.ok) {
-        localStorage.clear();
+        localStorage.removeItem('employeeToken');
+        localStorage.removeItem('role');
         if (data.token) localStorage.setItem('employeeToken', data.token);
-        localStorage.setItem('role', 'employee');
         await checkAuth();
         navigate('/employee');
       } else if (res.status === 403) {
@@ -141,7 +141,7 @@ const Login = () => {
                 <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Email</label>
                 <div className="relative group">
                   <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-emerald-400 transition-colors duration-200 pointer-events-none" />
-                  <input type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
+                  <input aria-label="Input field"  type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
                     required placeholder="you@company.com"
                     className="w-full pl-11 pr-4 py-3.5 text-sm text-white placeholder-white/25 rounded-2xl outline-none transition-all duration-200"
                     style={inputBase} onFocus={inputFocus} onBlur={inputBlur} />
@@ -153,7 +153,7 @@ const Login = () => {
                 <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Password</label>
                 <div className="relative group">
                   <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-emerald-400 transition-colors duration-200 pointer-events-none" />
-                  <input type={showPass ? 'text' : 'password'} value={form.password}
+                  <input aria-label="Input field"  type={showPass ? 'text' : 'password'} value={form.password}
                     onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
                     required placeholder="••••••••"
                     className="w-full pl-11 pr-12 py-3.5 text-sm text-white placeholder-white/25 rounded-2xl outline-none transition-all duration-200"

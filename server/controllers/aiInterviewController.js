@@ -5,7 +5,12 @@ const AIInterviewSession = require('../models/AIInterviewSession');
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'your-gemini-api-key');
 
-const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+const model = genAI.getGenerativeModel({ 
+  model: 'gemini-pro',
+  generationConfig: {
+    responseMimeType: "application/json",
+  }
+});
 
 // Generate interview questions based on focus areas and difficulty
 exports.generateQuestions = async (req, res) => {
@@ -504,6 +509,306 @@ exports.getHistory = async (req, res) => {
     });
   }
 };
+
+// Get all sessions (Admin/Employee/Company)
+exports.getAllSessions = async (req, res) => {
+  try {
+    const { limit = 50, page = 1 } = req.query;
+
+    const sessions = await AIInterviewSession.find()
+      .populate('user', 'name email')
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit))
+      .skip((parseInt(page) - 1) * parseInt(limit))
+      .select('-questions.userAnswer -questions.aiEvaluation');
+
+    const total = await AIInterviewSession.countDocuments();
+
+    res.status(200).json({
+      success: true,
+      sessions,
+      pagination: {
+        total,
+        page: parseInt(page),
+        pages: Math.ceil(total / parseInt(limit))
+      }
+    });
+
+  } catch (error) {
+    console.error('Get All Sessions Error:', error.message);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to get sessions', 
+      error: error.message 
+    });
+  }
+};
+
+// Generate next question dynamically based on conversation history
+exports.generateNextQuestion = async (req, res) => {
+  try {
+    const { jobRole, skills, conversationHistory, topic } = req.body;
+
+    // Validate request body
+    if (!jobRole || !skills) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid input - jobRole and skills are required"
+      });
+    }
+
+    const history = conversationHistory || [];
+    const interviewTopic = topic || 'General Technical';
+
+    // Check if interview should end (5+ exchanges)
+    if (history.length >= 5) {
+      return res.status(200).json({
+        success: true,
+        nextQuestion: null,
+        isComplete: true,
+        message: "Interview completed successfully"
+      });
+    }
+
+    // Check if API key is configured
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey || apiKey === 'your-gemini-api-key' || apiKey === '') {
+      console.warn("GEMINI_API_KEY not configured, using fallback question");
+      return res.status(200).json({
+        success: true,
+        nextQuestion: getFallbackQuestion(history.length, jobRole, skills, interviewTopic),
+        isComplete: false,
+        fallback: true
+      });
+    }
+
+    // Build conversation history string
+    const historyText = history.length > 0
+      ? history.map((item, idx) => `Q${idx + 1}: ${item.question}\nA${idx + 1}: ${item.answer}`).join('\n\n')
+      : 'No previous conversation.';
+
+    // Build AI prompt with topic focus
+    const prompt = `You are an expert technical interviewer hiring for a ${jobRole} position with skills in ${skills}.
+
+CRITICAL REQUIREMENT - TOPIC FOCUS:
+You are conducting an interview EXCLUSIVELY about: "${interviewTopic}"
+
+RULES:
+1. EVERY question you generate MUST be directly related to "${interviewTopic}"
+2. DO NOT ask questions outside of "${interviewTopic}" domain
+3. If "${interviewTopic}" contains "MERN", ask about MongoDB, Express, React, Node.js
+4. If "${interviewTopic}" contains "Python", ask about Python programming, frameworks, libraries
+5. If "${interviewTopic}" contains "Java", ask about Java, Spring, OOP concepts
+6. If "${interviewTopic}" contains "HR" or "Management", ask about people management, recruitment, workplace culture
+7. If "${interviewTopic}" contains "Data Science", ask about ML, statistics, data analysis
+8. If "${interviewTopic}" contains "DevOps", ask about CI/CD, Docker, Kubernetes, cloud platforms
+9. If "${interviewTopic}" contains "Cybersecurity", ask about security protocols, encryption, threat analysis
+10. For ANY other topic, generate questions specifically about that topic's core concepts
+
+Interview History:
+${historyText}
+
+Instructions:
+- If this is the first question (no history), ask an opening technical question specifically about ${interviewTopic}.
+- If the candidate's last answer was vague, incomplete, or lacked depth, ask a follow-up cross-question to dig deeper into the same ${interviewTopic} topic.
+- If the candidate's last answer was comprehensive and good, move to a new technical question on a different aspect of ${interviewTopic}.
+- Keep questions conversational, clear, and under 2 sentences.
+- All questions MUST be relevant to ${interviewTopic}.
+- If there are already 5 or more exchanges, indicate the interview is complete.
+
+Respond ONLY with valid JSON in this exact format:
+{
+  "nextQuestion": "your question here",
+  "isComplete": false
+}
+
+If interview is complete:
+{
+  "nextQuestion": null,
+  "isComplete": true
+}
+
+Do not include any other text, markdown, or explanations. Only the JSON object.`;
+
+    console.log('Generating next question for:', { jobRole, skills, topic: interviewTopic, historyLength: history.length });
+
+    const result = await model.generateContent(prompt);
+    const response = result.response.text();
+
+    // Parse the JSON response
+    let aiResponse;
+    try {
+      // Try to extract JSON from response
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        aiResponse = JSON.parse(jsonMatch[0]);
+      } else {
+        aiResponse = JSON.parse(response);
+      }
+    } catch (parseError) {
+      console.error('Failed to parse AI response:', parseError);
+      // Fallback question
+      return res.status(200).json({
+        success: true,
+        nextQuestion: getFallbackQuestion(history.length, jobRole, skills, interviewTopic),
+        isComplete: false,
+        fallback: true
+      });
+    }
+
+    // Validate response structure
+    if (typeof aiResponse.isComplete !== 'boolean') {
+      aiResponse.isComplete = false;
+    }
+
+    res.status(200).json({
+      success: true,
+      nextQuestion: aiResponse.nextQuestion,
+      isComplete: aiResponse.isComplete
+    });
+
+  } catch (error) {
+    console.error('Generate Next Question Error:', error.message);
+    
+    // Fallback on error
+    const history = req.body.conversationHistory || [];
+    const interviewTopic = req.body.topic || 'General Technical';
+    return res.status(200).json({
+      success: true,
+      nextQuestion: getFallbackQuestion(history.length, req.body.jobRole, req.body.skills, interviewTopic),
+      isComplete: false,
+      fallback: true,
+      message: "Using fallback question due to AI service error"
+    });
+  }
+};
+
+// Helper function for fallback questions
+function getFallbackQuestion(questionNumber, jobRole, skills, topic) {
+  const topicLower = (topic || '').toLowerCase();
+  
+  // Topic-specific fallback questions
+  if (topicLower.includes('mern')) {
+    const mernQuestions = [
+      `Tell me about your experience with the MERN stack (MongoDB, Express, React, Node.js).`,
+      `Can you explain how you would structure a RESTful API using Express and Node.js?`,
+      `What are the key differences between React class components and functional components with hooks?`,
+      `Describe your approach to state management in a React application.`,
+      `How do you handle authentication and authorization in a MERN stack application?`
+    ];
+    return mernQuestions[questionNumber % mernQuestions.length];
+  }
+  
+  if (topicLower.includes('python')) {
+    const pythonQuestions = [
+      `Tell me about your experience with Python and its frameworks.`,
+      `Can you explain the difference between lists and tuples in Python?`,
+      `What is your approach to handling exceptions in Python applications?`,
+      `Describe how you would optimize Python code for better performance.`,
+      `How do you manage dependencies in Python projects?`
+    ];
+    return pythonQuestions[questionNumber % pythonQuestions.length];
+  }
+  
+  if (topicLower.includes('java')) {
+    const javaQuestions = [
+      `Tell me about your experience with Java and Spring Boot.`,
+      `Can you explain the concept of dependency injection in Spring?`,
+      `What are the key differences between abstract classes and interfaces in Java?`,
+      `Describe your approach to exception handling in Java applications.`,
+      `How do you ensure thread safety in Java applications?`
+    ];
+    return javaQuestions[questionNumber % javaQuestions.length];
+  }
+  
+  if (topicLower.includes('hr') || topicLower.includes('management')) {
+    const hrQuestions = [
+      `Tell me about your experience in HR and people management.`,
+      `How do you handle conflict resolution in a team environment?`,
+      `Describe your approach to employee performance evaluation.`,
+      `What strategies do you use for talent acquisition and retention?`,
+      `How do you foster a positive workplace culture?`
+    ];
+    return hrQuestions[questionNumber % hrQuestions.length];
+  }
+  
+  if (topicLower.includes('data science') || topicLower.includes('machine learning') || topicLower.includes('ml')) {
+    const dsQuestions = [
+      `Tell me about your experience with data science and machine learning.`,
+      `Can you explain the difference between supervised and unsupervised learning?`,
+      `What is your approach to handling missing data in datasets?`,
+      `Describe a machine learning model you've built and deployed.`,
+      `How do you evaluate the performance of a machine learning model?`
+    ];
+    return dsQuestions[questionNumber % dsQuestions.length];
+  }
+  
+  if (topicLower.includes('devops') || topicLower.includes('cloud')) {
+    const devopsQuestions = [
+      `Tell me about your experience with DevOps and cloud platforms.`,
+      `Can you explain the concept of CI/CD pipelines?`,
+      `What is your approach to containerization using Docker?`,
+      `Describe your experience with Kubernetes orchestration.`,
+      `How do you ensure security in cloud deployments?`
+    ];
+    return devopsQuestions[questionNumber % devopsQuestions.length];
+  }
+  
+  if (topicLower.includes('cyber') || topicLower.includes('security')) {
+    const securityQuestions = [
+      `Tell me about your experience in cybersecurity.`,
+      `Can you explain the difference between symmetric and asymmetric encryption?`,
+      `What is your approach to threat detection and prevention?`,
+      `Describe common web application vulnerabilities and how to prevent them.`,
+      `How do you conduct security audits and penetration testing?`
+    ];
+    return securityQuestions[questionNumber % securityQuestions.length];
+  }
+  
+  if (topicLower.includes('mobile') || topicLower.includes('android') || topicLower.includes('ios')) {
+    const mobileQuestions = [
+      `Tell me about your experience with mobile app development.`,
+      `Can you explain the difference between native and cross-platform development?`,
+      `What is your approach to mobile app performance optimization?`,
+      `Describe how you handle offline functionality in mobile apps.`,
+      `How do you ensure mobile app security and data protection?`
+    ];
+    return mobileQuestions[questionNumber % mobileQuestions.length];
+  }
+  
+  if (topicLower.includes('ui') || topicLower.includes('ux') || topicLower.includes('design')) {
+    const designQuestions = [
+      `Tell me about your experience with UI/UX design.`,
+      `Can you explain your design process from research to implementation?`,
+      `What is your approach to creating accessible and inclusive designs?`,
+      `Describe how you conduct user research and usability testing.`,
+      `How do you balance aesthetics with functionality in your designs?`
+    ];
+    return designQuestions[questionNumber % designQuestions.length];
+  }
+  
+  if (topicLower.includes('database') || topicLower.includes('sql')) {
+    const dbQuestions = [
+      `Tell me about your experience with database design and management.`,
+      `Can you explain the difference between SQL and NoSQL databases?`,
+      `What is your approach to database optimization and indexing?`,
+      `Describe how you handle database transactions and ACID properties.`,
+      `How do you ensure data integrity and security in databases?`
+    ];
+    return dbQuestions[questionNumber % dbQuestions.length];
+  }
+  
+  // Default fallback questions based on topic
+  const defaultQuestions = [
+    `Tell me about your experience with ${topic}.`,
+    `Can you explain the key concepts and principles of ${topic}?`,
+    `What challenges have you faced while working with ${topic}?`,
+    `Describe a project where you applied ${topic} skills.`,
+    `How do you stay updated with the latest trends in ${topic}?`
+  ];
+  
+  return defaultQuestions[questionNumber % defaultQuestions.length];
+}
 
 // Helper function for default questions
 function getDefaultQuestions(focusAreas) {

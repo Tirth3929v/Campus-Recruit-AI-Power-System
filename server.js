@@ -3,13 +3,23 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 import jobRoutes from './server/routes/jobRoutes.js';
 import authRoutes from './server/routes/authRoutes.js';
 import courseRoutes from './server/routes/courseRoutes.js';
+import notificationRoutes from './server/routes/notificationRoutes.js';
 
 dotenv.config();
 
 const app = express();
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: true,
+    credentials: true
+  }
+});
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -40,10 +50,20 @@ const connectDB = async () => {
 };
 connectDB();
 
+app.set('socketio', io);
+
+io.on('connection', (socket) => {
+  socket.on('join_room', ({ userId, role }) => {
+    if (userId) socket.join(userId.toString());
+    if (role) socket.join(`role:${role}`);
+  });
+});
+
 app.use('/api/jobs', jobRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/courses', courseRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+httpServer.listen(PORT, () => console.log(`Server running on port ${PORT}`));

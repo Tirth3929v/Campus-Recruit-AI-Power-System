@@ -46,7 +46,7 @@ const AdminLogin = () => {
       {/* Ambient orbs */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute top-[-15%] left-[-10%] w-[45%] h-[45%] rounded-full bg-blue-600/10 blur-[150px] animate-float" />
-        <div className="absolute bottom-[-15%] right-[-10%] w-[45%] h-[45%] rounded-full bg-purple-600/10 blur-[150px] animate-float" style={{ animationDelay: '-4s' }} />
+        <div className="absolute bottom-[-15%] right-[-10%] w-[45%] h-[45%] rounded-full bg-teal-600/10 blur-[150px] animate-float" style={{ animationDelay: '-4s' }} />
         <div className="absolute top-[35%] left-[40%] w-[25%] h-[25%] rounded-full bg-cyan-500/5 blur-[100px] animate-morph-blob" />
       </div>
 
@@ -54,7 +54,7 @@ const AdminLogin = () => {
       <div className="hidden lg:flex flex-col justify-center px-16 flex-1 relative z-10">
         <div className="animate-fade-in-up">
           <div className="flex items-center gap-3 mb-10">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
               <ShieldCheck size={20} className="text-white" />
             </div>
             <span className="text-xl font-bold text-white">Campus<span className="text-blue-400">Admin</span></span>
@@ -69,7 +69,7 @@ const AdminLogin = () => {
             {perks.map(({ icon: Icon, label, desc }, i) => (
               <div key={label}
                 className={`flex items-center gap-4 p-4 rounded-2xl glass-card animate-fade-in-up delay-${(i + 2) * 100}`}>
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl flex items-center justify-center border border-white/10 flex-shrink-0">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500/20 to-teal-500/20 rounded-xl flex items-center justify-center border border-white/10 flex-shrink-0">
                   <Icon size={18} className="text-blue-400" />
                 </div>
                 <div>
@@ -99,7 +99,7 @@ const AdminLogin = () => {
           }}>
             {/* Logo */}
             <div className="flex items-center gap-3 mb-8">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
                 <ShieldCheck size={20} className="text-white" />
               </div>
               <span className="text-lg font-bold text-white">Campus<span className="text-blue-400">Admin</span></span>
@@ -126,7 +126,7 @@ const AdminLogin = () => {
                 <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Email</label>
                 <div className="relative group">
                   <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-blue-400 transition-colors duration-200 pointer-events-none" />
-                  <input type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
+                  <input aria-label="Input field"  type="email" id="email" name="email" autoComplete="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
                     required placeholder="admin@campusrecruit.com"
                     className="w-full pl-11 pr-4 py-3.5 text-sm text-white placeholder-white/25 rounded-2xl outline-none transition-all duration-200"
                     style={{
@@ -151,7 +151,7 @@ const AdminLogin = () => {
                 <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Password</label>
                 <div className="relative group">
                   <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-blue-400 transition-colors duration-200 pointer-events-none" />
-                  <input type={showPassword ? 'text' : 'password'} value={form.password}
+                  <input aria-label="Input field"  type={showPassword ? 'text' : 'password'} id="password" name="password" autoComplete="current-password" value={form.password}
                     onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
                     required placeholder="••••••••"
                     className="w-full pl-11 pr-12 py-3.5 text-sm text-white placeholder-white/25 rounded-2xl outline-none transition-all duration-200"
@@ -185,7 +185,7 @@ const AdminLogin = () => {
               <motion.button whileHover={{ scale: 1.01, boxShadow: '0 16px 40px rgba(99,102,241,0.45)' }}
                 whileTap={{ scale: 0.97 }} type="submit" disabled={loading}
                 className="w-full py-3.5 rounded-2xl text-white font-bold text-base flex items-center justify-center gap-2.5 mt-2 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300"
-                style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', boxShadow: '0 8px 24px rgba(99,102,241,0.35)' }}>
+                style={{ background: 'linear-gradient(135deg, #6366f1, #14b8a6)', boxShadow: '0 8px 24px rgba(99,102,241,0.35)' }}>
                 {loading
                   ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   : <><ArrowRight size={18} /> Sign In to Admin Panel</>

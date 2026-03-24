@@ -136,7 +136,7 @@ const CourseDetailModal = ({ course, onClose, onDelete }) => {
               {course.chapters && course.chapters.length > 0 ? (
                 course.chapters.map((chapter, index) => (
                   <div key={chapter.chapterId || index} className="flex items-center gap-3 p-3 rounded-xl border border-white/10" style={{ background: 'rgba(255,255,255,0.03)' }}>
-                    <span className="w-7 h-7 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center text-xs font-bold flex-shrink-0">
+                    <span className="w-7 h-7 rounded-lg bg-teal-500/20 text-teal-400 flex items-center justify-center text-xs font-bold flex-shrink-0">
                       {index + 1}
                     </span>
                     <p className="text-sm text-white font-medium">Lesson {index + 1} — {chapter.title || 'Untitled'}</p>
@@ -206,6 +206,7 @@ const ManageCourses = () => {
   const [toast, setToast] = useState(null);
   const [analytics, setAnalytics] = useState(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('published'); // published, pending_approval, draft
 
   const showToast = (message, type = 'success') => setToast({ message, type });
 
@@ -269,11 +270,56 @@ const ManageCourses = () => {
     } catch { showToast('Failed to load course details', 'error'); }
   };
 
-  const filtered = courses.filter(c =>
-    c.title?.toLowerCase().includes(search.toLowerCase()) ||
-    c.instructor?.toLowerCase().includes(search.toLowerCase()) ||
-    c.createdBy?.toLowerCase().includes(search.toLowerCase())
-  );
+  const handleApproveCourse = async (course) => {
+    try {
+      const res = await fetch(`/api/courses/${course._id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ status: 'published' })
+      });
+      if (res.ok) {
+        showToast('Course approved and published!');
+        fetchCourses();
+        fetchAnalytics();
+      } else {
+        showToast('Failed to approve course', 'error');
+      }
+    } catch { showToast('Failed to approve course', 'error'); }
+  };
+
+  const handleRejectCourse = async (course) => {
+    const reason = window.prompt('Enter rejection reason (optional):');
+    try {
+      const res = await fetch(`/api/courses/${course._id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ status: 'draft', rejectionReason: reason || '' })
+      });
+      if (res.ok) {
+        showToast('Course rejected and moved to draft');
+        fetchCourses();
+      } else {
+        showToast('Failed to reject course', 'error');
+      }
+    } catch { showToast('Failed to reject course', 'error'); }
+  };
+
+  const filtered = courses.filter(c => {
+    const matchesSearch = c.title?.toLowerCase().includes(search.toLowerCase()) ||
+      c.instructor?.toLowerCase().includes(search.toLowerCase()) ||
+      c.createdBy?.toLowerCase().includes(search.toLowerCase());
+    
+    if (activeTab === 'pending_approval') {
+      return matchesSearch && c.status === 'pending_approval';
+    } else if (activeTab === 'draft') {
+      return matchesSearch && c.status === 'draft';
+    }
+    return matchesSearch && c.status === 'published';
+  });
+
+  const pendingCount = courses.filter(c => c.status === 'pending_approval').length;
 
   const ratingData = analytics?.charts?.ratingDistribution ? [
     { name: '5 ⭐', count: analytics.charts.ratingDistribution[5], fill: '#fbbf24' },
@@ -295,27 +341,50 @@ const ManageCourses = () => {
         className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-            <BookOpen size={22} className="text-purple-400" /> Manage Courses
+            <BookOpen size={22} className="text-teal-400" /> Manage Courses
           </h2>
-          <p className="text-white/30 text-sm mt-1">{courses.length} total courses</p>
+          <div className="flex gap-2 mt-2">
+            {[
+              { key: 'published', label: 'Published' },
+              { key: 'pending_approval', label: 'Pending Approval', badge: pendingCount },
+              { key: 'draft', label: 'Draft' }
+            ].map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                  activeTab === tab.key 
+                    ? 'bg-teal-600 text-white' 
+                    : 'bg-white/5 text-white/50 hover:bg-white/10'
+                }`}
+              >
+                {tab.label}
+                {tab.badge > 0 && (
+                  <span className="ml-2 px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded-full text-xs">
+                    {tab.badge}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="relative">
           <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/25" />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search courses..."
-            className="pl-9 pr-4 py-2.5 rounded-xl text-sm text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-purple-500/40 w-64"
+          <input aria-label="Input field"  value={search} onChange={e => setSearch(e.target.value)} placeholder="Search courses..."
+            className="pl-9 pr-4 py-2.5 rounded-xl text-sm text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-teal-500/40 w-64"
             style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }} />
         </div>
       </motion.div>
 
       {analyticsLoading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 size={28} className="animate-spin text-purple-400" />
+          <Loader2 size={28} className="animate-spin text-teal-400" />
         </div>
       ) : analytics && (
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <BarChart3 size={20} className="text-purple-400" />
+              <BarChart3 size={20} className="text-teal-400" />
               <h3 className="text-lg font-bold text-white">Course Analytics Dashboard</h3>
             </div>
             <button onClick={handleResetAnalytics} className="px-3 py-1.5 text-xs font-medium text-red-400 bg-red-500/10 hover:bg-red-500/20 rounded-lg border border-red-500/15 transition-colors flex items-center gap-1.5">
@@ -324,7 +393,7 @@ const ManageCourses = () => {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <AnalyticsCard title="Total Courses" value={analytics.overview?.totalCourses || 0} icon={BookOpen} color="bg-purple-500/15 text-purple-400" />
+            <AnalyticsCard title="Total Courses" value={analytics.overview?.totalCourses || 0} icon={BookOpen} color="bg-teal-500/15 text-teal-400" />
             <AnalyticsCard title="Users Enrolled" value={analytics.overview?.totalEnrolledUsers || 0} icon={Users} color="bg-blue-500/15 text-blue-400" />
             <AnalyticsCard title="Paid Users" value={analytics.overview?.paidUsers || 0} icon={Award} color="bg-amber-500/15 text-amber-400" />
             <AnalyticsCard title="Free Users" value={analytics.overview?.freeUsers || 0} icon={PlayCircle} color="bg-emerald-500/15 text-emerald-400" />
@@ -338,7 +407,7 @@ const ManageCourses = () => {
 
           <div className="grid grid-cols-3 gap-4">
             <InsightCard title="Highest Rated" value={`${analytics.ratings?.highestRatedCourse?.title || 'N/A'} (${analytics.ratings?.highestRatedCourse?.rating?.toFixed(1) || '0.0'} ⭐)`} icon={Star} color="bg-yellow-500/15 text-yellow-400" />
-            <InsightCard title="Avg Rating" value={`${analytics.ratings?.averageRating || '0.0'} ⭐`} icon={Award} color="bg-purple-500/15 text-purple-400" />
+            <InsightCard title="Avg Rating" value={`${analytics.ratings?.averageRating || '0.0'} ⭐`} icon={Award} color="bg-teal-500/15 text-teal-400" />
             <InsightCard title="Most Reviewed" value={analytics.ratings?.mostReviewedCourse?.title || 'N/A'} icon={TrendingUp} color="bg-cyan-500/15 text-cyan-400" />
           </div>
 
@@ -356,7 +425,7 @@ const ManageCourses = () => {
                   <XAxis type="number" stroke="#666" fontSize={10} />
                   <YAxis dataKey="name" type="category" stroke="#666" fontSize={10} width={100} />
                   <Tooltip contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }} />
-                  <Bar dataKey="enrollments" fill="#8b5cf6" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="enrollments" fill="#14b8a6" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -441,12 +510,12 @@ const ManageCourses = () => {
         className="rounded-2xl overflow-hidden border border-white/8"
         style={{ background: 'rgba(255,255,255,0.03)' }}>
         {loading ? (
-          <div className="flex items-center justify-center py-20"><Loader2 size={28} className="animate-spin text-purple-400" /></div>
+          <div className="flex items-center justify-center py-20"><Loader2 size={28} className="animate-spin text-teal-400" /></div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-white/8">
-                <tr>{['Employee Name', 'Employee ID', 'Course Name', 'Course ID', 'Created Date', 'Created Time', 'Total Lessons', 'Actions'].map(h => (
+                <tr>{['Employee Name', 'Employee ID', 'Course Name', 'Course ID', 'Status', 'Created Date', 'Created Time', 'Total Lessons', 'Actions'].map(h => (
                   <th key={h} className="px-5 py-4 text-xs font-bold text-white/30 uppercase tracking-widest">{h}</th>
                 ))}</tr>
               </thead>
@@ -457,7 +526,7 @@ const ManageCourses = () => {
                     <motion.tr key={course._id} variants={rowVariants} className="hover:bg-white/5 transition-all">
                       <td className="px-5 py-4 min-w-[180px]">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-sm font-bold shadow-sm flex-shrink-0">
+                          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-teal-500 flex items-center justify-center text-white text-sm font-bold shadow-sm flex-shrink-0">
                             {course.instructor?.charAt(0).toUpperCase() || 'E'}
                           </div>
                           <span className="font-semibold text-white/90 whitespace-nowrap">{course.instructor || 'Unknown'}</span>
@@ -468,6 +537,15 @@ const ManageCourses = () => {
                         <span className="font-medium text-white/90 max-w-[200px] truncate block">{course.title}</span>
                       </td>
                       <td className="px-5 py-4 text-white/40 text-xs font-mono">C{course._id?.substring(0, 6).toUpperCase() || '000'}</td>
+                      <td className="px-5 py-4">
+                        <span className={`text-xs font-bold px-2.5 py-1 rounded-full flex-shrink-0 ${
+                          course.status === 'published' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20' :
+                          course.status === 'pending_approval' ? 'bg-amber-500/15 text-amber-400 border border-amber-500/20' :
+                          'bg-gray-500/15 text-gray-400 border border-gray-500/20'
+                        }`}>
+                          {course.status === 'published' ? 'Published' : course.status === 'pending_approval' ? 'Pending' : 'Draft'}
+                        </span>
+                      </td>
                       <td className="px-5 py-4 text-white/30 text-xs">{course.createdDate || '—'}</td>
                       <td className="px-5 py-4 text-white/30 text-xs">{course.createdTime || '—'}</td>
                       <td className="px-5 py-4">
@@ -475,16 +553,34 @@ const ManageCourses = () => {
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-2">
-                          <motion.button whileHover={{ scale: 1.07 }} whileTap={{ scale: 0.93 }}
-                            onClick={() => handleViewDetails(course)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 rounded-lg border border-blue-500/15">
-                            <Eye size={12} /> View
-                          </motion.button>
-                          <motion.button whileHover={{ scale: 1.07 }} whileTap={{ scale: 0.93 }}
-                            onClick={() => setConfirmCourse(course)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-400 bg-red-500/10 hover:bg-red-500/20 rounded-lg border border-red-500/15">
-                            <Trash2 size={12} /> Delete
-                          </motion.button>
+                          {course.status === 'pending_approval' && (
+                            <>
+                              <motion.button whileHover={{ scale: 1.07 }} whileTap={{ scale: 0.93 }}
+                                onClick={() => handleApproveCourse(course)}
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 rounded-lg border border-emerald-500/15">
+                                <CheckCircle2 size={12} /> Approve
+                              </motion.button>
+                              <motion.button whileHover={{ scale: 1.07 }} whileTap={{ scale: 0.93 }}
+                                onClick={() => handleRejectCourse(course)}
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-400 bg-red-500/10 hover:bg-red-500/20 rounded-lg border border-red-500/15">
+                                <X size={12} /> Reject
+                              </motion.button>
+                            </>
+                          )}
+                          {course.status !== 'pending_approval' && (
+                            <>
+                              <motion.button whileHover={{ scale: 1.07 }} whileTap={{ scale: 0.93 }}
+                                onClick={() => handleViewDetails(course)}
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 rounded-lg border border-blue-500/15">
+                                <Eye size={12} /> View
+                              </motion.button>
+                              <motion.button whileHover={{ scale: 1.07 }} whileTap={{ scale: 0.93 }}
+                                onClick={() => setConfirmCourse(course)}
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-400 bg-red-500/10 hover:bg-red-500/20 rounded-lg border border-red-500/15">
+                                <Trash2 size={12} /> Delete
+                              </motion.button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </motion.tr>

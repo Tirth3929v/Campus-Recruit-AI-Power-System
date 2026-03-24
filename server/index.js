@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ path: require('path').resolve(__dirname, '.env') });
 const express = require('express');
 const cors = require('cors');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
@@ -6,6 +6,15 @@ const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const path = require('path');
+
+// Helper to set role-specific auth cookie
+const setAuthCookie = (res, token, role) => {
+    const cookieNames = { admin: 'admin_token', employee: 'employee_token', company: 'company_token', student: 'student_token' };
+    const cookieName = cookieNames[role] || 'student_token';
+    res.cookie(cookieName, token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 30 * 24 * 60 * 60 * 1000 });
+    res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 30 * 24 * 60 * 60 * 1000 });
+};
 
 // Import models from /models (single source of truth)
 const User = require('./models/User');
@@ -36,11 +45,13 @@ app.use(cors({
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cookieParser());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Initialize Gemini
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({
-    model: "gemini-2.5-flash",
+    model: "gemini-pro",
     systemInstruction: "You are a helpful, encouraging Placement Assistant and Technical Tutor for Campus Recruit. Answer questions about coding, interviews, and platform navigation concisely."
 });
 
@@ -51,6 +62,7 @@ const connectDB = require('./config/db');
 const startServer = async (port = PORT) => {
     try {
         await connectDB();
+        console.log('🗄️  Connected DB Name:', mongoose.connection.name);
         
         const maxRetries = 3;
         let currentPort = port;
@@ -149,8 +161,12 @@ app.post('/api/chat', async (req, res) => {
 // 2. Student Dashboard — real data from DB
 app.get('/api/dashboard', verifyToken, async (req, res) => {
     try {
-        const user = await User.findById(req.user.id);
-        if (!user) return res.status(404).json({ error: "User not found" });
+        let user = await User.findById(req.user.id);
+        if (!user) {
+            const Student = require('./models/Student');
+            user = await Student.findById(req.user.id);
+        }
+        if (!user) return res.status(401).json({ error: "User not found" });
 
         const studentProfile = await StudentProfile.findOne({ user: req.user.id });
 
@@ -278,7 +294,7 @@ app.get('/api/dashboard', verifyToken, async (req, res) => {
                 streak: user.currentStreak || studentProfile?.streak || 0
             },
             stats: [
-                { label: "Total Courses", value: totalEnrolledCourses, icon: "BookOpen", color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-100 dark:bg-purple-500/10", accent: "from-purple-500 to-pink-500" },
+                { label: "Total Courses", value: totalEnrolledCourses, icon: "BookOpen", color: "text-teal-600 dark:text-teal-400", bg: "bg-teal-100 dark:bg-teal-500/10", accent: "from-teal-500 to-pink-500" },
                 { label: "Total Interviews", value: combinedTotal, icon: "Activity", color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-100 dark:bg-blue-500/10", accent: "from-blue-500 to-cyan-500" },
                 { label: "Average Score", value: finalAvg, suffix: "%", icon: "Target", color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-100 dark:bg-amber-500/10", accent: "from-amber-500 to-orange-500" },
                 { label: "Hours Practiced", value: ((combinedTotal * 0.5)).toFixed(1), suffix: " hrs", icon: "Clock", color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-100 dark:bg-emerald-500/10", accent: "from-emerald-500 to-teal-500" }
@@ -297,10 +313,15 @@ app.get('/api/dashboard', verifyToken, async (req, res) => {
 });
 
 // 3. User Profile — real data from DB
-app.get('/api/user', verifyToken, async (req, res) => {
+// 3. User Profile
+app.get(['/api/user', '/api/user/profile'], verifyToken, async (req, res) => {
     try {
-        const user = await User.findById(req.user.id).select('-password');
-        if (!user) return res.status(404).json({ error: 'User not found' });
+        let user = await User.findById(req.user.id).select('-password');
+        if (!user) {
+            const Student = require('./models/Student');
+            user = await Student.findById(req.user.id).select('-password');
+        }
+        if (!user) return res.status(401).json({ error: 'User not found' });
         const studentProfile = await StudentProfile.findOne({ user: req.user.id });
         res.json({
             id: user._id,
@@ -324,12 +345,18 @@ app.get('/api/user', verifyToken, async (req, res) => {
     }
 });
 
-app.put('/api/user', verifyToken, async (req, res) => {
+app.put(['/api/user', '/api/user/profile'], verifyToken, async (req, res) => {
     try {
         const { name, course, bio, skills, resumeName, resume } = req.body;
 
         let user = await User.findById(req.user.id);
-        if (!user) return res.status(404).json({ error: 'User not found' });
+        let fromStudentCollection = false;
+        if (!user) {
+            const Student = require('./models/Student');
+            user = await Student.findById(req.user.id);
+            fromStudentCollection = true;
+        }
+        if (!user) return res.status(401).json({ error: 'User not found' });
 
         if (name) user.name = name;
         if (course) user.course = course;
@@ -366,45 +393,71 @@ app.put('/api/user', verifyToken, async (req, res) => {
     }
 });
 
-// 4a. User Login (Student - with OTP verification)
+// 4a. User Login (Student - checks both User and Student collections)
 app.post('/api/auth/user-login', async (req, res) => {
     try {
-        const { email, password } = req.body;
-        
-        if (!email || !password) {
-            return res.status(400).json({ error: 'Email and password are required.' });
+        if (!req.body) return res.status(400).json({ message: 'Request body is required' });
+
+        const emailInput = req.body.email;
+        if (!emailInput || typeof emailInput !== 'string')
+            return res.status(400).json({ message: 'Email is required' });
+
+        const email = emailInput.trim().toLowerCase();
+        const { password } = req.body;
+        if (!password) return res.status(400).json({ message: 'Password is required' });
+
+        // ── Check User collection first, then Student collection as fallback ──
+        const Student = require('./models/Student');
+        let account = await User.findOne({ email }).select('+password');
+        let fromCollection = 'users';
+        if (!account) {
+            account = await Student.findOne({ email }).select('+password');
+            fromCollection = 'students';
         }
 
-        const user = await User.findOne({ email }).select('+password');
-        if (!user) {
-            return res.status(401).json({ error: 'User not found. Please register first.' });
+        console.log(`Login [${email}]: found in '${account ? fromCollection : 'neither'}' collection`);
+
+        if (!account) {
+            return res.status(401).json({ error: 'User not found. Please register an account first.' });
         }
 
-        const isMatch = await user.matchPassword(password);
-        if (!isMatch) {
-            return res.status(401).json({ error: 'Incorrect password.' });
-        }
+        const isMatch = await account.matchPassword(password);
+        if (!isMatch) return res.status(401).json({ error: 'Incorrect password. Please try again.' });
 
-        if (user.role !== 'student') {
+        // Both User and Student models store role — ensure it's student
+        const role = account.role || 'student';
+        if (role !== 'student') {
             return res.status(403).json({ error: 'Invalid credentials for this login portal.' });
         }
 
-        if (!user.isVerified) {
+        if (!account.isVerified) {
             return res.status(403).json({ error: 'Please verify your account first. Check your email for OTP.' });
         }
 
-        const token = user.getSignedJwtToken();
-        res.cookie('token', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            maxAge: 30 * 24 * 60 * 60 * 1000
-        });
+        // Update streak (only User model has streak fields; skip gracefully for Student)
+        if (fromCollection === 'users') {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const last = account.lastActiveDate ? new Date(account.lastActiveDate) : null;
+            if (last) last.setHours(0, 0, 0, 0);
+            const diffDays = last ? Math.round((today - last) / 86400000) : null;
+            if (!last || diffDays > 1) account.currentStreak = 1;
+            else if (diffDays === 1) account.currentStreak = (account.currentStreak || 0) + 1;
+            account.lastActiveDate = today;
+            await account.save();
+        }
 
-        res.status(200).json({ success: true, token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
+        const token = account.getSignedJwtToken();
+        res.cookie('student_token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 30 * 24 * 60 * 60 * 1000 });
+        res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 30 * 24 * 60 * 60 * 1000 });
+
+        res.status(200).json({
+            success: true, token,
+            user: { id: account._id, name: account.name, email: account.email, role, streak: account.currentStreak || 0 }
+        });
     } catch (err) {
-        console.error('User login error:', err);
-        res.status(500).json({ error: 'Server Error' });
+        console.error('user-login error:', err);
+        res.status(500).json({ message: 'Internal server error', error: err.message });
     }
 });
 
@@ -413,31 +466,29 @@ app.post('/api/auth/user-login', async (req, res) => {
 // 4c. Employee Login (requires admin approval - isVerified)
 app.post('/api/auth/employee-login', async (req, res) => {
     try {
+        const Employee = require('./models/Employee');
         const { email, password } = req.body;
         
         if (!email || !password) {
             return res.status(400).json({ error: 'Email and password are required.' });
         }
 
-        const user = await User.findOne({ email }).select('+password');
-        if (!user) {
+        const employee = await Employee.findOne({ email }).select('+password');
+        if (!employee) {
             return res.status(401).json({ error: 'Invalid email or password' });
         }
 
-        const isMatch = await user.matchPassword(password);
+        const isMatch = await employee.matchPassword(password);
         if (!isMatch) {
             return res.status(401).json({ error: 'Invalid email or password' });
         }
 
-        if (user.role !== 'employee') {
-            return res.status(403).json({ error: 'Invalid employee credentials' });
-        }
-
-        if (!user.isVerified) {
+        if (!employee.isVerified) {
             return res.status(403).json({ error: 'Your account is awaiting admin approval. Please check back later.' });
         }
 
-        const token = user.getSignedJwtToken();
+        const token = employee.getSignedJwtToken();
+        setAuthCookie(res, token, 'employee');
         res.cookie('token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
@@ -445,7 +496,7 @@ app.post('/api/auth/employee-login', async (req, res) => {
             maxAge: 30 * 24 * 60 * 60 * 1000
         });
 
-        res.status(200).json({ success: true, token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
+        res.status(200).json({ success: true, token, user: { id: employee._id, name: employee.name, email: employee.email, role: employee.role } });
     } catch (err) {
         console.error('Employee login error:', err);
         res.status(500).json({ error: 'Server Error' });
@@ -476,6 +527,7 @@ app.post('/api/auth/company-login', async (req, res) => {
         }
 
         const token = user.getSignedJwtToken();
+        setAuthCookie(res, token, 'company');
         res.cookie('token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
@@ -506,7 +558,7 @@ app.post('/api/login', async (req, res) => {
 
         const isMatch = await user.matchPassword(password);
         if (!isMatch) {
-            return res.status(401).json({ error: 'Incorrect password.' });
+            return res.status(401).json({ error: 'Incorrect password. Please try again.' });
         }
 
         if (user.role === 'student' && !user.isVerified) {
@@ -518,6 +570,7 @@ app.post('/api/login', async (req, res) => {
         }
 
         const token = user.getSignedJwtToken();
+        setAuthCookie(res, token, user.role);
         res.cookie('token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
@@ -534,15 +587,53 @@ app.post('/api/login', async (req, res) => {
 
 app.get('/api/currentuser', verifyToken, async (req, res) => {
     try {
+        // Safety check for req.user
         if (!req.user || !req.user.id) {
-            return res.status(401).json({ error: 'Not authorized' });
+            return res.status(401).json({ message: 'Not authorized - invalid token' });
         }
-        const user = await User.findById(req.user.id).select('-password');
-        if (!user) return res.status(404).json({ error: 'User not found' });
-        res.status(200).json(user);
+
+        const role = req.user.role;
+        let user = null;
+
+        try {
+            if (role === 'admin') {
+                const Admin = require('./models/Admin');
+                user = await Admin.findById(req.user.id).select('-password');
+                if (!user) user = await User.findById(req.user.id).select('-password');
+            } else if (role === 'student') {
+                const Student = require('./models/Student');
+                user = await Student.findById(req.user.id).select('-password');
+                if (!user) user = await User.findById(req.user.id).select('-password');
+            } else if (role === 'employee') {
+                const Employee = require('./models/Employee');
+                user = await Employee.findById(req.user.id).select('-password');
+                if (!user) user = await User.findById(req.user.id).select('-password');
+            } else if (role === 'company') {
+                const Company = require('./models/Company');
+                user = await Company.findById(req.user.id).select('-password');
+                if (!user) user = await User.findById(req.user.id).select('-password');
+            } else {
+                user = await User.findById(req.user.id).select('-password');
+            }
+        } catch (dbError) {
+            console.error('Database query error in /api/currentuser:', dbError);
+            // Try fallback to User model
+            try {
+                user = await User.findById(req.user.id).select('-password');
+            } catch (fallbackError) {
+                console.error('Fallback query also failed:', fallbackError);
+                return res.status(500).json({ message: 'Database error while fetching user', error: dbError.message });
+            }
+        }
+
+        if (!user) {
+            return res.status(401).json({ message: 'User not found - may have been deleted' });
+        }
+        
+        res.status(200).json({ ...user.toObject(), role });
     } catch (err) {
-        console.error('Current user error:', err);
-        res.status(500).json({ error: 'Server Error' });
+        console.error('Route Error in /api/currentuser:', err);
+        res.status(500).json({ message: 'Internal server error', error: err.message });
     }
 });
 
@@ -607,7 +698,12 @@ app.post('/api/register', async (req, res) => {
             course: course || ''
         });
 
-        await sendOTPEmail(email, otp);
+        // Send OTP email — non-blocking so registration succeeds even if email fails
+        try {
+            await sendOTPEmail(email, otp);
+        } catch (emailErr) {
+            console.error('OTP email failed (registration still saved):', emailErr.message);
+        }
 
         res.status(201).json({ 
             success: true, 
@@ -652,15 +748,20 @@ app.post('/api/verify-otp', async (req, res) => {
         }
 
         if (user.isVerified) {
-            return res.status(400).json({ error: 'Account already verified' });
+            return res.status(400).json({ error: 'Account already verified. Please login.' });
+        }
+
+        // Check if OTP was never sent
+        if (!user.otp) {
+            return res.status(400).json({ error: 'No OTP found. Please register or resend OTP.' });
         }
 
         if (user.otp !== otp) {
-            return res.status(400).json({ error: 'Invalid OTP' });
+            return res.status(400).json({ error: 'Invalid OTP. Please check and try again.' });
         }
 
         if (user.otpExpires < new Date()) {
-            return res.status(400).json({ error: 'OTP expired' });
+            return res.status(400).json({ error: 'OTP expired. Please request a new OTP.' });
         }
 
         user.isVerified = true;
@@ -669,6 +770,7 @@ app.post('/api/verify-otp', async (req, res) => {
         await user.save();
 
         const token = user.getSignedJwtToken();
+        setAuthCookie(res, token, user.role);
         res.cookie('token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
@@ -713,7 +815,11 @@ app.post('/api/resend-otp', async (req, res) => {
         user.otpExpires = otpExpires;
         await user.save();
 
-        await sendOTPEmail(user.email, otp);
+        try {
+            await sendOTPEmail(user.email, otp);
+        } catch (emailErr) {
+            console.error('Resend OTP email failed:', emailErr.message);
+        }
 
         res.status(200).json({ success: true, message: 'OTP resent to your email' });
     } catch (err) {
@@ -773,11 +879,11 @@ app.post('/api/auth/employee-verify-otp', async (req, res) => {
         }
 
         if (user.otp !== otp) {
-            return res.status(400).json({ error: 'Invalid OTP' });
+            return res.status(400).json({ error: 'Invalid OTP. Please check and try again.' });
         }
 
         if (user.otpExpires < new Date()) {
-            return res.status(400).json({ error: 'OTP expired' });
+            return res.status(400).json({ error: 'OTP expired. Please request a new OTP.' });
         }
 
         const resetToken = crypto.randomBytes(32).toString('hex');
@@ -838,19 +944,19 @@ app.post('/api/auth/employee-reset-password', async (req, res) => {
 // 4b. Employee Registration (creates a pending account, awaiting admin approval)
 app.post('/api/employee/register', async (req, res) => {
     try {
+        const Employee = require('./models/Employee');
         const { name, email, password, department } = req.body;
         if (!name || !email || !password) {
             return res.status(400).json({ error: 'Please provide name, email and password' });
         }
-        const existing = await User.findOne({ email });
+        const existing = await Employee.findOne({ email });
         if (existing) return res.status(400).json({ error: 'Email already in use' });
 
-        await User.create({
+        await Employee.create({
             name,
             email,
             password,
-            role: 'employee',
-            course: department || '',
+            department: department || '',
             isVerified: false // Pending admin approval
         });
 
@@ -940,12 +1046,44 @@ app.use('/api/company', optionalAuth, companyRoutes);
 const jobRoutes = require('./routes/jobRoutes');
 app.use('/api/jobs', optionalAuth, jobRoutes);
 
+const aiRoutes = require('./routes/aiRoutes');
+app.use('/api/ai', aiRoutes);
+
+const aiChatRoutes = require('./routes/aiChatRoutes');
+app.use('/api/ai-chat', aiChatRoutes);
+
 const communityRoutes = require('./routes/communityRoutes');
 app.use('/api/community', optionalAuth, communityRoutes);
 
 // New dynamic route for notifications
 const notificationRoutes = require('./routes/notificationRoutes');
 app.use('/api/notifications', notificationRoutes);
+
+const eventRoutes = require('./routes/eventRoutes');
+app.use('/api/events', eventRoutes);
+
+const userScoreRoutes = require('./routes/userScoreRoutes');
+app.use('/api/user-scores', userScoreRoutes);
+
+const courseUpdateRoutes = require('./routes/courseUpdateRoutes');
+app.use('/api/course-updates', courseUpdateRoutes);
+
+const paymentRoutes = require('./routes/paymentRoutes');
+app.use('/api/payments', paymentRoutes);
+
+const financialAnalyticsRoutes = require('./routes/financialAnalyticsRoutes');
+app.use('/api/admin/analytics', financialAnalyticsRoutes);
+
+// Multer error handler (must be after all routes)
+app.use((err, req, res, next) => {
+    if (err.message === 'Only PDF files are allowed') {
+        return res.status(400).json({ error: err.message });
+    }
+    if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ error: 'File too large. Maximum size is 5 MB.' });
+    }
+    next(err);
+});
 
 // Create HTTP server and attach Socket.io
 const http = require('http');

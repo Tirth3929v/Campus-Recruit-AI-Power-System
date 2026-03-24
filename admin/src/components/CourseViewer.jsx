@@ -133,7 +133,7 @@ const CourseViewer = () => {
                           }}
                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${
                             activeModule === mIdx && activeLesson === lIdx 
-                              ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20' 
+                              ? 'bg-teal-600 text-white shadow-lg shadow-teal-500/20' 
                               : 'text-gray-400 hover:bg-gray-700/50 hover:text-white'
                           }`}
                         >
@@ -163,7 +163,7 @@ const CourseViewer = () => {
               transition={{ duration: 0.3 }}
             >
               <div className="mb-8">
-                <span className="text-purple-400 text-sm font-medium mb-2 block">
+                <span className="text-teal-400 text-sm font-medium mb-2 block">
                   Module {activeModule + 1}: {course.modules[activeModule].title}
                 </span>
                 <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
@@ -213,7 +213,7 @@ const CourseViewer = () => {
 
                 <button 
                   onClick={handleMarkComplete}
-                  className="px-8 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold rounded-xl shadow-lg shadow-purple-500/25 transition-all flex items-center gap-2"
+                  className="px-8 py-3 bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-500 hover:to-blue-500 text-white font-bold rounded-xl shadow-lg shadow-teal-500/25 transition-all flex items-center gap-2"
                 >
                   Mark Complete & Next <ChevronRight size={18} />
                 </button>

@@ -44,10 +44,6 @@ const jobSchema = new mongoose.Schema({
     enum: ['pending', 'employee_review', 'admin_review', 'approved', 'rejected', 'Open', 'Closed'],
     default: 'pending'
   },
-  assignedEmployeeId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  },
   department: {
     type: String,
     default: ''
@@ -65,6 +61,11 @@ const jobSchema = new mongoose.Schema({
   },
   submittedAt: {
     type: Date
+  },
+  reviewedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Employee',
+    default: null
   },
   applicants: [{
     user: {

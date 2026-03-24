@@ -53,7 +53,7 @@ const SignUp = () => {
             className="w-full p-2 border rounded text-gray-900 bg-white"
           />
           <input 
-            type="password" name="password" placeholder="Password"
+            type="password" name="password" placeholder="Password" autoComplete="new-password"
             onChange={handleChange} required
             className="w-full p-2 border rounded text-gray-900 bg-white"
           />

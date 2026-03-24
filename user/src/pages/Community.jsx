@@ -113,10 +113,10 @@ const Community = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-6 font-sans selection:bg-purple-500/30 overflow-x-hidden">
+    <div className="min-h-screen bg-gray-900 text-white p-6 font-sans selection:bg-teal-500/30 overflow-x-hidden">
       {/* Background Effects */}
       <div className="fixed inset-0 z-0 pointer-events-none">
-          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-purple-900/20 blur-[120px]" />
+          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-teal-900/20 blur-[120px]" />
           <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-900/20 blur-[120px]" />
       </div>
 
@@ -136,7 +136,7 @@ const Community = () => {
               placeholder="Search discussions..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-gray-800/50 border border-gray-700 rounded-xl py-2.5 pl-10 pr-4 text-sm text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
+              className="w-full bg-gray-800/50 border border-gray-700 rounded-xl py-2.5 pl-10 pr-4 text-sm text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all"
             />
           </div>
         </header>
@@ -148,13 +148,13 @@ const Community = () => {
               value={newPost}
               onChange={(e) => setNewPost(e.target.value)}
               placeholder="What's on your mind? Share an interview question or tip..."
-              className="w-full bg-gray-800/50 border border-gray-700 rounded-xl p-4 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all resize-none min-h-[100px]"
+              className="w-full bg-gray-800/50 border border-gray-700 rounded-xl p-4 text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all resize-none min-h-[100px]"
             />
             <div className="flex justify-end mt-4">
               <button 
                 type="submit"
                 disabled={!newPost.trim()}
-                className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-purple-500/25 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2.5 bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-500 hover:to-blue-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-teal-500/25 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Send size={16} /> Post
               </button>
@@ -173,7 +173,7 @@ const Community = () => {
             >
               <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center text-purple-400 border border-white/10">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-500/20 to-blue-500/20 flex items-center justify-center text-teal-400 border border-white/10">
                     <User size={20} />
                   </div>
                   <div>
@@ -228,7 +228,7 @@ const Community = () => {
                   </div>
                   
                   <form onSubmit={(e) => handleCommentSubmit(e, post.id)} className="flex gap-2">
-                    <input
+                    <input aria-label="Input field" 
                       type="text"
                       value={newComment}
                       onChange={(e) => setNewComment(e.target.value)}

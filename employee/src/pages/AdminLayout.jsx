@@ -7,6 +7,10 @@ import { useAuth } from '../context/AuthContext';
 import axiosInstance from './axiosInstance';
 
 const EmployeeLayout = () => {
+  useEffect(() => {
+    document.title = 'Campus Recruiting AI Assistant';
+  }, []);
+
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -79,9 +83,9 @@ const EmployeeLayout = () => {
       <div className="flex-1 flex flex-col h-full overflow-hidden relative">
         {/* Top Header */}
         <header className="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-8 shadow-sm z-10">
-          <h1 className="text-xl font-semibold text-gray-800">
+          <h2 className="text-xl font-semibold text-gray-800">
             {navItems.find(i => i.path === location.pathname)?.label || 'Employee Dashboard'}
-          </h1>
+          </h2>
 
           <div className="flex items-center gap-4">
             <div className="text-right hidden sm:block">

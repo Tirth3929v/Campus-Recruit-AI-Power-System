@@ -1,19 +1,35 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, BookOpen, Briefcase, User, LogOut, ChevronRight, Bell } from 'lucide-react';
+import { 
+  LayoutDashboard, BookOpen, Briefcase, User, LogOut, ChevronRight, Bell, 
+  CalendarDays, Building2, Sparkles, FileText, Code2, ChevronDown, Edit3 
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import NotificationBell from '../components/NotificationBell';
 
 const EmployeeLayout = () => {
     const location = useLocation();
     const { user, logout } = useAuth();
+    const [aiOpen, setAiOpen] = useState(false);
 
     const navItems = [
         { path: '/employee', label: 'Dashboard', icon: LayoutDashboard, exact: true },
         { path: '/employee/jobs', label: 'Job Board', icon: Briefcase },
         { path: '/employee/courses', label: 'Courses', icon: BookOpen },
+        { path: '/employee/course-updates', label: 'Update Courses', icon: Edit3 },
         { path: '/employee/notifications/send', label: 'Send Notification', icon: Bell },
+        { path: '/employee/calendar', label: 'Calendar', icon: CalendarDays },
+        { path: '/employee/company-approvals', label: 'Company Approvals', icon: Building2 },
+        {
+            label: 'AI Assistant',
+            icon: Sparkles,
+            isDropdown: true,
+            children: [
+                { path: '/employee/ai/text', label: 'Text Generator', icon: FileText },
+                { path: '/employee/ai/code', label: 'Code Generator', icon: Code2 },
+            ],
+        },
         { path: '/employee/profile', label: 'My Profile', icon: User },
     ];
 
@@ -58,6 +74,62 @@ const EmployeeLayout = () => {
                 <nav className="flex-1 py-3 px-3 space-y-1 overflow-y-auto custom-scrollbar">
                     <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest px-3 mb-2">Menu</p>
                     {navItems.map((item) => {
+                        // Handle dropdown items
+                        if (item.isDropdown) {
+                            const isAnyChildActive = item.children.some(c => location.pathname.startsWith(c.path));
+                            const Icon = item.icon;
+                            return (
+                                <div key={item.label}>
+                                    <motion.div whileHover={{ x: 3 }} whileTap={{ scale: 0.97 }}
+                                        onClick={() => setAiOpen(p => !p)}
+                                        className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer ${
+                                            isAnyChildActive
+                                                ? 'text-emerald-400 border border-emerald-500/20'
+                                                : 'text-white/35 hover:text-white/70 hover:bg-white/5'
+                                        }`}
+                                        style={isAnyChildActive ? { background: 'rgba(16,185,129,0.08)' } : {}}>
+                                        <Icon size={17} className="flex-shrink-0" />
+                                        <span className="text-sm font-medium flex-1">{item.label}</span>
+                                        <motion.div animate={{ rotate: aiOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                                            <ChevronDown size={14} className="text-white/30" />
+                                        </motion.div>
+                                    </motion.div>
+
+                                    <AnimatePresence>
+                                        {aiOpen && (
+                                            <motion.div
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: 'auto' }}
+                                                exit={{ opacity: 0, height: 0 }}
+                                                transition={{ duration: 0.2 }}
+                                                className="overflow-hidden ml-3 mt-1 space-y-1 border-l border-white/8 pl-3"
+                                            >
+                                                {item.children.map(child => {
+                                                    const CIcon = child.icon;
+                                                    const isActive = location.pathname.startsWith(child.path);
+                                                    return (
+                                                        <Link key={child.path} to={child.path}>
+                                                            <motion.div whileHover={{ x: 3 }} whileTap={{ scale: 0.97 }}
+                                                                className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-all cursor-pointer ${
+                                                                    isActive
+                                                                        ? 'text-emerald-400 border border-emerald-500/20'
+                                                                        : 'text-white/35 hover:text-white/70 hover:bg-white/5'
+                                                                }`}
+                                                                style={isActive ? { background: 'rgba(16,185,129,0.08)' } : {}}>
+                                                                <CIcon size={15} className="flex-shrink-0" />
+                                                                <span className="font-medium">{child.label}</span>
+                                                            </motion.div>
+                                                        </Link>
+                                                    );
+                                                })}
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+                            );
+                        }
+
+                        // Handle regular items
                         const isActive = item.exact
                             ? location.pathname === item.path
                             : location.pathname.startsWith(item.path);

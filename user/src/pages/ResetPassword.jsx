@@ -110,9 +110,9 @@ const ResetPassword = () => {
   const validationMsg = getValidationMessage();
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0B0F19] flex items-center justify-center p-4 font-sans selection:bg-purple-500/30">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0B0F19] flex items-center justify-center p-4 font-sans selection:bg-teal-500/30">
       <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-purple-500/10 dark:bg-purple-900/20 blur-[120px]" />
+        <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-teal-500/10 dark:bg-teal-900/20 blur-[120px]" />
         <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-500/10 dark:bg-blue-900/20 blur-[120px]" />
       </div>
 
@@ -122,7 +122,7 @@ const ResetPassword = () => {
         className="relative z-10 w-full max-w-md bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 backdrop-blur-xl rounded-2xl p-8 shadow-2xl"
       >
         <div className="text-center mb-8">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 flex items-center justify-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-r from-teal-600 to-blue-600 flex items-center justify-center">
             <Lock className="text-white" size={32} />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Create New Password</h1>
@@ -153,7 +153,7 @@ const ResetPassword = () => {
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                 <input 
                   type="password" required placeholder="Enter new password" autoComplete="new-password"
-                  className="w-full bg-gray-100 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl py-3 pl-10 pr-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 outline-none transition-all"
+                  className="w-full bg-gray-100 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl py-3 pl-10 pr-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 outline-none transition-all"
                   value={password} onChange={handlePasswordChange}
                 />
               </div>
@@ -182,7 +182,7 @@ const ResetPassword = () => {
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                 <input 
                   type="password" required placeholder="Confirm new password" autoComplete="new-password"
-                  className="w-full bg-gray-100 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl py-3 pl-10 pr-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 outline-none transition-all"
+                  className="w-full bg-gray-100 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl py-3 pl-10 pr-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 outline-none transition-all"
                   value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
                 />
               </div>
@@ -191,7 +191,7 @@ const ResetPassword = () => {
               )}
             </div>
 
-            <button type="submit" disabled={loading} className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold rounded-xl shadow-lg shadow-purple-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50 mt-4">
+            <button type="submit" disabled={loading} className="w-full py-3.5 bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-500 hover:to-blue-500 text-white font-bold rounded-xl shadow-lg shadow-teal-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50 mt-4">
               {loading ? (
                 <span className="flex items-center gap-2">
                   <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }}

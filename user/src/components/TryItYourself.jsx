@@ -101,7 +101,7 @@ const TryItYourself = ({ defaultCode = 'print("Hello, World!")' }) => {
                     <span className="font-semibold text-gray-700 dark:text-gray-300">Example</span>
                 </div>
                 {isLoading ? (
-                    <div className="flex items-center gap-2 text-xs font-semibold text-purple-500 bg-purple-500/10 px-3 py-1 rounded-full">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-teal-500 bg-teal-500/10 px-3 py-1 rounded-full">
                         <Loader2 size={12} className="animate-spin" /> Loading Python...
                     </div>
                 ) : error ? (

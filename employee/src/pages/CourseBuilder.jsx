@@ -3,8 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   PlusCircle, Trash2, Send, Image as ImageIcon,
-  BookOpen, ChevronDown, ChevronUp, Video, FileText,
-  CheckCircle2, Loader2, AlertCircle, Search, Filter
+  BookOpen, ChevronDown, ChevronUp, FileText,
+  CheckCircle2, Loader2, AlertCircle, Search, Filter, History, Clock
 } from 'lucide-react';
 import axiosInstance from './axiosInstance';
 import { useAuth } from '../context/AuthContext';
@@ -29,7 +29,7 @@ const Toast = ({ type, message }) => {
     );
 };
 
-const fieldBase = 'w-full rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-purple-500/40 transition-all';
+const fieldBase = 'w-full rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-teal-500/40 transition-all';
 const fieldStyle = { background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' };
 const labelCls = 'block text-xs font-bold text-white/30 uppercase tracking-widest mb-1.5';
 
@@ -37,6 +37,7 @@ const CourseBuilder = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const [view, setView] = useState('list');
+    const [editingCourseId, setEditingCourseId] = useState(null);
     const [courseData, setCourseData] = useState({
         title: '', description: '', instructor: '', level: 'Beginner',
         category: 'Development', courseType: 'free', price: 0, duration: '', thumbnail: '', createdBy: '',
@@ -55,6 +56,9 @@ const CourseBuilder = () => {
     // Search and Filter states
     const [searchQuery, setSearchQuery] = useState('');
     const [levelFilter, setLevelFilter] = useState('all');
+    const [showHistoryModal, setShowHistoryModal] = useState(false);
+    const [selectedCourseHistory, setSelectedCourseHistory] = useState(null);
+    const [historyLoading, setHistoryLoading] = useState(false);
 
     useEffect(() => {
         fetchCreatedCourses();
@@ -170,7 +174,7 @@ const CourseBuilder = () => {
 
     const addChapter = () => {
         const newId = `chap_${Date.now()}`;
-        setChapters(prev => [...prev, { chapterId: newId, title: '', content: '', videoUrl: '', order: prev.length + 1 }]);
+        setChapters(prev => [...prev, { chapterId: newId, title: '', content: '', order: prev.length + 1 }]);
     };
 
     const removeChapter = (id) => {
@@ -197,10 +201,18 @@ const CourseBuilder = () => {
             }
         }
         setSubmitting(true);
-        showToast('loading', 'Submitting course…', 30000);
+        showToast('loading', editingCourseId ? 'Updating course…' : 'Submitting course…', 30000);
         try {
-            const res = await axiosInstance.post('/courses', { ...courseData, chapters });
-            showToast('success', `"${res.data.course.title}" submitted! 🎉`);
+            let res;
+            if (editingCourseId) {
+                // Update existing course
+                res = await axiosInstance.put(`/courses/${editingCourseId}`, { ...courseData, chapters });
+                showToast('success', `"${res.data.course.title}" updated successfully! 🎉`);
+            } else {
+                // Create new course
+                res = await axiosInstance.post('/courses', { ...courseData, chapters });
+                showToast('success', `"${res.data.course.title}" submitted! 🎉`);
+            }
             
             const newCourse = res.data.course;
             
@@ -224,17 +236,70 @@ const CourseBuilder = () => {
                 inProgress: 0,
                 createdAt: new Date().toISOString()
             };
-            localStorage.setItem('employeeCourseHistory', JSON.stringify([courseForHistory, ...localHistory]));
             
-            setCreatedCourses(prev => [newCourse, ...prev]);
+            if (editingCourseId) {
+                // Update in local storage
+                const updatedHistory = localHistory.map(c => 
+                    c.courseId === editingCourseId ? courseForHistory : c
+                );
+                localStorage.setItem('employeeCourseHistory', JSON.stringify(updatedHistory));
+            } else {
+                // Add new to local storage
+                localStorage.setItem('employeeCourseHistory', JSON.stringify([courseForHistory, ...localHistory]));
+            }
             
             const userIdentity = user?.email || user?.name || courseData.createdBy || '';
             setCourseData({ title: '', description: '', instructor: '', level: 'Beginner', category: 'Development', courseType: 'free', price: 0, duration: '', thumbnail: '', createdBy: userIdentity, courseNotes: '', pdfFile: '' });
             setChapters([]);
+            setEditingCourseId(null);
+            setView('list');
             fetchCreatedCourses();
         } catch (err) {
-            showToast('error', err.response?.data?.message || 'Submission failed.');
+            showToast('error', err.response?.data?.message || 'Operation failed.');
         } finally { setSubmitting(false); }
+    };
+
+    const viewUpdateHistory = async (courseId, courseTitle) => {
+        setHistoryLoading(true);
+        setShowHistoryModal(true);
+        try {
+            const res = await axiosInstance.get(`/course-updates/history/${courseId}`);
+            setSelectedCourseHistory({ title: courseTitle, history: res.data.history || [] });
+        } catch (err) {
+            showToast('error', 'Failed to load update history');
+            console.error(err);
+        } finally {
+            setHistoryLoading(false);
+        }
+    };
+
+    const handleEditCourse = async (courseId) => {
+        try {
+            const res = await axiosInstance.get(`/courses/${courseId}`);
+            const course = res.data;
+            
+            setCourseData({
+                title: course.title || '',
+                description: course.description || '',
+                instructor: course.instructor || '',
+                level: course.level || 'Beginner',
+                category: course.category || 'Development',
+                courseType: course.courseType || 'free',
+                price: course.price || 0,
+                duration: course.duration || '',
+                thumbnail: course.thumbnail || '',
+                createdBy: course.createdBy || '',
+                courseNotes: course.courseNotes || '',
+                pdfFile: course.pdfFile || ''
+            });
+            
+            setChapters(course.chapters || []);
+            setEditingCourseId(courseId);
+            setView('create');
+        } catch (err) {
+            showToast('error', 'Failed to load course for editing');
+            console.error(err);
+        }
     };
 
     if (view === 'list') {
@@ -252,9 +317,9 @@ const CourseBuilder = () => {
                         </div>
                         <h2 className="text-2xl font-bold text-white">Created Courses</h2>
                         <p className="text-sm text-white/30 mt-1">Manage your created courses and view analytics.</p>
-                        <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-purple-500/10 border border-purple-500/20 rounded-lg">
-                            <span className="text-xs text-purple-400">💡</span>
-                            <span className="text-xs text-purple-300">Students get 5% discount after 3 paid courses, 10% after 5!</span>
+                        <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-teal-500/10 border border-teal-500/20 rounded-lg">
+                            <span className="text-xs text-teal-400">💡</span>
+                            <span className="text-xs text-teal-300">Students get 5% discount after 3 paid courses, 10% after 5!</span>
                         </div>
                     </div>
                     <motion.button onClick={() => setView('create')} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
@@ -279,7 +344,7 @@ const CourseBuilder = () => {
                             placeholder="Search by title, category, or instructor..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-12 pr-4 py-3 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-purple-500/40 transition-all"
+                            className="w-full pl-12 pr-4 py-3 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-teal-500/40 transition-all"
                             style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
                         />
                     </div>
@@ -287,7 +352,7 @@ const CourseBuilder = () => {
                         <select
                             value={levelFilter}
                             onChange={(e) => setLevelFilter(e.target.value)}
-                            className="w-full px-4 py-3 rounded-xl text-white appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500/40 transition-all"
+                            className="w-full px-4 py-3 rounded-xl text-white appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-500/40 transition-all"
                             style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
                         >
                             <option value="all" style={{ background: '#1f2937' }}>All Levels</option>
@@ -337,7 +402,7 @@ const CourseBuilder = () => {
                                     {course.thumbnail ? (
                                         <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover" />
                                     ) : (
-                                        <div className="w-full h-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center">
+                                        <div className="w-full h-full bg-gradient-to-br from-teal-500/20 to-blue-500/20 flex items-center justify-center">
                                             <BookOpen size={40} className="text-white/30" />
                                         </div>
                                     )}
@@ -383,7 +448,7 @@ const CourseBuilder = () => {
                                     </div>
                                     
                                     <div className="mt-3 pt-3 border-t border-white/10">
-                                        <div className="flex items-center justify-between">
+                                        <div className="flex items-center justify-between mb-3">
                                             <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${
                                                 course.courseType === 'paid' 
                                                     ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
@@ -395,6 +460,26 @@ const CourseBuilder = () => {
                                                 {course.createdAt ? new Date(course.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
                                             </span>
                                         </div>
+                                        <motion.button
+                                            onClick={() => handleEditCourse(course._id || course.courseId)}
+                                            whileHover={{ scale: 1.02 }}
+                                            whileTap={{ scale: 0.98 }}
+                                            className="w-full py-2 px-3 rounded-lg text-xs font-bold text-teal-400 border border-teal-500/30 hover:bg-teal-500/10 transition-all flex items-center justify-center gap-1.5"
+                                        >
+                                            <FileText size={14} />
+                                            Edit Course
+                                        </motion.button>
+                                        {course.updateHistory && course.updateHistory.length > 0 && (
+                                            <motion.button
+                                                onClick={() => viewUpdateHistory(course._id || course.courseId, course.title)}
+                                                whileHover={{ scale: 1.02 }}
+                                                whileTap={{ scale: 0.98 }}
+                                                className="w-full py-2 px-3 rounded-lg text-xs font-bold text-blue-400 border border-blue-500/30 hover:bg-blue-500/10 transition-all flex items-center justify-center gap-1.5 mt-2"
+                                            >
+                                                <History size={14} />
+                                                View History ({course.updateHistory.length})
+                                            </motion.button>
+                                        )}
                                     </div>
                                 </div>
                             </motion.div>
@@ -414,20 +499,20 @@ const CourseBuilder = () => {
             <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }}
                 className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <button onClick={() => setView('list')} className="text-white/40 hover:text-white text-sm mb-2">
+                    <button onClick={() => { setView('list'); setEditingCourseId(null); setCourseData({ title: '', description: '', instructor: '', level: 'Beginner', category: 'Development', courseType: 'free', price: 0, duration: '', thumbnail: '', createdBy: user?.email || user?.name || '', courseNotes: '', pdfFile: '' }); setChapters([]); }} className="text-white/40 hover:text-white text-sm mb-2">
                         ← Back to Courses
                     </button>
-                    <div className="inline-flex items-center gap-1.5 bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-bold px-3 py-1 rounded-full mb-3">
-                        <BookOpen size={12} /> Course Builder
+                    <div className="inline-flex items-center gap-1.5 bg-teal-500/10 border border-teal-500/20 text-teal-400 text-xs font-bold px-3 py-1 rounded-full mb-3">
+                        <BookOpen size={12} /> {editingCourseId ? 'Edit Course' : 'Course Builder'}
                     </div>
-                    <h2 className="text-2xl font-bold text-white">Design a New Course</h2>
-                    <p className="text-sm text-white/30 mt-1">Fill in the info, build chapters, then submit for admin approval.</p>
+                    <h2 className="text-2xl font-bold text-white">{editingCourseId ? 'Edit Your Course' : 'Design a New Course'}</h2>
+                    <p className="text-sm text-white/30 mt-1">{editingCourseId ? 'Update course information, chapters, and content.' : 'Fill in the info, build chapters, then submit for admin approval.'}</p>
                 </div>
                 <motion.button onClick={handleSubmit} disabled={submitting} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
                     className="flex items-center gap-2 text-white px-6 py-3 rounded-xl font-bold disabled:opacity-60 flex-shrink-0"
-                    style={{ background: 'linear-gradient(135deg, #8b5cf6, #6366f1)', boxShadow: '0 8px 24px rgba(139,92,246,0.25)' }}>
+                    style={{ background: 'linear-gradient(135deg, #14b8a6, #6366f1)', boxShadow: '0 8px 24px rgba(139,92,246,0.25)' }}>
                     {submitting ? <Loader2 size={17} className="animate-spin" /> : <Send size={17} />}
-                    Submit for Approval
+                    {editingCourseId ? 'Update Course' : 'Submit for Approval'}
                 </motion.button>
             </motion.div>
 
@@ -435,7 +520,7 @@ const CourseBuilder = () => {
                 <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}
                     className="lg:col-span-1 glass-card rounded-2xl p-6 space-y-5 sticky top-6">
                     <h3 className="text-sm font-bold text-white border-b border-white/8 pb-3 flex items-center gap-2">
-                        <FileText size={15} className="text-purple-400" /> Basic Info
+                        <FileText size={15} className="text-teal-400" /> Basic Info
                     </h3>
 
                     {[
@@ -490,7 +575,7 @@ const CourseBuilder = () => {
 
                     <div>
                         <label className={labelCls}>Course Thumbnail</label>
-                        <input ref={thumbnailInputRef} type="file" accept="image/*" className="hidden" onChange={handleThumbnailFile} />
+                        <input aria-label="Input field"  ref={thumbnailInputRef} type="file" accept="image/*" className="hidden" onChange={handleThumbnailFile} />
                         {courseData.thumbnail ? (
                             <div className="relative group">
                                 <img src={courseData.thumbnail} alt="Thumbnail" className="w-full h-28 object-cover rounded-xl border border-white/10" />
@@ -505,8 +590,8 @@ const CourseBuilder = () => {
                                 style={{ border: '2px dashed rgba(139,92,246,0.3)', background: 'rgba(139,92,246,0.05)' }}
                                 onMouseOver={e => e.currentTarget.style.background = 'rgba(139,92,246,0.1)'}
                                 onMouseOut={e => e.currentTarget.style.background = 'rgba(139,92,246,0.05)'}>
-                                <ImageIcon size={22} className="text-purple-400" />
-                                <p className="text-xs text-purple-400 font-medium">Click to upload</p>
+                                <ImageIcon size={22} className="text-teal-400" />
+                                <p className="text-xs text-teal-400 font-medium">Click to upload</p>
                                 <p className="text-[10px] text-white/20">PNG, JPG, WEBP · max 5 MB</p>
                             </div>
                         )}
@@ -519,7 +604,7 @@ const CourseBuilder = () => {
                     </div>
 
                     <div>
-                        <input ref={pdfInputRef} type="file" accept="application/pdf" className="hidden" onChange={handlePdfFile} />
+                        <input aria-label="Input field"  ref={pdfInputRef} type="file" accept="application/pdf" className="hidden" onChange={handlePdfFile} />
                         {courseData.pdfFile ? (
                             <div className="relative group flex items-center gap-3 p-3 rounded-xl border border-white/10 bg-white/5">
                                 <FileText size={24} className="text-green-400" />
@@ -549,15 +634,15 @@ const CourseBuilder = () => {
                 <div className="lg:col-span-2 space-y-4">
                     <div className="flex items-center justify-between">
                         <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                            <BookOpen size={18} className="text-purple-400" /> Chapter Builder
+                            <BookOpen size={18} className="text-teal-400" /> Chapter Builder
                             {chapters.length > 0 && (
-                                <span className="text-sm font-bold bg-purple-500/15 text-purple-400 border border-purple-500/20 px-2.5 py-0.5 rounded-full">
+                                <span className="text-sm font-bold bg-teal-500/15 text-teal-400 border border-teal-500/20 px-2.5 py-0.5 rounded-full">
                                     {chapters.length}
                                 </span>
                             )}
                         </h3>
                         <motion.button onClick={addChapter} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-                            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold text-purple-400 border border-purple-500/20 hover:bg-purple-500/10 transition-all">
+                            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold text-teal-400 border border-teal-500/20 hover:bg-teal-500/10 transition-all">
                             <PlusCircle size={16} /> Add Chapter
                         </motion.button>
                     </div>
@@ -565,11 +650,11 @@ const CourseBuilder = () => {
                     {chapters.length === 0 && (
                         <div className="text-center py-20 flex flex-col items-center gap-3"
                             style={{ border: '2px dashed rgba(255,255,255,0.08)', borderRadius: '1rem', background: 'rgba(255,255,255,0.02)' }}>
-                            <div className="w-16 h-16 rounded-2xl bg-purple-500/10 border border-purple-500/15 flex items-center justify-center">
-                                <PlusCircle size={30} className="text-purple-400 opacity-50" />
+                            <div className="w-16 h-16 rounded-2xl bg-teal-500/10 border border-teal-500/15 flex items-center justify-center">
+                                <PlusCircle size={30} className="text-teal-400 opacity-50" />
                             </div>
                             <p className="text-white/30 font-semibold">No chapters yet</p>
-                            <p className="text-sm text-white/15 max-w-xs">Click <span className="text-purple-400">Add Chapter</span> to start building your curriculum.</p>
+                            <p className="text-sm text-white/15 max-w-xs">Click <span className="text-teal-400">Add Chapter</span> to start building your curriculum.</p>
                         </div>
                     )}
 
@@ -582,7 +667,7 @@ const CourseBuilder = () => {
                                     exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.15 } }}
                                     className="glass-card rounded-2xl overflow-hidden">
                                     <div className="flex items-center gap-3 px-5 py-4 border-b border-white/5">
-                                        <span className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0 shadow-sm">
+                                        <span className="w-7 h-7 rounded-full bg-gradient-to-br from-teal-500 to-indigo-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0 shadow-sm">
                                             {chapter.order}
                                         </span>
                                         <span className="flex-1 text-sm font-semibold text-white/70 truncate">
@@ -606,7 +691,7 @@ const CourseBuilder = () => {
                                                 <div className="p-5 space-y-4">
                                                     <div>
                                                         <label className={labelCls}>Chapter Title *</label>
-                                                        <input type="text" value={chapter.title}
+                                                        <input aria-label="Input field"  type="text" value={chapter.title}
                                                             onChange={e => updateChapter(chapter.chapterId, 'title', e.target.value)}
                                                             placeholder="e.g. Introduction to Context API"
                                                             className={`${fieldBase} font-semibold`} style={fieldStyle} />
@@ -622,13 +707,6 @@ const CourseBuilder = () => {
                                                             <FileText size={10} /> Supports rich formatting: headings, lists, code blocks, tables, quotes
                                                         </p>
                                                     </div>
-                                                    <div>
-                                                        <label className={labelCls}><span className="flex items-center gap-1"><Video size={11} /> Video URL (optional)</span></label>
-                                                        <input type="url" value={chapter.videoUrl}
-                                                            onChange={e => updateChapter(chapter.chapterId, 'videoUrl', e.target.value)}
-                                                            placeholder="https://youtube.com/watch?v=…"
-                                                            className={fieldBase} style={fieldStyle} />
-                                                    </div>
                                                 </div>
                                             </motion.div>
                                         )}
@@ -642,13 +720,127 @@ const CourseBuilder = () => {
                         <motion.button onClick={handleSubmit} disabled={submitting}
                             whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
                             className="w-full py-4 text-white font-bold rounded-2xl flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
-                            style={{ background: 'linear-gradient(135deg, #8b5cf6, #6366f1)', boxShadow: '0 8px 24px rgba(139,92,246,0.2)' }}>
+                            style={{ background: 'linear-gradient(135deg, #14b8a6, #6366f1)', boxShadow: '0 8px 24px rgba(139,92,246,0.2)' }}>
                             {submitting ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
-                            Submit Course for Approval
+                            {editingCourseId ? 'Update Course' : 'Submit Course for Approval'}
                         </motion.button>
                     )}
                 </div>
             </div>
+
+            {/* Update History Modal */}
+            <AnimatePresence>
+                {showHistoryModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+                        onClick={() => setShowHistoryModal(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="rounded-2xl max-w-4xl w-full flex flex-col"
+                            style={{ background: 'rgba(15,23,42,0.95)', border: '1px solid rgba(255,255,255,0.1)', maxHeight: '90vh' }}
+                        >
+                            <div className="p-6 border-b border-white/10">
+                                <h2 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">
+                                    <History size={24} className="text-blue-400" />
+                                    Update History
+                                </h2>
+                                <p className="text-white/40 text-sm">{selectedCourseHistory?.title}</p>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto p-6" style={{ maxHeight: '60vh' }}>
+                                {historyLoading ? (
+                                    <div className="flex items-center justify-center py-12">
+                                        <Loader2 size={32} className="animate-spin text-blue-400" />
+                                    </div>
+                                ) : selectedCourseHistory?.history.length === 0 ? (
+                                    <div className="text-center py-12">
+                                        <History size={48} className="mx-auto text-white/20 mb-4" />
+                                        <p className="text-white/40">No update history yet</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        {selectedCourseHistory?.history.map((entry, idx) => (
+                                            <motion.div
+                                                key={idx}
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: idx * 0.05 }}
+                                                className="p-5 rounded-xl"
+                                                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+                                            >
+                                                <div className="flex items-start justify-between mb-3">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`p-2 rounded-lg ${
+                                                            entry.status === 'approved' 
+                                                                ? 'bg-emerald-500/10 text-emerald-400'
+                                                                : 'bg-red-500/10 text-red-400'
+                                                        }`}>
+                                                            {entry.status === 'approved' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-white font-bold">{entry.updatedBy}</p>
+                                                            <p className="text-white/40 text-xs">{entry.updatedByEmail}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                                                            entry.status === 'approved'
+                                                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                                                : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                                                        }`}>
+                                                            {entry.status.toUpperCase()}
+                                                        </span>
+                                                        <p className="text-white/30 text-xs mt-1 flex items-center gap-1 justify-end">
+                                                            <Clock size={10} />
+                                                            {new Date(entry.updatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                {entry.employeeReason && (
+                                                    <div className="mb-3 p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                                                        <p className="text-xs text-white/40 mb-1">Employee Reason:</p>
+                                                        <p className="text-sm text-white/70">{entry.employeeReason}</p>
+                                                    </div>
+                                                )}
+
+                                                {entry.adminResponse && (
+                                                    <div className="mb-3 p-3 rounded-lg" style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)' }}>
+                                                        <p className="text-xs text-blue-400 mb-1">Admin Response:</p>
+                                                        <p className="text-sm text-white/70">{entry.adminResponse}</p>
+                                                        <p className="text-xs text-blue-300 mt-1">Reviewed by: {entry.reviewedBy}</p>
+                                                    </div>
+                                                )}
+
+                                                <div className="text-xs text-white/30">
+                                                    Update Type: <span className="text-white/50 font-semibold">{entry.updateType}</span>
+                                                </div>
+                                            </motion.div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="p-6 border-t border-white/10 bg-black/20">
+                                <button
+                                    onClick={() => setShowHistoryModal(false)}
+                                    className="w-full py-3 rounded-xl text-white/60 hover:text-white transition-colors font-semibold"
+                                    style={{ background: 'rgba(255,255,255,0.05)' }}
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

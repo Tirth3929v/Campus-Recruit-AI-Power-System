@@ -16,13 +16,29 @@ const StudyResource = require('./models/StudyResource');
 const LegacyInterview = require('./models/LegacyInterview');
 
 // Connect to Database
-mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/campus_recruit')
+mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/campus_recruit_v2')
   .then(() => console.log('✅ Connected to MongoDB for seeding'))
   .catch(err => { console.error('MongoDB connection error:', err); process.exit(1); });
 
 const seedData = async () => {
   try {
     console.log('\n🧹 Clearing ALL existing data...');
+
+    // Drop ALL indexes across ALL collections before clearing data
+    try {
+      const collections = mongoose.connection.collections;
+      for (const [name, collection] of Object.entries(collections)) {
+        await collection.dropIndexes();
+        console.log(`   Dropped indexes for: ${name}`);
+      }
+    } catch (e) { 
+      console.log('   ⚠️ Some indexes may not exist, continuing...'); 
+    }
+
+    // Explicitly remove any stale admin users first
+    await User.deleteMany({ email: 'admin@gmail.com' });
+    console.log('   ✓ Removed stale admin user if exists');
+    
     await Promise.all([
       User.deleteMany({}),
       CompanyProfile.deleteMany({}),
@@ -38,13 +54,6 @@ const seedData = async () => {
       LegacyInterview.deleteMany({})
     ]);
 
-    // Drop stale indexes that may conflict (from prior schema versions)
-    try {
-      const db = mongoose.connection.db;
-      await db.collection('companyprofiles').dropIndexes();
-      await db.collection('users').dropIndexes();
-    } catch (e) { /* indexes may not exist, that's fine */ }
-
     console.log('   ✓ All collections cleared\n');
 
     // ═══════════════════════════════════════════════════════════
@@ -52,24 +61,36 @@ const seedData = async () => {
     // ═══════════════════════════════════════════════════════════
     console.log('👤 Creating users...');
 
-    const adminUser = await User.create({
-      name: 'Admin User', email: 'admin@gmail.com',
-      password: 'admin@123', role: 'admin', isVerified: true, currentStreak: 0
-    });
+    const adminUser = await User.findOneAndUpdate(
+      { email: 'admin@gmail.com' },
+      {
+        name: 'Admin User', email: 'admin@gmail.com',
+        password: 'Admin@123', role: 'admin', isVerified: true, currentStreak: 0
+      },
+      { upsert: true, new: true, runValidators: true }
+    );
 
-    const companyUsers = await User.create([
+    const companyUsers = await Promise.all([
       { name: 'Tech Corp Recruiter', email: 'recruiter@techcorp.com', password: 'Recruiter@123', role: 'company', isVerified: true },
       { name: 'DataSystems HR', email: 'hr@datasystems.com', password: 'Recruiter@123', role: 'company', isVerified: true },
       { name: 'StartupXYZ Lead', email: 'lead@startupxyz.com', password: 'Recruiter@123', role: 'company', isVerified: true }
-    ]);
+    ].map(userData => User.findOneAndUpdate(
+      { email: userData.email },
+      userData,
+      { upsert: true, new: true, runValidators: true }
+    )));
 
-    const studentUsers = await User.create([
+    const studentUsers = await Promise.all([
       { name: 'Tirth Patel', email: 'tirth@student.com', password: 'Student@123', role: 'student', course: 'BCA Final Year', isVerified: true, currentStreak: 7 },
       { name: 'Alice Johnson', email: 'alice@student.com', password: 'Student@123', role: 'student', course: 'B.Tech CS', isVerified: true, currentStreak: 12 },
       { name: 'Bob Smith', email: 'bob@student.com', password: 'Student@123', role: 'student', course: 'BCA Final Year', isVerified: true, currentStreak: 5 },
       { name: 'Charlie Davis', email: 'charlie@student.com', password: 'Student@123', role: 'student', course: 'MCA', isVerified: true, currentStreak: 3 },
       { name: 'Diana Evans', email: 'diana@student.com', password: 'Student@123', role: 'student', course: 'B.Tech IT', isVerified: true, currentStreak: 9 }
-    ]);
+    ].map(userData => User.findOneAndUpdate(
+      { email: userData.email },
+      userData,
+      { upsert: true, new: true, runValidators: true }
+    )));
     console.log(`   ✓ Created 1 admin, ${companyUsers.length} company, ${studentUsers.length} students\n`);
 
     // ═══════════════════════════════════════════════════════════
@@ -81,19 +102,19 @@ const seedData = async () => {
         userId: companyUsers[0]._id, companyName: 'Tech Corp',
         description: 'Leading innovator in AI and Cloud Computing solutions, serving Fortune 500 clients worldwide.',
         website: 'https://techcorp.example.com', location: 'San Francisco, CA', industry: 'Technology',
-        logo: 'https://via.placeholder.com/150?text=TC'
+        logo: 'https://placehold.co/150x150?text=TC'
       },
       {
         userId: companyUsers[1]._id, companyName: 'DataSystems Inc',
         description: 'Enterprise data solutions provider specializing in big data analytics and business intelligence.',
         website: 'https://datasystems.example.com', location: 'New York, NY', industry: 'Data & Analytics',
-        logo: 'https://via.placeholder.com/150?text=DS'
+        logo: 'https://placehold.co/150x150?text=DS'
       },
       {
         userId: companyUsers[2]._id, companyName: 'StartupXYZ',
         description: 'Fast-growing fintech startup revolutionizing digital payments and blockchain solutions.',
         website: 'https://startupxyz.example.com', location: 'Austin, TX', industry: 'FinTech',
-        logo: 'https://via.placeholder.com/150?text=SX'
+        logo: 'https://placehold.co/150x150?text=SX'
       }
     ]);
     console.log(`   ✓ Created ${companies.length} company profiles\n`);
@@ -226,26 +247,26 @@ const seedData = async () => {
     // ═══════════════════════════════════════════════════════════
     console.log('📝 Creating applications...');
     const applicationData = [
-      { job: jobs[0]._id, student: studentProfiles[0]._id, status: 'Applied', coverLetter: 'I am passionate about React and would love to contribute to your team.' },
-      { job: jobs[0]._id, student: studentProfiles[1]._id, status: 'Shortlisted', coverLetter: 'My strong CS fundamentals and React experience make me a great fit.' },
-      { job: jobs[0]._id, student: studentProfiles[4]._id, status: 'Interview', coverLetter: 'As a hackathon winner and frontend specialist, I bring unique value.' },
-      { job: jobs[1]._id, student: studentProfiles[0]._id, status: 'Applied', coverLetter: 'I have extensive experience with Node.js and MongoDB.' },
-      { job: jobs[1]._id, student: studentProfiles[2]._id, status: 'Shortlisted', coverLetter: 'Backend development is my passion and I am AWS certified.' },
-      { job: jobs[2]._id, student: studentProfiles[1]._id, status: 'Applied', coverLetter: 'ML research is my primary interest and I have published papers.' },
-      { job: jobs[2]._id, student: studentProfiles[3]._id, status: 'Applied', coverLetter: 'I am eager to learn ML and already have Python experience.' },
-      { job: jobs[4]._id, student: studentProfiles[1]._id, status: 'Applied', coverLetter: 'My Python and statistics background aligns with this role.' },
-      { job: jobs[4]._id, student: studentProfiles[3]._id, status: 'Shortlisted', coverLetter: 'I love working with data and have freelance analytics experience.' },
-      { job: jobs[5]._id, student: studentProfiles[0]._id, status: 'Applied', coverLetter: 'Full stack is my strength with React + Python skills.' },
-      { job: jobs[5]._id, student: studentProfiles[2]._id, status: 'Applied', coverLetter: 'I can build end-to-end features independently.' },
-      { job: jobs[5]._id, student: studentProfiles[4]._id, status: 'Rejected', coverLetter: 'Looking to expand my backend skills.' },
-      { job: jobs[8]._id, student: studentProfiles[2]._id, status: 'Applied', coverLetter: 'I am learning Solidity and very interested in blockchain.' },
-      { job: jobs[9]._id, student: studentProfiles[0]._id, status: 'Applied', coverLetter: 'I have React Native experience from personal projects.' },
-      { job: jobs[9]._id, student: studentProfiles[3]._id, status: 'Applied', coverLetter: 'Mobile development with React Native is something I enjoy.' },
-      { job: jobs[9]._id, student: studentProfiles[4]._id, status: 'Shortlisted', coverLetter: 'My UI/UX background helps me build beautiful mobile apps.' },
-      { job: jobs[7]._id, student: studentProfiles[4]._id, status: 'Applied', coverLetter: 'UI/UX design is my core strength with Figma expertise.' },
-      { job: jobs[10]._id, student: studentProfiles[2]._id, status: 'Applied', coverLetter: 'I have experience with Cypress and Jest testing frameworks.' },
-      { job: jobs[3]._id, student: studentProfiles[2]._id, status: 'Applied', coverLetter: 'Docker and Kubernetes are part of my daily workflow.' },
-      { job: jobs[3]._id, student: studentProfiles[1]._id, status: 'Applied', coverLetter: 'I have AWS certifications and CI/CD experience.' },
+      { job: jobs[0]._id, student: studentProfiles[0]._id, studentUserId: studentProfiles[0].user, status: 'Applied', coverLetter: 'I am passionate about React and would love to contribute to your team.' },
+      { job: jobs[0]._id, student: studentProfiles[1]._id, studentUserId: studentProfiles[1].user, status: 'Shortlisted', coverLetter: 'My strong CS fundamentals and React experience make me a great fit.' },
+      { job: jobs[0]._id, student: studentProfiles[4]._id, studentUserId: studentProfiles[4].user, status: 'Interview', coverLetter: 'As a hackathon winner and frontend specialist, I bring unique value.' },
+      { job: jobs[1]._id, student: studentProfiles[0]._id, studentUserId: studentProfiles[0].user, status: 'Applied', coverLetter: 'I have extensive experience with Node.js and MongoDB.' },
+      { job: jobs[1]._id, student: studentProfiles[2]._id, studentUserId: studentProfiles[2].user, status: 'Shortlisted', coverLetter: 'Backend development is my passion and I am AWS certified.' },
+      { job: jobs[2]._id, student: studentProfiles[1]._id, studentUserId: studentProfiles[1].user, status: 'Applied', coverLetter: 'ML research is my primary interest and I have published papers.' },
+      { job: jobs[2]._id, student: studentProfiles[3]._id, studentUserId: studentProfiles[3].user, status: 'Applied', coverLetter: 'I am eager to learn ML and already have Python experience.' },
+      { job: jobs[4]._id, student: studentProfiles[1]._id, studentUserId: studentProfiles[1].user, status: 'Applied', coverLetter: 'My Python and statistics background aligns with this role.' },
+      { job: jobs[4]._id, student: studentProfiles[3]._id, studentUserId: studentProfiles[3].user, status: 'Shortlisted', coverLetter: 'I love working with data and have freelance analytics experience.' },
+      { job: jobs[5]._id, student: studentProfiles[0]._id, studentUserId: studentProfiles[0].user, status: 'Applied', coverLetter: 'Full stack is my strength with React + Python skills.' },
+      { job: jobs[5]._id, student: studentProfiles[2]._id, studentUserId: studentProfiles[2].user, status: 'Applied', coverLetter: 'I can build end-to-end features independently.' },
+      { job: jobs[5]._id, student: studentProfiles[4]._id, studentUserId: studentProfiles[4].user, status: 'Rejected', coverLetter: 'Looking to expand my backend skills.' },
+      { job: jobs[8]._id, student: studentProfiles[2]._id, studentUserId: studentProfiles[2].user, status: 'Applied', coverLetter: 'I am learning Solidity and very interested in blockchain.' },
+      { job: jobs[9]._id, student: studentProfiles[0]._id, studentUserId: studentProfiles[0].user, status: 'Applied', coverLetter: 'I have React Native experience from personal projects.' },
+      { job: jobs[9]._id, student: studentProfiles[3]._id, studentUserId: studentProfiles[3].user, status: 'Applied', coverLetter: 'Mobile development with React Native is something I enjoy.' },
+      { job: jobs[9]._id, student: studentProfiles[4]._id, studentUserId: studentProfiles[4].user, status: 'Shortlisted', coverLetter: 'My UI/UX background helps me build beautiful mobile apps.' },
+      { job: jobs[7]._id, student: studentProfiles[4]._id, studentUserId: studentProfiles[4].user, status: 'Applied', coverLetter: 'UI/UX design is my core strength with Figma expertise.' },
+      { job: jobs[10]._id, student: studentProfiles[2]._id, studentUserId: studentProfiles[2].user, status: 'Applied', coverLetter: 'I have experience with Cypress and Jest testing frameworks.' },
+      { job: jobs[3]._id, student: studentProfiles[2]._id, studentUserId: studentProfiles[2].user, status: 'Applied', coverLetter: 'Docker and Kubernetes are part of my daily workflow.' },
+      { job: jobs[3]._id, student: studentProfiles[1]._id, studentUserId: studentProfiles[1].user, status: 'Applied', coverLetter: 'I have AWS certifications and CI/CD experience.' },
     ];
     const applications = await Application.create(applicationData);
 
@@ -328,7 +349,7 @@ const seedData = async () => {
     const courses = await Course.create([
       {
         title: 'Mastering React 2024', description: 'A comprehensive guide to building modern web apps with React, Hooks, and Redux.',
-        instructor: 'Sarah Drasner', thumbnail: 'https://via.placeholder.com/300x200.png?text=React+Course',
+        instructor: 'Sarah Drasner', thumbnail: 'https://placehold.co/300x200?text=React+Course',
         duration: '12 hours', level: 'Intermediate', category: 'Development', price: '49.99', status: 'published',
         chapters: [
           { chapterId: 'ch1', title: 'Introduction to React', content: '## Why React?\n\nReact is a declarative, component-based library for building UIs.', order: 1 },
@@ -338,7 +359,7 @@ const seedData = async () => {
       },
       {
         title: 'Node.js for Beginners', description: 'Learn the basics of Node.js, Express, and building RESTful APIs.',
-        instructor: 'Andrew Mead', thumbnail: 'https://via.placeholder.com/300x200.png?text=Node.js+Course',
+        instructor: 'Andrew Mead', thumbnail: 'https://placehold.co/300x200?text=Node.js+Course',
         duration: '8 hours', level: 'Beginner', category: 'Development', price: '29.99', status: 'published',
         chapters: [
           { chapterId: 'ch1', title: 'Getting Started with Node.js', content: '## What is Node.js?\n\nNode.js is a JavaScript runtime built on V8.', order: 1 },
@@ -347,7 +368,7 @@ const seedData = async () => {
       },
       {
         title: 'System Design Interview Prep', description: 'Crack system design interviews. Learn scalability, load balancing, and DB design.',
-        instructor: 'Gaurav Sen', thumbnail: 'https://via.placeholder.com/300x200.png?text=System+Design',
+        instructor: 'Gaurav Sen', thumbnail: 'https://placehold.co/300x200?text=System+Design',
         duration: '15 hours', level: 'Advanced', category: 'Development', price: '79.99', status: 'published',
         chapters: [
           { chapterId: 'ch1', title: 'Scalability Basics', content: '## Horizontal vs Vertical Scaling', order: 1 }
@@ -355,7 +376,7 @@ const seedData = async () => {
       },
       {
         title: 'Python for Data Science', description: 'Master Python for data analysis, visualization, and machine learning.',
-        instructor: 'Jose Portilla', thumbnail: 'https://via.placeholder.com/300x200.png?text=Python+DS',
+        instructor: 'Jose Portilla', thumbnail: 'https://placehold.co/300x200?text=Python+DS',
         duration: '20 hours', level: 'Intermediate', category: 'Data Science', price: '59.99', status: 'published',
         chapters: [
           { chapterId: 'ch1', title: 'Python Basics', content: '## Variables and Data Types\n\nPython supports int, float, str, list, dict.', order: 1 },
@@ -364,7 +385,7 @@ const seedData = async () => {
       },
       {
         title: 'MongoDB Complete Guide', description: 'Learn MongoDB from basics to advanced aggregation pipelines.',
-        instructor: 'Max Schwarz', thumbnail: 'https://via.placeholder.com/300x200.png?text=MongoDB',
+        instructor: 'Max Schwarz', thumbnail: 'https://placehold.co/300x200?text=MongoDB',
         duration: '10 hours', level: 'Beginner', category: 'Development', price: '39.99', status: 'published',
         chapters: [
           { chapterId: 'ch1', title: 'Introduction to MongoDB', content: '## NoSQL Databases\n\nMongoDB is a document-based NoSQL database.', order: 1 }

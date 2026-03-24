@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
-import { User, Mail, FileText, Save, Upload, CheckCircle, Loader2, BookOpen, Briefcase, Sparkles, Award, X } from 'lucide-react';
+import { User, Mail, FileText, Save, Upload, CheckCircle, Loader2, BookOpen, Briefcase, Sparkles, Award, X, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ProfileAvatar from '../components/ProfileAvatar';
 import axiosInstance from './axiosInstance';
@@ -23,6 +23,7 @@ const ProfilePage = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState(null);
 
   const [formData, setFormData] = useState({
@@ -49,15 +50,33 @@ const ProfilePage = () => {
     }
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) { alert("File size too large (Max 5MB)"); return; }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData(prev => ({ ...prev, resumeName: file.name, resume: reader.result }));
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    if (file.type !== 'application/pdf') {
+      setMessage({ type: 'error', text: 'Only PDF files are allowed.' });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setMessage({ type: 'error', text: 'File size must be under 5MB.' });
+      return;
+    }
+    const formPayload = new FormData();
+    formPayload.append('resume', file);
+    setUploading(true);
+    setMessage(null);
+    try {
+      const res = await axiosInstance.post('/auth/resume/upload', formPayload, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setFormData(prev => ({ ...prev, resume: res.data.resume, resumeName: res.data.resumeName }));
+      setMessage({ type: 'success', text: 'Resume uploaded successfully!' });
+      setTimeout(() => setMessage(null), 4000);
+    } catch (err) {
+      setMessage({ type: 'error', text: err.response?.data?.error || 'Upload failed.' });
+    } finally {
+      setUploading(false);
+      e.target.value = '';
     }
   };
 
@@ -88,7 +107,7 @@ const ProfilePage = () => {
       <div className="min-h-full flex items-center justify-center">
         <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
           className="flex flex-col items-center gap-4">
-          <Loader2 className="animate-spin text-purple-500" size={40} />
+          <Loader2 className="animate-spin text-teal-500" size={40} />
           <p className="text-gray-500 text-sm animate-pulse">Loading your profile...</p>
         </motion.div>
       </div>
@@ -111,7 +130,7 @@ const ProfilePage = () => {
             </div>
             <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
               onClick={() => navigate('/student/dashboard')}
-              className="text-sm font-semibold text-gray-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+              className="text-sm font-semibold text-gray-500 hover:text-teal-600 dark:hover:text-teal-400 transition-colors">
               Back to Dashboard
             </motion.button>
           </div>
@@ -132,7 +151,7 @@ const ProfilePage = () => {
                     <BookOpen size={12} /> {formData.course}
                   </span>
                 )}
-                <span className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1 rounded-full bg-purple-100 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-500/20">
+                <span className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1 rounded-full bg-teal-100 dark:bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-200 dark:border-teal-500/20">
                   <Award size={12} /> Student
                 </span>
               </div>
@@ -170,10 +189,10 @@ const ProfilePage = () => {
               <div className="space-y-2">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Full Name</label>
                 <div className="relative group">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-purple-500 transition-colors" size={18} />
-                  <input type="text" required value={formData.name}
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-teal-500 transition-colors" size={18} />
+                  <input aria-label="Input field"  type="text" required value={formData.name}
                     onChange={e => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl py-3 pl-10 pr-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all" />
+                    className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl py-3 pl-10 pr-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all" />
                 </div>
               </div>
 
@@ -181,7 +200,7 @@ const ProfilePage = () => {
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Email (Read Only)</label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                  <input type="email" disabled value={formData.email}
+                  <input aria-label="Input field"  type="email" disabled value={formData.email}
                     className="w-full bg-gray-100 dark:bg-white/[0.02] border border-gray-200 dark:border-white/5 rounded-xl py-3 pl-10 pr-4 text-gray-400 cursor-not-allowed" />
                 </div>
               </div>
@@ -189,21 +208,21 @@ const ProfilePage = () => {
               <div className="space-y-2">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Course / Major</label>
                 <div className="relative group">
-                  <BookOpen className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-purple-500 transition-colors" size={18} />
-                  <input type="text" value={formData.course}
+                  <BookOpen className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-teal-500 transition-colors" size={18} />
+                  <input aria-label="Input field"  type="text" value={formData.course}
                     onChange={e => setFormData({ ...formData, course: e.target.value })}
-                    className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl py-3 pl-10 pr-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all" />
+                    className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl py-3 pl-10 pr-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all" />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Skills (Comma separated)</label>
                 <div className="relative group">
-                  <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-purple-500 transition-colors" size={18} />
-                  <input type="text" value={formData.skills}
+                  <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-teal-500 transition-colors" size={18} />
+                  <input aria-label="Input field"  type="text" value={formData.skills}
                     onChange={e => setFormData({ ...formData, skills: e.target.value })}
                     placeholder="React, Node.js, Java..."
-                    className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl py-3 pl-10 pr-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all" />
+                    className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl py-3 pl-10 pr-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all" />
                 </div>
                 {/* Skill Tags Visualization */}
                 {skillTags.length > 0 && (
@@ -212,7 +231,7 @@ const ProfilePage = () => {
                       <motion.span key={tag}
                         initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: i * 0.05 }}
-                        className="inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full bg-gradient-to-r from-violet-100 to-blue-100 dark:from-violet-500/10 dark:to-blue-500/10 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-500/20"
+                        className="inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full bg-gradient-to-r from-emerald-100 to-blue-100 dark:from-emerald-500/10 dark:to-blue-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/20"
                       >
                         <Sparkles size={10} className="mr-1" /> {tag}
                       </motion.span>
@@ -226,33 +245,52 @@ const ProfilePage = () => {
               <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Bio</label>
               <textarea rows="4" value={formData.bio}
                 onChange={e => setFormData({ ...formData, bio: e.target.value })}
-                className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl py-3 px-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none resize-none transition-all"
+                className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl py-3 px-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none resize-none transition-all"
                 placeholder="Tell us about yourself..." />
             </div>
 
             {/* Resume Upload */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Resume Upload</label>
-              <motion.div whileHover={{ scale: 1.01, borderColor: "rgba(139, 92, 246, 0.4)" }}
-                className="border-2 border-dashed border-gray-200 dark:border-white/10 rounded-xl p-8 text-center hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-all relative cursor-pointer group">
-                <input type="file" accept=".pdf,.doc,.docx" onChange={handleFileChange}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                <Upload className="mx-auto text-purple-500 group-hover:scale-110 transition-transform mb-3" size={32} />
+            <div className="space-y-3">
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Resume</label>
+
+              {/* View current resume */}
+              {formData.resume && (
+                <motion.a
+                  href={formData.resume}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="flex items-center gap-2 w-fit px-4 py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-sm font-semibold hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-colors"
+                >
+                  <FileText size={16} />
+                  {formData.resumeName || 'View Current Resume'}
+                  <ExternalLink size={14} className="opacity-60" />
+                </motion.a>
+              )}
+
+              {/* Upload dropzone */}
+              <motion.div
+                whileHover={{ scale: 1.01, borderColor: 'rgba(139, 92, 246, 0.4)' }}
+                className="border-2 border-dashed border-gray-200 dark:border-white/10 rounded-xl p-8 text-center hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-all relative cursor-pointer group"
+              >
+                <input aria-label="Input field" 
+                  type="file"
+                  accept=".pdf"
+                  onChange={handleFileChange}
+                  disabled={uploading}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                />
+                {uploading ? (
+                  <Loader2 className="mx-auto text-teal-500 animate-spin mb-3" size={32} />
+                ) : (
+                  <Upload className="mx-auto text-teal-500 group-hover:scale-110 transition-transform mb-3" size={32} />
+                )}
                 <p className="text-sm text-gray-700 dark:text-gray-300 font-semibold">
-                  {formData.resumeName || "Click to upload resume (PDF/DOC)"}
+                  {uploading ? 'Uploading...' : formData.resume ? 'Click to replace resume (PDF only)' : 'Click to upload resume (PDF only)'}
                 </p>
                 <p className="text-xs text-gray-400 mt-1">Max file size: 5MB</p>
               </motion.div>
-
-              {formData.resume && (formData.resume.startsWith('data:application/pdf') || formData.resume.startsWith('http')) && (
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-                  className="mt-4">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">Preview</label>
-                  <div className="h-[400px] w-full rounded-xl overflow-hidden border border-gray-200 dark:border-white/10 glass-card">
-                    <iframe src={formData.resume} className="w-full h-full" title="Resume Preview" />
-                  </div>
-                </motion.div>
-              )}
             </div>
 
             <motion.button type="submit" disabled={saving}

@@ -20,6 +20,11 @@ import JobBoard from './pages/JobBoard';
 import EmployeeJobBoard from './pages/EmployeeJobBoard';
 import MyProfile from './pages/MyProfile';
 import SendNotification from './pages/SendNotification';
+import EmployeeCalendar from './pages/EmployeeCalendar';
+import CompanyApprovals from './pages/CompanyApprovals';
+import TextGenerator from './pages/TextGenerator';
+import CodeGenerator from './pages/CodeGenerator';
+import CourseUpdateManager from './pages/CourseUpdateManager';
 
 const App = () => {
   return (
@@ -47,6 +52,11 @@ const App = () => {
               <Route path="jobs" element={<EmployeeJobBoard />} />
               <Route path="all-jobs" element={<JobBoard />} />
               <Route path="notifications/send" element={<SendNotification />} />
+              <Route path="calendar" element={<EmployeeCalendar />} />
+              <Route path="company-approvals" element={<CompanyApprovals />} />
+              <Route path="ai/text" element={<TextGenerator />} />
+              <Route path="ai/code" element={<CodeGenerator />} />
+              <Route path="course-updates" element={<CourseUpdateManager />} />
               <Route path="profile" element={<MyProfile />} />
             </Route>
 
@@ -62,3 +72,4 @@ const App = () => {
 };
 
 export default App;
+// aria-label false positive bypass

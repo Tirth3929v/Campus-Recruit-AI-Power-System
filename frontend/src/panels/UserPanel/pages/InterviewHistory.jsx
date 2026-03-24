@@ -130,10 +130,10 @@ const InterviewHistory = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-900 text-white p-6 font-sans selection:bg-purple-500/30 overflow-x-hidden">
+        <div className="min-h-screen bg-gray-900 text-white p-6 font-sans selection:bg-teal-500/30 overflow-x-hidden">
             {/* Background Effects */}
             <div className="fixed inset-0 z-0 pointer-events-none">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-purple-900/20 blur-[120px]" />
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-teal-900/20 blur-[120px]" />
                 <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-900/20 blur-[120px]" />
             </div>
 
@@ -165,7 +165,7 @@ const InterviewHistory = () => {
                                 placeholder="Search subjects..." 
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full sm:w-64 bg-gray-800/50 border border-gray-700 rounded-xl py-2.5 pl-10 pr-4 text-sm text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
+                                className="w-full sm:w-64 bg-gray-800/50 border border-gray-700 rounded-xl py-2.5 pl-10 pr-4 text-sm text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all"
                             />
                         </div>
 
@@ -175,7 +175,7 @@ const InterviewHistory = () => {
                             <select 
                                 value={filterStatus}
                                 onChange={(e) => setFilterStatus(e.target.value)}
-                                className="w-full sm:w-40 bg-gray-800/50 border border-gray-700 rounded-xl py-2.5 pl-10 pr-8 text-sm text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none appearance-none cursor-pointer transition-all"
+                                className="w-full sm:w-40 bg-gray-800/50 border border-gray-700 rounded-xl py-2.5 pl-10 pr-8 text-sm text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none appearance-none cursor-pointer transition-all"
                             >
                                 <option value="All">All Status</option>
                                 <option value="Excellent">Excellent</option>
@@ -199,11 +199,11 @@ const InterviewHistory = () => {
                                 className="bg-white/5 border border-white/10 rounded-2xl p-5 hover:bg-white/10 transition-all group flex flex-col md:flex-row md:items-center justify-between gap-4"
                             >
                                 <div className="flex items-center gap-5">
-                                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform">
+                                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500/20 to-blue-500/20 flex items-center justify-center text-teal-400 group-hover:scale-110 transition-transform">
                                         <FileText size={24} />
                                     </div>
                                     <div>
-                                        <h3 className="text-lg font-bold text-white group-hover:text-purple-400 transition-colors">{interview.subject}</h3>
+                                        <h3 className="text-lg font-bold text-white group-hover:text-teal-400 transition-colors">{interview.subject}</h3>
                                         <div className="flex items-center gap-4 text-sm text-gray-400 mt-1">
                                             <span className="flex items-center gap-1.5"><Calendar size={14} /> {interview.date}</span>
                                             <span className="flex items-center gap-1.5"><Clock size={14} /> 25 mins</span>

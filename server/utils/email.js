@@ -1,11 +1,15 @@
 const nodemailer = require('nodemailer');
 
+const EMAIL = process.env.EMAIL_USER;
+const PASS  = process.env.EMAIL_PASS;
+
+if (!EMAIL || !PASS) {
+  console.warn('⚠️  EMAIL_USER or EMAIL_PASS missing in .env — emails will not send');
+}
+
 const transporter = nodemailer.createTransport({
   service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER || 'vivekvala249@gmail.com',
-    pass: process.env.EMAIL_PASS || 'odcdpthyyhawcldj'
-  }
+  auth: { user: EMAIL, pass: PASS },
 });
 
 transporter.verify((error, success) => {
@@ -18,19 +22,23 @@ transporter.verify((error, success) => {
 
 const sendOTPEmail = async (userEmail, otp) => {
   const mailOptions = {
-    from: process.env.EMAIL_USER || 'vivekvala249@gmail.com',
+    from: EMAIL,
     to: userEmail,
     subject: 'Verify Your Account',
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 10px;">
-        <h2 style="color: #8b5cf6;">Verify Your Account</h2>
-        <p>Your verification code is:</p>
-        <div style="background: #f9fafb; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #8b5cf6;">
-          ${otp}
+      <div style="background-color: #0f172a; padding: 40px 20px; font-family: sans-serif;">
+        <div style="max-width: 500px; margin: 0 auto; background-color: #0a0e17; border-radius: 16px; padding: 40px 30px;">
+          <h2 style="color: #c084fc; font-size: 28px; font-weight: bold; text-align: center; margin-top: 0;">Verify Your Email</h2>
+          <p style="color: #cbd5e1; font-size: 16px; line-height: 1.5;">Hello,</p>
+          <p style="color: #cbd5e1; font-size: 16px; line-height: 1.5;">Please use the following verification code to complete your process. This code is valid for 10 minutes.</p>
+          <div style="background-color: #1e1b4b; border-radius: 12px; padding: 24px; text-align: center; margin: 30px 0;">
+            <span style="font-size: 36px; color: #d8b4fe; letter-spacing: 12px; font-family: monospace; font-weight: bold;">${otp}</span>
+          </div>
+          <p style="color: #cbd5e1; font-size: 16px; line-height: 1.5;">If you didn't request this code, please ignore this email.</p>
+          <div style="text-align: center; margin-top: 40px;">
+            <p style="color: #64748b; font-size: 12px; margin: 0;">&copy; ${new Date().getFullYear()} Campus Recruiting Team. All rights reserved.</p>
+          </div>
         </div>
-        <p>This code will expire in 5 minutes.</p>
-        <p style="margin-top: 20px;">If you didn't request this code, please ignore this email.</p>
-        <p style="color: #6b7280; font-size: 12px; margin-top: 30px;">Campus Recruiting Team</p>
       </div>
     `
   };
@@ -44,21 +52,26 @@ const sendPasswordResetEmail = async (userEmail, resetToken) => {
   const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password/${resetToken}`;
   
   const mailOptions = {
-    from: process.env.EMAIL_USER || 'vivekvala249@gmail.com',
+    from: EMAIL,
     to: userEmail,
     subject: 'Reset Your Password',
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 10px;">
-        <h2 style="color: #8b5cf6;">Reset Your Password</h2>
-        <p>Click the button below to create a new password:</p>
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="${resetUrl}" style="display: inline-block; padding: 14px 28px; background: linear-gradient(to right, #8b5cf6, #3b82f6); color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Reset Password</a>
+      <div style="background-color: #0f172a; padding: 40px 20px; font-family: sans-serif;">
+        <div style="max-width: 500px; margin: 0 auto; background-color: #0a0e17; border-radius: 16px; padding: 40px 30px;">
+          <h2 style="color: #c084fc; font-size: 28px; font-weight: bold; text-align: center; margin-top: 0;">Reset Your Password</h2>
+          <p style="color: #cbd5e1; font-size: 16px; line-height: 1.5;">Hello,</p>
+          <p style="color: #cbd5e1; font-size: 16px; line-height: 1.5;">We received a request to reset your password. Click the button below to create a new one.</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${resetUrl}" style="display: inline-block; padding: 14px 28px; background: linear-gradient(to right, #9333ea, #a855f7); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">Reset Password</a>
+          </div>
+          <p style="color: #cbd5e1; font-size: 14px; line-height: 1.5;">Or copy and paste this link in your browser:</p>
+          <p style="word-break: break-all; color: #94a3b8; font-size: 14px;">${resetUrl}</p>
+          <p style="color: #cbd5e1; font-size: 14px; line-height: 1.5; margin-top: 20px;">This link will expire in 15 minutes.</p>
+          <p style="color: #cbd5e1; font-size: 14px; line-height: 1.5;">If you didn't request a password reset, please ignore this email.</p>
+          <div style="text-align: center; margin-top: 40px;">
+            <p style="color: #64748b; font-size: 12px; margin: 0;">&copy; ${new Date().getFullYear()} Campus Recruiting Team. All rights reserved.</p>
+          </div>
         </div>
-        <p>Or copy and paste this link in your browser:</p>
-        <p style="word-break: break-all; color: #6b7280;">${resetUrl}</p>
-        <p style="margin-top: 20px;">This link will expire in 15 minutes.</p>
-        <p>If you didn't request this password reset, please ignore this email.</p>
-        <p style="color: #6b7280; font-size: 12px; margin-top: 30px;">Campus Recruiting Team</p>
       </div>
     `
   };
@@ -72,19 +85,23 @@ const sendAccountApprovalEmail = async (userEmail, userName) => {
   const loginUrl = 'http://localhost:5176/login';
   
   const mailOptions = {
-    from: process.env.EMAIL_USER || 'vivekvala249@gmail.com',
+    from: EMAIL,
     to: userEmail,
     subject: 'Account Approved',
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 10px;">
-        <h2 style="color: #10b981;">Account Approved!</h2>
-        <p>Hello ${userName || 'User'},</p>
-        <p>Your account has been approved. You can now log in.</p>
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="${loginUrl}" style="display: inline-block; padding: 14px 28px; background: linear-gradient(to right, #10b981, #0ea5e9); color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Login Now</a>
+      <div style="background-color: #0f172a; padding: 40px 20px; font-family: sans-serif;">
+        <div style="max-width: 500px; margin: 0 auto; background-color: #0a0e17; border-radius: 16px; padding: 40px 30px;">
+          <h2 style="color: #c084fc; font-size: 28px; font-weight: bold; text-align: center; margin-top: 0;">Account Approved!</h2>
+          <p style="color: #cbd5e1; font-size: 16px; line-height: 1.5;">Hello ${userName || 'User'},</p>
+          <p style="color: #cbd5e1; font-size: 16px; line-height: 1.5;">Great news! Your account has been approved. You can now log in and start using the platform.</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${loginUrl}" style="display: inline-block; padding: 14px 28px; background: linear-gradient(to right, #9333ea, #a855f7); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">Login Now</a>
+          </div>
+          <p style="color: #cbd5e1; font-size: 14px; line-height: 1.5;">If you have any questions, feel free to reply to this email.</p>
+          <div style="text-align: center; margin-top: 40px;">
+            <p style="color: #64748b; font-size: 12px; margin: 0;">&copy; ${new Date().getFullYear()} Campus Recruiting Team. All rights reserved.</p>
+          </div>
         </div>
-        <p>If you didn't request this, please ignore this email.</p>
-        <p style="color: #6b7280; font-size: 12px; margin-top: 30px;">Campus Recruiting Team</p>
       </div>
     `
   };
@@ -96,19 +113,24 @@ const sendAccountApprovalEmail = async (userEmail, userName) => {
 
 const sendOTPForPasswordReset = async (userEmail, otp) => {
   const mailOptions = {
-    from: process.env.EMAIL_USER || 'vivekvala249@gmail.com',
+    from: EMAIL,
     to: userEmail,
     subject: 'Password Reset OTP',
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 10px;">
-        <h2 style="color: #8b5cf6;">Reset Your Password</h2>
-        <p>Your OTP code for password reset is:</p>
-        <div style="background: #f9fafb; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #8b5cf6;">
-          ${otp}
+      <div style="background-color: #0f172a; padding: 40px 20px; font-family: sans-serif;">
+        <div style="max-width: 500px; margin: 0 auto; background-color: #0a0e17; border-radius: 16px; padding: 40px 30px;">
+          <h2 style="color: #c084fc; font-size: 28px; font-weight: bold; text-align: center; margin-top: 0;">Reset Your Password</h2>
+          <p style="color: #cbd5e1; font-size: 16px; line-height: 1.5;">Hello,</p>
+          <p style="color: #cbd5e1; font-size: 16px; line-height: 1.5;">Your OTP code for resetting your password is:</p>
+          <div style="background-color: #1e1b4b; border-radius: 12px; padding: 24px; text-align: center; margin: 30px 0;">
+            <span style="font-size: 36px; color: #d8b4fe; letter-spacing: 12px; font-family: monospace; font-weight: bold;">${otp}</span>
+          </div>
+          <p style="color: #cbd5e1; font-size: 14px; line-height: 1.5;">This OTP will expire in 10 minutes.</p>
+          <p style="color: #cbd5e1; font-size: 14px; line-height: 1.5; margin-top: 20px;">If you didn't request a password reset, please ignore this email to keep your account safe.</p>
+          <div style="text-align: center; margin-top: 40px;">
+            <p style="color: #64748b; font-size: 12px; margin: 0;">&copy; ${new Date().getFullYear()} Campus Recruiting Team. All rights reserved.</p>
+          </div>
         </div>
-        <p>This OTP will expire in 10 minutes.</p>
-        <p style="margin-top: 20px;">If you didn't request this, please ignore this email.</p>
-        <p style="color: #6b7280; font-size: 12px; margin-top: 30px;">Campus Recruiting Team</p>
       </div>
     `
   };
@@ -122,22 +144,26 @@ const sendPaymentSuccessEmail = async (userEmail, userName, courseTitle, price =
   const formattedPrice = typeof price === 'number' ? `₹${price}` : price;
   
   const mailOptions = {
-    from: process.env.EMAIL_USER || 'vivekvala249@gmail.com',
+    from: EMAIL,
     to: userEmail,
     subject: 'Course Purchase Confirmation',
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 10px;">
-        <h2 style="color: #8b5cf6;">Congratulations!</h2>
-        <p>Hello ${userName || 'Student'},</p>
-        <p>Your payment has been successfully completed.</p>
-        <div style="background: #f9fafb; padding: 15px; border-radius: 8px; margin: 20px 0;">
-          <p style="margin: 5px 0;"><strong>Course Name:</strong> ${courseTitle}</p>
-          <p style="margin: 5px 0;"><strong>Amount Paid:</strong> ${formattedPrice}</p>
-          <p style="margin: 5px 0;"><strong>Payment Method:</strong> ${paymentMethod}</p>
+      <div style="background-color: #0f172a; padding: 40px 20px; font-family: sans-serif;">
+        <div style="max-width: 500px; margin: 0 auto; background-color: #0a0e17; border-radius: 16px; padding: 40px 30px;">
+          <h2 style="color: #c084fc; font-size: 28px; font-weight: bold; text-align: center; margin-top: 0;">Congratulations!</h2>
+          <p style="color: #cbd5e1; font-size: 16px; line-height: 1.5;">Hello ${userName || 'Student'},</p>
+          <p style="color: #cbd5e1; font-size: 16px; line-height: 1.5;">Your payment has been successfully completed and your enrollment is confirmed.</p>
+          <div style="background-color: #1e1b4b; border-radius: 12px; padding: 24px; margin: 30px 0;">
+            <p style="color: #cbd5e1; margin: 5px 0; font-size: 15px;"><strong style="color: #e2e8f0;">Course Name:</strong> ${courseTitle}</p>
+            <p style="color: #cbd5e1; margin: 5px 0; font-size: 15px;"><strong style="color: #e2e8f0;">Amount Paid:</strong> ${formattedPrice}</p>
+            <p style="color: #cbd5e1; margin: 5px 0; font-size: 15px;"><strong style="color: #e2e8f0;">Payment Method:</strong> ${paymentMethod}</p>
+          </div>
+          <p style="color: #cbd5e1; font-size: 16px; line-height: 1.5;">You can now access your dashboard and start learning.</p>
+          <p style="color: #cbd5e1; font-size: 16px; line-height: 1.5; margin-top: 20px;">Thank you for learning with us!</p>
+          <div style="text-align: center; margin-top: 40px;">
+            <p style="color: #64748b; font-size: 12px; margin: 0;">&copy; ${new Date().getFullYear()} Campus Recruiting Team. All rights reserved.</p>
+          </div>
         </div>
-        <p>You can now start learning the course.</p>
-        <p style="margin-top: 20px;">Thank you for learning with us.</p>
-        <p style="color: #6b7280; font-size: 12px; margin-top: 30px;">Campus Recruiting Team</p>
       </div>
     `
   };
@@ -147,4 +173,4 @@ const sendPaymentSuccessEmail = async (userEmail, userName, courseTitle, price =
   return info;
 };
 
-module.exports = { sendPaymentSuccessEmail, sendOTPEmail, sendPasswordResetEmail, sendAccountApprovalEmail, sendOTPForPasswordReset };
+module.exports = { transporter, sendPaymentSuccessEmail, sendOTPEmail, sendPasswordResetEmail, sendAccountApprovalEmail, sendOTPForPasswordReset };

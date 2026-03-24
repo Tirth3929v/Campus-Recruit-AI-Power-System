@@ -182,14 +182,34 @@ router.get('/last-course', verifyAuthToken, async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const { status } = req.query;
+    // Default to published courses for public access
     const filter = status ? { status } : { status: 'published' };
     const courses = await Course.find(filter).select('title description instructor level category courseType price duration thumbnail chapters createdAt rating totalRatings').sort({ createdAt: -1 });
-    console.log('Courses returned:', courses.length);
+    console.log('Courses returned:', courses.length, 'with filter:', filter);
     courses.forEach(c => {
-      console.log(' - ', c.title, 'Price:', c.price, 'Type:', c.courseType);
+      console.log(' - ', c.title, 'Price:', c.price, 'Type:', c.courseType, 'Status:', c.status);
     });
     res.json(courses);
   } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// GET /api/courses/admin/pending - Get all pending courses (Admin only)
+router.get('/admin/pending', verifyAuthToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Admin access required' });
+    }
+    
+    const pendingCourses = await Course.find({ status: 'pending_approval' })
+      .select('title description instructor level category courseType price duration thumbnail chapters createdAt createdBy')
+      .sort({ createdAt: -1 });
+    
+    console.log('Pending courses found:', pendingCourses.length);
+    res.json(pendingCourses);
+  } catch (err) {
+    console.error('Get pending courses error:', err);
     res.status(500).json({ message: err.message });
   }
 });
@@ -310,7 +330,8 @@ router.get('/employee/course-stats', verifyAuthToken, async (req, res) => {
         inProgress,
         status: course.status,
         createdBy: course.createdBy,
-        createdAt: course.createdAt
+        createdAt: course.createdAt,
+        updateHistory: course.updateHistory || []
       };
     }));
 
@@ -326,19 +347,17 @@ router.post('/fake-payment', verifyAuthToken, async (req, res) => {
   try {
     console.log('Payment request received:', req.body);
     
-    const { courseId, email, name, paymentMethod, cardNumber, expiry, cvv, cardName, upiId, upiMobile, bankName, accountId } = req.body;
+    const { courseId, name, paymentMethod, cardNumber, expiry, cvv, cardName, upiId, upiMobile, bankName, accountId } = req.body;
+    
+    // Extract user data from authenticated token
+    const studentId = req.user.id || req.user._id;
+    const userEmail = req.user.email;
+    const userName = name || req.user.name || 'Student';
     
     // Validate required fields
-    if (!courseId || !email || !name) {
-      console.log('Validation failed: missing required fields');
-      return res.status(400).json({ success: false, message: 'Name and email are required' });
-    }
-    
-    // Validate Gmail format
-    const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
-    if (!gmailRegex.test(email)) {
-      console.log('Validation failed: invalid email format');
-      return res.status(400).json({ success: false, message: 'Please enter a valid Gmail address' });
+    if (!courseId) {
+      console.log('Validation failed: missing courseId');
+      return res.status(400).json({ success: false, message: 'Course ID is required' });
     }
     
     // Validate payment method specific fields
@@ -394,9 +413,9 @@ router.post('/fake-payment', verifyAuthToken, async (req, res) => {
     }
 
     // STEP 1: Try to send confirmation email (non-blocking - don't fail payment if email fails)
-    console.log('Attempting to send payment confirmation email to:', email);
+    console.log('Attempting to send payment confirmation email to:', userEmail);
     try {
-      await sendPaymentSuccessEmail(email, name, course.title, course.price, paymentMethodText);
+      await sendPaymentSuccessEmail(userEmail, userName, course.title, course.price, paymentMethodText);
       console.log('Email sent successfully!');
     } catch (emailErr) {
       console.error('Email sending failed (non-blocking):', emailErr.message);
@@ -405,21 +424,34 @@ router.post('/fake-payment', verifyAuthToken, async (req, res) => {
 
     // STEP 2: Create purchase record
     console.log('Creating purchase record for course:', course.title, 'Amount:', course.price);
+    
+    // Map payment method to valid enum values
+    let validPaymentMethod = 'Credit Card';
+    if (paymentMethod === 'upi' || paymentMethodText.includes('UPI')) {
+      validPaymentMethod = 'UPI';
+    } else if (paymentMethod === 'netbanking' || paymentMethodText.includes('Net Banking')) {
+      validPaymentMethod = 'Net Banking';
+    } else if (paymentMethod === 'card' || paymentMethod === 'Credit Card') {
+      validPaymentMethod = 'Credit Card';
+    } else if (paymentMethod === 'Debit Card') {
+      validPaymentMethod = 'Debit Card';
+    }
+    
     const purchase = await Purchase.create({
-      userId: req.user.id,
-      courseId: new mongoose.Types.ObjectId(courseId),
+      student: studentId,
+      course: new mongoose.Types.ObjectId(courseId),
       amount: course.price,
-      paymentStatus: 'success',
-      paymentMethod: paymentMethodText
+      status: 'completed',
+      paymentMethod: validPaymentMethod
     });
     console.log('Purchase created:', purchase._id);
     
     // STEP 3: Auto-enroll user in course after payment
-    let studentProfile = await StudentProfile.findOne({ user: req.user.id });
+    let studentProfile = await StudentProfile.findOne({ user: studentId });
     if (!studentProfile) {
-      console.log('Creating new student profile for user:', req.user.id);
+      console.log('Creating new student profile for user:', studentId);
       studentProfile = await StudentProfile.create({
-        user: req.user.id,
+        user: studentId,
         course: '' 
       });
     }
@@ -431,7 +463,7 @@ router.post('/fake-payment', verifyAuthToken, async (req, res) => {
     });
     
     if (!enrollment) {
-      console.log('Creating new enrollment for user:', req.user.id, 'Course:', courseId);
+      console.log('Creating new enrollment for user:', studentId, 'Course:', courseId);
       enrollment = await Enrollment.create({
         student: studentProfile._id,
         course: new mongoose.Types.ObjectId(courseId),
@@ -506,6 +538,83 @@ router.get('/course-access/:courseId', verifyAuthToken, async (req, res) => {
   }
 });
 
+// POST /api/courses/temp-upload-pdf - Upload PDF file (for course creation)
+router.post('/temp-upload-pdf', verifyAuthToken, async (req, res) => {
+  try {
+    uploadCoursePdf.single('pdfFile')(req, res, async (err) => {
+      if (err) {
+        console.error("Temp PDF Upload Error:", err.message);
+        return res.status(400).json({ error: err.message });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const filePath = req.file.path;
+      if (!isPdfFile(filePath)) {
+        fs.unlinkSync(filePath);
+        return res.status(400).json({ error: 'Invalid PDF file. File may be corrupted.' });
+      }
+
+      if (req.file.size === 0) {
+        fs.unlinkSync(filePath);
+        return res.status(400).json({ error: 'Empty file uploaded' });
+      }
+
+      console.log("Temp Uploaded File:", req.file);
+
+      const pdfUrl = `/uploads/course-pdfs/${req.file.filename}`;
+      res.json({ success: true, pdfFile: pdfUrl, pdfUrl });
+    });
+  } catch (err) {
+    console.error("Temp upload error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/courses/download/:filename - Download PDF file with proper headers
+router.get('/download/:filename', verifyAuthToken, async (req, res) => {
+  try {
+    const { filename } = req.params;
+    const filePath = path.join(coursePdfsDir, filename);
+    
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
+    const stats = fs.statSync(filePath);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Length', stats.size);
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.sendFile(filePath);
+  } catch (err) {
+    console.error('Download error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/courses/serve/:filename - Serve PDF file for inline viewing
+router.get('/serve/:filename', verifyAuthToken, async (req, res) => {
+  try {
+    const { filename } = req.params;
+    const filePath = path.join(coursePdfsDir, filename);
+    
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
+    const stats = fs.statSync(filePath);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Length', stats.size);
+    res.setHeader('Content-Disposition', 'inline');
+    res.sendFile(filePath);
+  } catch (err) {
+    console.error('Serve error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/courses/:id - get one course by id (MUST be after specific routes)
 router.get('/:id', async (req, res) => {
   try {
@@ -555,15 +664,69 @@ router.post('/', verifyAuthToken, async (req, res) => {
       chapters: chapters || [],
       pdfFile: coursePdfUrl,
       pdfUrl: coursePdfUrl,
-      status: 'published',
+      status: req.user.role === 'admin' ? 'published' : 'pending_approval', // Require admin approval for non-admin users
       createdBy: createdBy
     });
 
+    console.log("Course created with status:", req.user.role === 'admin' ? 'published' : 'pending_approval');
     console.log("Course created with PDF URL:", coursePdfUrl);
 
     res.status(201).json({ success: true, course });
   } catch (err) {
     console.error('Course creation error:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// PUT /api/courses/:id - Update entire course (employee only)
+router.put('/:id', verifyAuthToken, async (req, res) => {
+  try {
+    const allowedRoles = ['employee', 'company', 'admin'];
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'Employee access only' });
+    }
+
+    const {
+      title, description, instructor, level, category, courseType, price,
+      duration, thumbnail, chapters, pdfFile, pdfUrl
+    } = req.body;
+
+    if (!title || !description || !instructor) {
+      return res.status(400).json({ message: 'Title, description, and instructor are required.' });
+    }
+
+    const course = await Course.findById(req.params.id);
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    // Check if user is the creator
+    const userIdentity = req.user.email || req.user.name;
+    if (course.createdBy !== userIdentity && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'You can only edit your own courses' });
+    }
+
+    const parsedPrice = typeof price === 'number' ? price : parseFloat(price) || 0;
+    const coursePdfUrl = pdfUrl || pdfFile || course.pdfFile || '';
+
+    course.title = title;
+    course.description = description;
+    course.instructor = instructor;
+    course.level = level || 'Beginner';
+    course.category = category || 'Development';
+    course.courseType = courseType || 'free';
+    course.price = parsedPrice;
+    course.duration = duration || 'TBD';
+    course.thumbnail = thumbnail || '';
+    course.chapters = chapters || [];
+    course.pdfFile = coursePdfUrl;
+    course.pdfUrl = coursePdfUrl;
+
+    await course.save();
+
+    res.json({ success: true, course });
+  } catch (err) {
+    console.error('Course update error:', err);
     res.status(500).json({ message: err.message });
   }
 });
@@ -754,41 +917,6 @@ router.post('/:id/upload-notes', verifyAuthToken, async (req, res) => {
     });
   } catch (err) {
     console.error("Upload notes error:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// POST /api/courses/temp-upload-pdf - Upload PDF file (for course creation)
-router.post('/temp-upload-pdf', verifyAuthToken, async (req, res) => {
-  try {
-    uploadCoursePdf.single('pdfFile')(req, res, async (err) => {
-      if (err) {
-        console.error("Temp PDF Upload Error:", err.message);
-        return res.status(400).json({ error: err.message });
-      }
-
-      if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded' });
-      }
-
-      const filePath = req.file.path;
-      if (!isPdfFile(filePath)) {
-        fs.unlinkSync(filePath);
-        return res.status(400).json({ error: 'Invalid PDF file. File may be corrupted.' });
-      }
-
-      if (req.file.size === 0) {
-        fs.unlinkSync(filePath);
-        return res.status(400).json({ error: 'Empty file uploaded' });
-      }
-
-      console.log("Temp Uploaded File:", req.file);
-
-      const pdfUrl = `/uploads/course-pdfs/${req.file.filename}`;
-      res.json({ success: true, pdfFile: pdfUrl, pdfUrl });
-    });
-  } catch (err) {
-    console.error("Temp upload error:", err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -1171,48 +1299,6 @@ router.get('/:id/mcq-status', verifyAuthToken, async (req, res) => {
   }
 });
 
-// GET /api/courses/download/:filename - Download PDF file with proper headers
-router.get('/download/:filename', verifyAuthToken, async (req, res) => {
-  try {
-    const { filename } = req.params;
-    const filePath = path.join(coursePdfsDir, filename);
-    
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ error: 'File not found' });
-    }
-
-    const stats = fs.statSync(filePath);
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Length', stats.size);
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    res.sendFile(filePath);
-  } catch (err) {
-    console.error('Download error:', err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// GET /api/courses/serve/:filename - Serve PDF file for inline viewing
-router.get('/serve/:filename', verifyAuthToken, async (req, res) => {
-  try {
-    const { filename } = req.params;
-    const filePath = path.join(coursePdfsDir, filename);
-    
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ error: 'File not found' });
-    }
-
-    const stats = fs.statSync(filePath);
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Length', stats.size);
-    res.setHeader('Content-Disposition', 'inline');
-    res.sendFile(filePath);
-  } catch (err) {
-    console.error('Serve error:', err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
 // Course test questions cache (in-memory storage)
 const courseTestCache = new Map();
 
@@ -1220,7 +1306,7 @@ const courseTestCache = new Map();
 let genAI, geminiModel;
 try {
   genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'your-gemini-api-key');
-  geminiModel = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+  geminiModel = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
 } catch (err) {
   console.log('Gemini AI not configured, MCQ generation will use fallback');
 }

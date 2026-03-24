@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Trash2, Shield, ChevronDown, Search, Loader2, AlertTriangle, CheckCircle, FileText, X } from 'lucide-react';
+import { Users, Trash2, Shield, ChevronDown, Search, Loader2, AlertTriangle, CheckCircle, FileText, X, Trophy } from 'lucide-react';
 import axiosInstance from './axiosInstance';
+import ScorecardModal from '../components/ScorecardModal';
 
 const ROLES = ['student', 'company', 'admin'];
 
@@ -110,6 +111,7 @@ const ManageUsers = () => {
   const [roleLoading, setRoleLoading] = useState({});
   const [viewingResume, setViewingResume] = useState(null);
   const [resumeLoading, setResumeLoading] = useState(null);
+  const [scorecardUser, setScorecardUser] = useState(null);
 
   const showToast = (message, type = 'success') => setToast({ message, type });
 
@@ -186,6 +188,7 @@ const ManageUsers = () => {
         {toast && <Toast key="toast" message={toast.message} type={toast.type} onDone={() => setToast(null)} />}
         {confirmUser && <ConfirmModal key="modal" user={confirmUser} onConfirm={handleDelete} onCancel={() => setConfirmUser(null)} />}
         {viewingResume && <ResumeModal key="resume" resumeData={viewingResume} onClose={() => setViewingResume(null)} />}
+        {scorecardUser && <ScorecardModal key="scorecard" isOpen={!!scorecardUser} userId={scorecardUser._id} onClose={() => setScorecardUser(null)} />}
       </AnimatePresence>
 
       {/* Header */}
@@ -198,7 +201,7 @@ const ManageUsers = () => {
         </div>
         <div className="relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
+          <input aria-label="Input field" 
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search users..."
@@ -231,7 +234,7 @@ const ManageUsers = () => {
                   <motion.tr key={user._id} variants={rowVariants} whileHover={{ backgroundColor: '#f9fafb' }} className="transition-colors">
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-sm font-bold shadow-sm">
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-teal-500 flex items-center justify-center text-white text-sm font-bold shadow-sm">
                           {user.name?.charAt(0).toUpperCase()}
                         </div>
                         <span className="font-semibold text-gray-900">{user.name}</span>
@@ -260,15 +263,24 @@ const ManageUsers = () => {
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-2">
                         {user.role === 'student' && (
-                          <motion.button
-                            whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                            onClick={() => handleViewResume(user)}
-                            disabled={resumeLoading === user._id}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors disabled:opacity-50"
-                          >
-                            {resumeLoading === user._id ? <Loader2 size={13} className="animate-spin" /> : <FileText size={13} />}
-                            Resume
-                          </motion.button>
+                          <>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                              onClick={() => setScorecardUser(user)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-teal-600 bg-teal-50 hover:bg-teal-100 rounded-lg transition-colors"
+                            >
+                              <Trophy size={13} /> Scorecard
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                              onClick={() => handleViewResume(user)}
+                              disabled={resumeLoading === user._id}
+                              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors disabled:opacity-50"
+                            >
+                              {resumeLoading === user._id ? <Loader2 size={13} className="animate-spin" /> : <FileText size={13} />}
+                              Resume
+                            </motion.button>
+                          </>
                         )}
                         <motion.button
                           whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.93 }}

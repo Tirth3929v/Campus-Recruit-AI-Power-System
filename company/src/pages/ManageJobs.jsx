@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
-import { Plus, Search, Edit3, Trash2, MapPin, DollarSign, Clock, Users, X, Briefcase, ArrowLeft, User, Building2, CheckCircle, XCircle, Clock as ClockIcon, Send, Eye, EyeOff } from 'lucide-react';
+import { Plus, Search, Edit3, Trash2, MapPin, DollarSign, Clock, Users, X, Briefcase, ArrowLeft, Building2, CheckCircle, XCircle, Clock as ClockIcon, Send, Eye, EyeOff } from 'lucide-react';
 
 const Reveal = ({ children, delay = 0, className = "" }) => {
   const ref = useRef(null);
@@ -18,7 +18,7 @@ const Reveal = ({ children, delay = 0, className = "" }) => {
 const statusConfig = {
   pending: { label: 'Waiting for Employee', color: 'bg-yellow-500/15 text-yellow-400 border border-yellow-500/20', icon: ClockIcon },
   employee_review: { label: 'Under Employee Review', color: 'bg-blue-500/15 text-blue-400 border border-blue-500/20', icon: Eye },
-  admin_review: { label: 'Sent to Admin', color: 'bg-purple-500/15 text-purple-400 border border-purple-500/20', icon: Send },
+  admin_review: { label: 'Sent to Admin', color: 'bg-teal-500/15 text-teal-400 border border-teal-500/20', icon: Send },
   approved: { label: 'Active', color: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20', icon: CheckCircle },
   rejected: { label: 'Rejected', color: 'bg-red-500/15 text-red-400 border border-red-500/20', icon: XCircle }
 };
@@ -30,13 +30,11 @@ const emptyJob = {
   type: 'Full-time', 
   description: '', 
   tags: '',
-  assignedEmployeeId: '',
   department: ''
 };
 
 const ManageJobs = () => {
   const [jobs, setJobs] = useState([]);
-  const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
@@ -47,30 +45,21 @@ const ManageJobs = () => {
   useEffect(() => {
     document.title = "Manage Jobs | CampusHire";
     fetchJobs();
-    fetchEmployees();
   }, []);
 
   const fetchJobs = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('/api/jobs/company/me', { 
+      const token = localStorage.getItem('companyToken');
+      const res = await fetch('/api/company/jobs', { 
         credentials: 'include',
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
-      if (res.ok) { 
-        setJobs(await res.json()); 
+      if (res.ok) {
+        const data = await res.json();
+        setJobs(data.data || data);
       }
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
-  };
-
-  const fetchEmployees = async () => {
-    try {
-      const res = await fetch('/api/jobs/employees/list');
-      if (res.ok) {
-        setEmployees(await res.json());
-      }
-    } catch (e) { console.error(e); }
   };
 
   const handleSubmit = async (e) => {
@@ -81,7 +70,7 @@ const ManageJobs = () => {
       tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean)
     };
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('companyToken');
       const headers = { 
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {})
@@ -97,6 +86,9 @@ const ManageJobs = () => {
         if (res.ok) {
           fetchJobs();
           closeForm();
+        } else {
+          const err = await res.json();
+          alert(err.message || 'Failed to update job');
         }
       } else {
         const res = await fetch('/api/jobs', {
@@ -108,6 +100,9 @@ const ManageJobs = () => {
         if (res.ok) {
           fetchJobs();
           closeForm();
+        } else {
+          const err = await res.json();
+          alert(err.message || 'Failed to create job');
         }
       }
     } catch (e) { console.error(e); }
@@ -117,7 +112,7 @@ const ManageJobs = () => {
   const handleDelete = async (id) => {
     if (!confirm('Delete this job posting?')) return;
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('companyToken');
       await fetch(`/api/jobs/${id}`, { 
         method: 'DELETE', 
         credentials: 'include',
@@ -138,7 +133,6 @@ const ManageJobs = () => {
     setFormData({ 
       ...job, 
       tags: Array.isArray(job.tags) ? job.tags.join(', ') : '',
-      assignedEmployeeId: job.assignedEmployeeId || '',
       department: job.department || ''
     });
     setShowForm(true);
@@ -222,29 +216,6 @@ const ManageJobs = () => {
                       onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                       className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl py-3 px-4 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500 outline-none">
                       {['Full-time', 'Part-time', 'Internship', 'Contract', 'Freelance'].map(t => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Select Employee *</label>
-                    <select 
-                      required
-                      value={formData.assignedEmployeeId}
-                      onChange={(e) => {
-                        const emp = employees.find(em => em._id === e.target.value);
-                        setFormData({ 
-                          ...formData, 
-                          assignedEmployeeId: e.target.value,
-                          department: emp?.department || ''
-                        });
-                      }}
-                      className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl py-3 px-4 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500 outline-none">
-                      <option value="">Select an employee</option>
-                      {employees.map(emp => (
-                        <option key={emp._id} value={emp._id}>
-                          {emp.name} - {emp.department}
-                        </option>
-                      ))}
                     </select>
                   </div>
 
@@ -390,7 +361,7 @@ const ManageJobs = () => {
                       </span>
                     </div>
                     
-                    <p className="text-xs text-gray-500 mb-3">{job.company}</p>
+                    <p className="text-xs text-gray-500 mb-3">{typeof job.company === 'object' ? job.company?.companyName : job.company}</p>
                     <div className="space-y-1.5 text-xs text-gray-500 dark:text-gray-400 flex-1 mb-3">
                       {job.location && <div className="flex items-center gap-1.5"><MapPin size={12} /> {job.location}</div>}
                       {job.salary && <div className="flex items-center gap-1.5"><DollarSign size={12} /> {job.salary}</div>}

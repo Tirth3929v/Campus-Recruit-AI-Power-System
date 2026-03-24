@@ -1,8 +1,8 @@
 import React from 'react';
 
 const LanguageModule = ({ title, description }) => (
-  <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:border-purple-200 transition-colors cursor-pointer group">
-    <h3 className="font-bold text-gray-800 group-hover:text-purple-600 transition-colors">{title}</h3>
+  <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:border-teal-200 transition-colors cursor-pointer group">
+    <h3 className="font-bold text-gray-800 group-hover:text-teal-600 transition-colors">{title}</h3>
     <p className="text-gray-600 text-sm mt-2">{description}</p>
   </div>
 );

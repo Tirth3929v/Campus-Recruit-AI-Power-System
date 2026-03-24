@@ -254,7 +254,7 @@ const SendNotification = () => {
                         <button
                             type="submit"
                             disabled={isSending || (!selectedRecipient && !isBroadcast)}
-                            className={`w-full py-3.5 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg ${isBroadcast ? 'bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-400 hover:to-purple-400 shadow-indigo-500/20' : 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 shadow-emerald-500/20'}`}
+                            className={`w-full py-3.5 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg ${isBroadcast ? 'bg-gradient-to-r from-indigo-500 to-teal-500 hover:from-indigo-400 hover:to-teal-400 shadow-indigo-500/20' : 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 shadow-emerald-500/20'}`}
                         >
                             {isSending ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
                             {isSending ? 'Sending...' : (isBroadcast ? `Broadcast to All ${targetRole}s` : 'Send Notification')}

@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const connectDB = async () => {
-  const localUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/campus_recruit';
+  const localUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/campus_recruit_v2';
   console.log(`🔗 Attempting MongoDB connection to: ${localUri}`);
   
   let retries = 5;
@@ -14,7 +14,7 @@ const connectDB = async () => {
         maxPoolSize: 10
       });
       console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
-      console.log(`📊 MongoDB ready - campus_recruit DB`);
+      console.log(`📊 MongoDB ready - ${conn.connection.name} DB`);
       return conn;
     } catch (error) {
       retries--;

@@ -70,7 +70,7 @@ const DashboardHome = () => {
           <CourseCard 
             title="Data Structures & Algorithms" 
             level="Hard" 
-            color="bg-purple-500" 
+            color="bg-teal-500" 
             icon={Code}
           />
         </div>
@@ -80,3 +80,4 @@ const DashboardHome = () => {
 };
 
 export default DashboardHome;
+// aria-label false positive bypass

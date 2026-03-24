@@ -17,7 +17,7 @@ const resetAdmin = async () => {
     const adminUser = await User.create({
       name: 'Admin User',
       email: 'admin@gmail.com',
-      password: 'admin@123',
+      password: 'Admin@123',
       role: 'admin',
       isVerified: true,
       currentStreak: 0
@@ -26,7 +26,7 @@ const resetAdmin = async () => {
     console.log('   ✓ Admin user created successfully!');
     console.log('\n📋 Admin Credentials:');
     console.log('   Email: admin@gmail.com');
-    console.log('   Password: admin@123');
+    console.log('   Password: Admin@123');
     console.log('\n✅ Database reset complete!');
     
     process.exit(0);

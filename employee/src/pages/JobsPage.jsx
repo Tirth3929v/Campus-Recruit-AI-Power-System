@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Search, MapPin, Filter, Briefcase, DollarSign, Clock } from 'lucide-react';
 import { jobsData } from '../data/jobsData';
 
-const JobCard = ({ job, index }) => (
+const JobCard = ({ job, index, onApplyClick, onApply }) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
@@ -46,7 +46,19 @@ const JobCard = ({ job, index }) => (
       ))}
     </div>
 
-    <button className="w-full py-2.5 rounded-xl bg-gray-900 text-white font-medium hover:bg-blue-600 transition-colors shadow-lg shadow-gray-200">
+    <button 
+      type="button"
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (typeof onApplyClick === 'function') {
+          onApplyClick(job);
+        } else if (typeof onApply === 'function') {
+          onApply(job);
+        }
+      }}
+      className="relative z-50 w-full py-2.5 rounded-xl bg-gray-900 text-white font-medium hover:bg-blue-600 transition-colors shadow-lg shadow-gray-200"
+    >
       Apply Now
     </button>
   </motion.div>
@@ -54,6 +66,13 @@ const JobCard = ({ job, index }) => (
 
 const JobsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedJob, setSelectedJob] = useState(null);
+
+  const handleApplyClick = (job) => {
+    console.log('Apply button clicked! Job data:', job);
+    setSelectedJob(job);
+    alert(`Application feature coming soon for: ${job.title}`);
+  };
 
   const filteredJobs = jobsData.filter(job => 
     job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -95,7 +114,7 @@ const JobsPage = () => {
       {/* Job Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredJobs.map((job, index) => (
-          <JobCard key={job.id} job={job} index={index} />
+          <JobCard key={job.id} job={job} index={index} onApplyClick={handleApplyClick} />
         ))}
       </div>
       

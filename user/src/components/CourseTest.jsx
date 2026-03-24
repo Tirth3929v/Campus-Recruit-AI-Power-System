@@ -148,7 +148,7 @@ const CourseTest = ({ courseId, courseTitle, onClose, onComplete }) => {
         <div className="p-6 border-b border-gray-700">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Brain className="text-purple-400" size={28} />
+              <Brain className="text-teal-400" size={28} />
               <div>
                 <h2 className="text-xl font-bold text-white">Course Knowledge Test</h2>
                 <p className="text-sm text-gray-400">{courseTitle}</p>
@@ -156,7 +156,7 @@ const CourseTest = ({ courseId, courseTitle, onClose, onComplete }) => {
             </div>
             {testState === 'testing' && (
               <div className={`flex items-center gap-2 px-4 py-2 rounded-xl ${
-                timeLeft <= 10 ? 'bg-red-500/20 text-red-400' : 'bg-purple-500/20 text-purple-400'
+                timeLeft <= 10 ? 'bg-red-500/20 text-red-400' : 'bg-teal-500/20 text-teal-400'
               }`}>
                 <Clock size={20} />
                 <span className="font-mono font-bold text-lg">{formatTime(timeLeft)}</span>
@@ -208,7 +208,7 @@ const CourseTest = ({ courseId, courseTitle, onClose, onComplete }) => {
                 )}
                 <button
                   onClick={startTest}
-                  className="px-8 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold rounded-xl hover:from-purple-500 hover:to-blue-500 transition-all flex items-center gap-2 mx-auto"
+                  className="px-8 py-3 bg-gradient-to-r from-teal-600 to-blue-600 text-white font-bold rounded-xl hover:from-teal-500 hover:to-blue-500 transition-all flex items-center gap-2 mx-auto"
                 >
                   <BookOpen size={20} />
                   Start Course Test
@@ -223,7 +223,7 @@ const CourseTest = ({ courseId, courseTitle, onClose, onComplete }) => {
                 animate={{ opacity: 1 }}
                 className="text-center py-12"
               >
-                <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                 <p className="text-gray-400">Generating test questions...</p>
               </motion.div>
             )}
@@ -246,7 +246,7 @@ const CourseTest = ({ courseId, courseTitle, onClose, onComplete }) => {
                       <div
                         key={idx}
                         className={`w-3 h-3 rounded-full ${
-                          answers[idx] ? 'bg-green-500' : idx === currentQuestion ? 'bg-purple-500' : 'bg-gray-600'
+                          answers[idx] ? 'bg-green-500' : idx === currentQuestion ? 'bg-teal-500' : 'bg-gray-600'
                         }`}
                       />
                     ))}
@@ -266,12 +266,12 @@ const CourseTest = ({ courseId, courseTitle, onClose, onComplete }) => {
                           onClick={() => handleSelectAnswer(option)}
                           className={`w-full text-left p-4 rounded-xl border-2 transition-all flex items-center gap-3 ${
                             isSelected
-                              ? 'border-purple-500 bg-purple-500/10'
+                              ? 'border-teal-500 bg-teal-500/10'
                               : 'border-gray-600 hover:border-gray-500 bg-gray-700/30'
                           }`}
                         >
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-bold ${
-                            isSelected ? 'bg-purple-500 text-white' : 'bg-gray-600 text-gray-300'
+                            isSelected ? 'bg-teal-500 text-white' : 'bg-gray-600 text-gray-300'
                           }`}>
                             {option}
                           </div>
@@ -279,7 +279,7 @@ const CourseTest = ({ courseId, courseTitle, onClose, onComplete }) => {
                             {currentQ[`option${option}`]}
                           </span>
                           {isSelected && (
-                            <CheckCircle size={20} className="ml-auto text-purple-400" />
+                            <CheckCircle size={20} className="ml-auto text-teal-400" />
                           )}
                         </button>
                       );
@@ -307,7 +307,7 @@ const CourseTest = ({ courseId, courseTitle, onClose, onComplete }) => {
                   ) : (
                     <button
                       onClick={handleNextQuestion}
-                      className="px-6 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl flex items-center gap-2"
+                      className="px-6 py-2 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl flex items-center gap-2"
                     >
                       Next
                       <ChevronRight size={18} />
@@ -414,7 +414,7 @@ const CourseTest = ({ courseId, courseTitle, onClose, onComplete }) => {
                   </button>
                   <button
                     onClick={() => onComplete && onComplete(score)}
-                    className="px-8 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold rounded-xl hover:from-purple-500 hover:to-blue-500 transition-all flex items-center gap-2"
+                    className="px-8 py-3 bg-gradient-to-r from-teal-600 to-blue-600 text-white font-bold rounded-xl hover:from-teal-500 hover:to-blue-500 transition-all flex items-center gap-2"
                   >
                     Continue
                     <ChevronRight size={18} />

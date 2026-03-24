@@ -4,7 +4,7 @@ import { Briefcase, MapPin, Search, Loader2, Building2, CheckCircle, XCircle, Cl
 
 const typeColors = {
     'Full-time': 'bg-blue-500/15 text-blue-400 border border-blue-500/20',
-    'Internship': 'bg-purple-500/15 text-purple-400 border border-purple-500/20',
+    'Internship': 'bg-teal-500/15 text-teal-400 border border-teal-500/20',
     'Part-time': 'bg-orange-500/15 text-orange-400 border border-orange-500/20',
     'Contract': 'bg-rose-500/15 text-rose-400 border border-rose-500/20',
 };
@@ -142,7 +142,7 @@ const AdminJobApproval = () => {
                 className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
                     <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search jobs, companies, locations..."
+                    <input aria-label="Input field"  value={search} onChange={e => setSearch(e.target.value)} placeholder="Search jobs, companies, locations..."
                         className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 bg-white border border-gray-200" />
                 </div>
             </motion.div>
@@ -175,7 +175,7 @@ const AdminJobApproval = () => {
                                 </div>
 
                                 <div className="flex items-center gap-2">
-                                    <span className="text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 bg-purple-500/15 text-purple-500 border border-purple-500/20">
+                                    <span className="text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 bg-teal-500/15 text-teal-500 border border-teal-500/20">
                                         <Clock size={10} />
                                         Awaiting Review
                                     </span>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Trash2, ChevronDown, Search, Loader2, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Users, Trash2, ChevronDown, Search, Loader2, AlertTriangle, CheckCircle2, Trophy } from 'lucide-react';
+import ScorecardModal from '../components/ScorecardModal';
 
 const ROLES = ['student', 'company', 'admin', 'employee'];
 const roleColors = {
@@ -49,6 +50,7 @@ const ManageUsers = () => {
   const [confirmUser, setConfirmUser] = useState(null);
   const [toast, setToast] = useState(null);
   const [roleLoading, setRoleLoading] = useState({});
+  const [scorecardUser, setScorecardUser] = useState(null);
 
   const showToast = (message, type = 'success') => setToast({ message, type });
 
@@ -98,6 +100,7 @@ const ManageUsers = () => {
       <AnimatePresence>
         {toast && <Toast key="toast" {...toast} onDone={() => setToast(null)} />}
         {confirmUser && <ConfirmModal key="modal" user={confirmUser} onConfirm={handleDelete} onCancel={() => setConfirmUser(null)} />}
+        {scorecardUser && <ScorecardModal key="scorecard" isOpen={!!scorecardUser} userId={scorecardUser._id} onClose={() => setScorecardUser(null)} />}
       </AnimatePresence>
 
       <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }}
@@ -110,7 +113,7 @@ const ManageUsers = () => {
         </div>
         <div className="relative">
           <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/25" />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search users..."
+          <input aria-label="Input field"  value={search} onChange={e => setSearch(e.target.value)} placeholder="Search users..."
             className="pl-9 pr-4 py-2.5 rounded-xl text-sm text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/40 w-64"
             style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }} />
         </div>
@@ -136,7 +139,7 @@ const ManageUsers = () => {
                     <motion.tr key={user._id} variants={rowVariants} className="hover:bg-white/5 transition-all">
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-sm font-bold shadow-sm flex-shrink-0">
+                          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-teal-500 flex items-center justify-center text-white text-sm font-bold shadow-sm flex-shrink-0">
                             {user.name?.charAt(0).toUpperCase()}
                           </div>
                           <span className="font-semibold text-white/90">{user.name}</span>
@@ -160,11 +163,18 @@ const ManageUsers = () => {
                         {user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
                       </td>
                       <td className="px-5 py-4">
-                        <motion.button whileHover={{ scale: 1.07 }} whileTap={{ scale: 0.93 }}
-                          onClick={() => setConfirmUser(user)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-400 bg-red-500/10 hover:bg-red-500/20 rounded-lg border border-red-500/15">
-                          <Trash2 size={12} /> Delete
-                        </motion.button>
+                        <div className="flex gap-2">
+                          <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                            onClick={() => setScorecardUser(user)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/20 rounded-lg border border-indigo-500/15">
+                            <Trophy size={12} /> Scorecard
+                          </motion.button>
+                          <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                            onClick={() => setConfirmUser(user)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-400 bg-red-500/10 hover:bg-red-500/20 rounded-lg border border-red-500/15">
+                            <Trash2 size={12} /> Delete
+                          </motion.button>
+                        </div>
                       </td>
                     </motion.tr>
                   ))}

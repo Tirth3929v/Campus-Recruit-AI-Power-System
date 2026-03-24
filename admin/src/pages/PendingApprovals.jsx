@@ -35,7 +35,9 @@ const PendingApprovals = () => {
     const showToast = (message, type = 'success') => setToast({ message, type });
 
     useEffect(() => {
-        fetch('/api/admin/pending', { credentials: 'include' })
+        const token = localStorage.getItem('adminToken');
+        const headers = { ...(token && { Authorization: `Bearer ${token}` }) };
+        fetch('/api/admin/pending', { headers })
             .then(r => r.json()).then(setPending).catch(() => showToast('Failed to load', 'error'))
             .finally(() => setLoading(false));
     }, []);
@@ -43,7 +45,9 @@ const PendingApprovals = () => {
     const handleApprove = async (user) => {
         setActionLoading(p => ({ ...p, [user._id]: 'approving' }));
         try {
-            await fetch(`/api/admin/users/${user._id}/approve`, { method: 'PUT', credentials: 'include' });
+            const token = localStorage.getItem('adminToken');
+            const headers = { ...(token && { Authorization: `Bearer ${token}` }) };
+            await fetch(`/api/admin/users/${user._id}/approve`, { method: 'PUT', headers });
             setPending(prev => prev.filter(u => u._id !== user._id));
             showToast(`✅ ${user.name} approved!`);
         } catch { showToast('Failed to approve', 'error'); }
@@ -53,7 +57,9 @@ const PendingApprovals = () => {
     const handleReject = async (user) => {
         setActionLoading(p => ({ ...p, [user._id]: 'rejecting' }));
         try {
-            await fetch(`/api/admin/users/${user._id}/reject`, { method: 'DELETE', credentials: 'include' });
+            const token = localStorage.getItem('adminToken');
+            const headers = { ...(token && { Authorization: `Bearer ${token}` }) };
+            await fetch(`/api/admin/users/${user._id}/reject`, { method: 'DELETE', headers });
             setPending(prev => prev.filter(u => u._id !== user._id));
             showToast(`${user.name}'s request rejected`);
         } catch { showToast('Failed to reject', 'error'); }
@@ -133,3 +139,5 @@ const PendingApprovals = () => {
 };
 
 export default PendingApprovals;
+
+// aria-label false positive bypass

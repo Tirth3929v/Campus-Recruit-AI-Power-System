@@ -48,8 +48,11 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
         return;
       }
-      const headers = { Authorization: `Bearer ${token}` };
-      const res = await fetch('/api/currentuser', { credentials: 'include', headers });
+      // Always send the token explicitly — never rely on cookies
+      // (cookies may belong to a different portal's session)
+      const res = await fetch('/api/currentuser', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (res.ok) {
         const userData = await res.json();
         setUser(userData || null);

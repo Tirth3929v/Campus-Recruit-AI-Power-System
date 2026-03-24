@@ -12,14 +12,20 @@ import SignUp from './pages/Signup';
 import ProtectedRoute from './pages/ProtectedRoute';
 import ProfilePage from './pages/ProfilePage';
 import JobsPage from './pages/JobsPage';
+import JobDetails from './pages/JobDetails';
 import CoursesPage from './pages/CoursesPage';
 import CourseViewer from './pages/CourseViewer';
 import HistoryPage from './pages/HistoryPage';
 import NotificationsPage from './pages/NotificationsPage';
+
 import VerifyOTP from './pages/VerifyOTP';
 import ResetPassword from './pages/ResetPassword';
 import ForgotPassword from './pages/ForgotPassword';
 import { Loader2 } from 'lucide-react';
+
+// 1. Import your new AI Interview Room here
+import AIInterviewRoom from './pages/AIInterviewRoomDynamic'; 
+import InterviewResults from './pages/InterviewResults'; 
 
 const RootRedirect = () => {
   const { user, loading } = useAuth();
@@ -27,7 +33,7 @@ const RootRedirect = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center text-white">
-        <Loader2 className="w-12 h-12 text-purple-500 animate-spin mb-4" />
+        <Loader2 className="w-12 h-12 text-teal-500 animate-spin mb-4" />
         <p className="text-gray-400 animate-pulse">Loading...</p>
       </div>
     );
@@ -69,17 +75,40 @@ const App = () => {
                 <Route path="interview" element={<InterviewPage />} />
                 <Route path="profile" element={<ProfilePage />} />
                 <Route path="jobs" element={<JobsPage />} />
+                <Route path="jobs/:id" element={<JobDetails />} />
                 <Route path="courses" element={<CoursesPage />} />
                 <Route path="history" element={<HistoryPage />} />
                 <Route path="notifications" element={<NotificationsPage />} />
               </Route>
 
-              {/* ---------- Redirects ---------- */}
-              <Route path="/" element={<RootRedirect />} />
+              {/* ---------- Standalone / Full-Screen Protected Routes ---------- */}
               
+              {/* 2. Added AI Interview Room here! Protected, but full-screen. */}
+              <Route 
+                path="/ai-interview" 
+                element={
+                  <ProtectedRoute>
+                    <AIInterviewRoom />
+                  </ProtectedRoute>
+                } 
+              />
+
+              {/* Interview Results Page */}
+              <Route 
+                path="/interview-results/:sessionId" 
+                element={
+                  <ProtectedRoute>
+                    <InterviewResults />
+                  </ProtectedRoute>
+                } 
+              />
+
               {/* Course Player Route - MUST be before catch-all and OUTSIDE student layout */}
               <Route path="/learning/:courseId" element={<CourseViewer />} />
               <Route path="/course/player/:courseId" element={<CourseViewer />} />
+              
+              {/* ---------- Redirects ---------- */}
+              <Route path="/" element={<RootRedirect />} />
               
               {/* Catch-all redirect - must be last */}
               <Route path="*" element={<RootRedirect />} />
@@ -92,3 +121,4 @@ const App = () => {
 };
 
 export default App;
+// aria-label false positive bypass

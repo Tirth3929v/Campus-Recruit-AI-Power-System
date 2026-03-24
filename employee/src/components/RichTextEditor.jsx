@@ -11,10 +11,9 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
       [{ list: 'ordered' }, { list: 'bullet' }],
       ['blockquote', 'code-block'],
       ['link', 'image'],
-      ['table'],
+      // Removed 'table' - not supported without additional module
       ['clean']
     ],
-    table: false,
     history: {
       delay: 1000,
       maxStack: 100,
@@ -28,8 +27,8 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
     'color', 'background',
     'list', 'bullet',
     'blockquote', 'code-block',
-    'link', 'image',
-    'table'
+    'link', 'image'
+    // Removed 'table' from formats
   ];
 
   const handleChange = (content) => {

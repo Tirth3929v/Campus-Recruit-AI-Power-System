@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Play, Clock, ChevronRight, ChevronLeft, CheckCircle, XCircle, 
   Target, Brain, Zap, MessageSquare, Video, Mic, AlertCircle,
-  Sparkles, ArrowRight, FileText, Star
+  Sparkles, ArrowRight, FileText, Star, Volume2, RefreshCw
 } from 'lucide-react';
 import ScreenRecorder from '../components/ScreenRecorder';
 
@@ -41,7 +41,134 @@ const InterviewRoom = () => {
   const [overallScore, setOverallScore] = useState(0);
   const [submittedAnswers, setSubmittedAnswers] = useState([]);
 
+  // Voice & Transcription State
+  const [isAiSpeaking, setIsAiSpeaking] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [currentTranscript, setCurrentTranscript] = useState('');
+  const [fullTranscript, setFullTranscript] = useState([]);
+
   const timerRef = useRef(null);
+  const recognitionRef = useRef(null);
+  const synthRef = useRef(null);
+
+  // Initialize Speech Recognition
+  useEffect(() => {
+    // Check for browser support
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = true;
+      recognitionRef.current.interimResults = true;
+      recognitionRef.current.lang = 'en-US';
+
+      recognitionRef.current.onresult = (event) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          if (event.results[i].isFinal) {
+            transcript += event.results[i][0].transcript;
+          }
+        }
+        if (transcript) {
+          setCurrentTranscript(prev => prev + ' ' + transcript);
+          setAnswer(prev => prev + ' ' + transcript);
+        }
+      };
+
+      recognitionRef.current.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        setIsListening(false);
+      };
+
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+      };
+    }
+
+    // Initialize Speech Synthesis
+    synthRef.current = window.speechSynthesis;
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      if (synthRef.current) {
+        synthRef.current.cancel();
+      }
+    };
+  }, []);
+
+  // AI Voice - Ask Question using speechSynthesis
+  const askQuestion = () => {
+    if (!synthRef.current || !questions[currentQuestion]) return;
+
+    // Cancel any ongoing speech
+    synthRef.current.cancel();
+
+    const question = questions[currentQuestion];
+    const utterance = new SpeechSynthesisUtterance(question.question);
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+
+    utterance.onstart = () => setIsAiSpeaking(true);
+    utterance.onend = () => setIsAiSpeaking(false);
+    utterance.onerror = () => setIsAiSpeaking(false);
+
+    synthRef.current.speak(utterance);
+  };
+
+  // User Dictation - Start/Stop Listening
+  const startListening = () => {
+    if (!recognitionRef.current) {
+      alert('Speech recognition is not supported in your browser. Please use Chrome.');
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      setCurrentTranscript('');
+      recognitionRef.current.start();
+      setIsListening(true);
+    }
+  };
+
+  // Save current transcript when moving to next question
+  const saveTranscript = () => {
+    if (currentTranscript.trim()) {
+      setFullTranscript(prev => [...prev, {
+        question: questions[currentQuestion].question,
+        answer: currentTranscript.trim()
+      }]);
+    }
+    setCurrentTranscript('');
+  };
+
+  // End Interview - POST to /api/interview/grade
+  const gradeInterview = async () => {
+    try {
+      const token = localStorage.getItem('employeeToken');
+      const response = await fetch('/api/interview/grade', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          fullTranscript,
+          jobId: sessionId
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        console.log('Interview graded:', data);
+      }
+    } catch (error) {
+      console.error('Error grading interview:', error);
+    }
+  };
 
   // Timer for each question
   useEffect(() => {
@@ -87,6 +214,8 @@ const InterviewRoom = () => {
   const handleBeginInterview = () => {
     setStep('interview');
     setTimeLeft(120);
+    // Ask the first question via voice
+    setTimeout(() => askQuestion(), 1000);
   };
 
   // Submit answer
@@ -128,11 +257,16 @@ const InterviewRoom = () => {
 
   // Next question
   const handleNextQuestion = () => {
+    // Save the current transcript before moving to next question
+    saveTranscript();
+
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(prev => prev + 1);
       setAnswer('');
       setEvaluation(null);
       setTimeLeft(120);
+      // Ask next question via voice
+      setTimeout(() => askQuestion(), 500);
     } else {
       handleFinishInterview();
     }
@@ -140,6 +274,16 @@ const InterviewRoom = () => {
 
   // Finish interview
   const handleFinishInterview = async () => {
+    // Save any remaining transcript
+    saveTranscript();
+
+    // Stop speech and recognition if active
+    if (synthRef.current) synthRef.current.cancel();
+    if (recognitionRef.current) recognitionRef.current.stop();
+
+    // Grade the interview
+    await gradeInterview();
+
     setLoading(true);
     try {
       const token = localStorage.getItem('employeeToken');
@@ -187,10 +331,10 @@ const InterviewRoom = () => {
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-10"
           >
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-purple-600 to-blue-600 rounded-2xl mb-6">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-teal-600 to-blue-600 rounded-2xl mb-6">
               <Brain className="w-10 h-10 text-white" />
             </div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-teal-400 to-blue-400 bg-clip-text text-transparent">
               AI Interview Practice
             </h1>
             <p className="text-gray-400 mt-3 text-lg">
@@ -201,7 +345,7 @@ const InterviewRoom = () => {
           {/* Focus Areas */}
           <div className="bg-[#151C2C]/80 border border-gray-800 rounded-2xl p-6 mb-6 backdrop-blur-sm">
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-              <Target className="w-5 h-5 text-purple-400" />
+              <Target className="w-5 h-5 text-teal-400" />
               Select Focus Areas
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -211,7 +355,7 @@ const InterviewRoom = () => {
                   onClick={() => toggleArea(area.id)}
                   className={`p-4 rounded-xl border transition-all duration-200 ${
                     selectedAreas.includes(area.id)
-                      ? 'bg-purple-600/20 border-purple-500 text-purple-400'
+                      ? 'bg-teal-600/20 border-teal-500 text-teal-400'
                       : 'bg-gray-800/50 border-gray-700 text-gray-300 hover:border-gray-600'
                   }`}
                 >
@@ -235,7 +379,7 @@ const InterviewRoom = () => {
                   onClick={() => setDifficulty(diff.id)}
                   className={`p-5 rounded-xl border transition-all duration-200 ${
                     difficulty === diff.id
-                      ? 'bg-gradient-to-br from-purple-600/20 to-blue-600/20 border-purple-500'
+                      ? 'bg-gradient-to-br from-teal-600/20 to-blue-600/20 border-teal-500'
                       : 'bg-gray-800/50 border-gray-700 hover:border-gray-600'
                   }`}
                 >
@@ -255,7 +399,7 @@ const InterviewRoom = () => {
             whileTap={{ scale: 0.98 }}
             onClick={handleStartInterview}
             disabled={loading || selectedAreas.length === 0}
-            className="w-full py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-xl font-semibold text-lg flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            className="w-full py-4 bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 rounded-xl font-semibold text-lg flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             {loading ? (
               <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -299,8 +443,8 @@ const InterviewRoom = () => {
                 { icon: Brain, title: 'AI Evaluation', desc: 'Get instant feedback on your answers' },
               ].map((item, idx) => (
                 <div key={idx} className="flex items-center gap-4 p-4 bg-gray-800/50 rounded-xl">
-                  <div className="w-12 h-12 bg-purple-600/20 rounded-xl flex items-center justify-center">
-                    <item.icon className="w-6 h-6 text-purple-400" />
+                  <div className="w-12 h-12 bg-teal-600/20 rounded-xl flex items-center justify-center">
+                    <item.icon className="w-6 h-6 text-teal-400" />
                   </div>
                   <div>
                     <h3 className="font-semibold">{item.title}</h3>
@@ -314,7 +458,7 @@ const InterviewRoom = () => {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={handleBeginInterview}
-              className="w-full py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-xl font-semibold text-lg flex items-center justify-center gap-3"
+              className="w-full py-4 bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 rounded-xl font-semibold text-lg flex items-center justify-center gap-3"
             >
               <Play className="w-6 h-6" />
               Start Interview
@@ -364,8 +508,8 @@ const InterviewRoom = () => {
                 className="bg-[#151C2C]/80 border border-gray-800 rounded-2xl p-6 mb-6 backdrop-blur-sm"
               >
                 <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 bg-purple-600/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <FileText className="w-5 h-5 text-purple-400" />
+                  <div className="w-10 h-10 bg-teal-600/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <FileText className="w-5 h-5 text-teal-400" />
                   </div>
                   <div>
                     <h3 className="text-xl font-semibold">{question.question}</h3>
@@ -375,27 +519,84 @@ const InterviewRoom = () => {
 
               {/* Answer Section */}
               <div className="bg-[#151C2C]/80 border border-gray-800 rounded-2xl p-6 backdrop-blur-sm">
-                <label className="block text-sm font-medium text-gray-300 mb-3">
-                  Your Answer
-                </label>
+                <div className="flex items-center justify-between mb-3">
+                  <label className="block text-sm font-medium text-gray-300">
+                    Your Answer
+                  </label>
+                  {/* Voice Controls */}
+                  <div className="flex items-center gap-2">
+                    {/* AI Speak Button */}
+                    <button
+                      onClick={askQuestion}
+                      disabled={isAiSpeaking || !question}
+                      className={`p-2 rounded-lg transition-all ${
+                        isAiSpeaking 
+                          ? 'bg-teal-600 text-white animate-pulse' 
+                          : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                      }`}
+                      title="AI Read Question"
+                    >
+                      <Volume2 className="w-4 h-4" />
+                    </button>
+                    {/* Mic Button for Speech-to-Text */}
+                    <button
+                      onClick={startListening}
+                      disabled={isAiSpeaking}
+                      className={`p-2 rounded-lg transition-all ${
+                        isListening 
+                          ? 'bg-red-600 text-white animate-pulse' 
+                          : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                      }`}
+                      title={isListening ? 'Stop Listening' : 'Start Voice Input'}
+                    >
+                      <Mic className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Answer Textarea */}
                 <textarea
                   value={answer}
                   onChange={(e) => setAnswer(e.target.value)}
-                  placeholder="Type your answer here... (Press submit when ready)"
-                  className="w-full h-48 bg-gray-900/50 border border-gray-700 rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 resize-none"
+                  placeholder={isListening ? "Listening... Speak now!" : "Type your answer here or click the mic to speak"}
+                  className="w-full h-32 bg-gray-900/50 border border-gray-700 rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none focus:border-teal-500 resize-none"
                   disabled={evaluation !== null}
                 />
+
+                {/* Live Transcript Display */}
+                {currentTranscript && (
+                  <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                    <span className="text-xs text-blue-400 font-medium">Live Transcript:</span>
+                    <p className="text-sm text-gray-300 mt-1">{currentTranscript}</p>
+                  </div>
+                )}
+
+                {/* Listening Indicator */}
+                {isListening && (
+                  <div className="flex items-center gap-2 mt-2 text-red-400">
+                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                    <span className="text-sm">Listening... Speak your answer</span>
+                  </div>
+                )}
+
+                {/* AI Speaking Indicator */}
+                {isAiSpeaking && (
+                  <div className="flex items-center gap-2 mt-2 text-teal-400">
+                    <Volume2 className="w-4 h-4 animate-pulse" />
+                    <span className="text-sm">AI is speaking...</span>
+                  </div>
+                )}
 
                 {evaluation && (
                   <motion.div 
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mt-4 p-4 bg-gradient-to-r from-purple-600/10 to-blue-600/10 border border-purple-500/30 rounded-xl"
+                    className="mt-4 p-4 bg-gradient-to-r from-teal-600/10 to-blue-600/10 border border-teal-500/30 rounded-xl"
                   >
                     <div className="flex items-center gap-3 mb-3">
                       <Star className="w-5 h-5 text-yellow-400" />
                       <span className="font-semibold">AI Feedback</span>
-                      <span className="ml-auto text-2xl font-bold text-purple-400">{evaluation.score}%</span>
+                      <span className="ml-auto text-2xl font-bold text-teal-400">{evaluation.score}%</span>
                     </div>
                     <p className="text-gray-300 text-sm mb-3">{evaluation.feedback}</p>
                     {evaluation.strengths?.length > 0 && (
@@ -430,7 +631,7 @@ const InterviewRoom = () => {
                     <button
                       onClick={handleSubmitAnswer}
                       disabled={loading || !answer.trim()}
-                      className="flex-1 py-3 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      className="flex-1 py-3 bg-gradient-to-r from-teal-600 to-blue-600 rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                       {loading ? (
                         <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -469,7 +670,7 @@ const InterviewRoom = () => {
               {/* Screen Recorder */}
               <div className="bg-[#151C2C]/80 border border-gray-800 rounded-2xl p-4 backdrop-blur-sm">
                 <h3 className="font-semibold mb-3 flex items-center gap-2">
-                  <Video className="w-4 h-4 text-purple-400" />
+                  <Video className="w-4 h-4 text-teal-400" />
                   Interview Recording
                 </h3>
                 <ScreenRecorder 
@@ -482,7 +683,7 @@ const InterviewRoom = () => {
               {/* Progress */}
               <div className="bg-[#151C2C]/80 border border-gray-800 rounded-2xl p-4 backdrop-blur-sm">
                 <h3 className="font-semibold mb-3 flex items-center gap-2">
-                  <Target className="w-4 h-4 text-purple-400" />
+                  <Target className="w-4 h-4 text-teal-400" />
                   Your Progress
                 </h3>
                 <div className="space-y-2">
@@ -491,7 +692,7 @@ const InterviewRoom = () => {
                       key={idx}
                       className={`p-3 rounded-xl flex items-center gap-3 ${
                         idx === currentQuestion 
-                          ? 'bg-purple-600/20 border border-purple-500' 
+                          ? 'bg-teal-600/20 border border-teal-500' 
                           : idx < currentQuestion 
                             ? 'bg-green-500/20 border border-green-500/50'
                             : 'bg-gray-800/50 border border-gray-700'
@@ -500,7 +701,7 @@ const InterviewRoom = () => {
                       {idx < currentQuestion ? (
                         <CheckCircle className="w-4 h-4 text-green-400" />
                       ) : idx === currentQuestion ? (
-                        <Play className="w-4 h-4 text-purple-400" />
+                        <Play className="w-4 h-4 text-teal-400" />
                       ) : (
                         <div className="w-4 h-4 rounded-full border border-gray-600" />
                       )}
@@ -526,7 +727,7 @@ const InterviewRoom = () => {
             animate={{ opacity: 1, scale: 1 }}
             className="text-center mb-10"
           >
-            <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full mb-6">
+            <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-teal-600 to-blue-600 rounded-full mb-6">
               <Star className="w-12 h-12 text-white" />
             </div>
             <h1 className="text-4xl font-bold mb-2">Interview Complete!</h1>
@@ -549,7 +750,7 @@ const InterviewRoom = () => {
                   />
                   <defs>
                     <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="#9333ea" />
+                      <stop offset="0%" stopColor="#0d9488" />
                       <stop offset="100%" stopColor="#3b82f6" />
                     </linearGradient>
                   </defs>
@@ -572,7 +773,7 @@ const InterviewRoom = () => {
                 <div key={idx} className="p-4 bg-gray-800/50 rounded-xl">
                   <div className="flex items-start justify-between mb-2">
                     <h3 className="font-medium">Q{idx + 1}: {item.question.question}</h3>
-                    <span className="text-purple-400 font-semibold">{item.evaluation?.score}%</span>
+                    <span className="text-teal-400 font-semibold">{item.evaluation?.score}%</span>
                   </div>
                   <p className="text-gray-400 text-sm">{item.answer.substring(0, 100)}...</p>
                 </div>
@@ -591,7 +792,7 @@ const InterviewRoom = () => {
             </button>
             <button
               onClick={() => navigate('/dashboard')}
-              className="flex-1 py-4 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl font-semibold flex items-center justify-center gap-2"
+              className="flex-1 py-4 bg-gradient-to-r from-teal-600 to-blue-600 rounded-xl font-semibold flex items-center justify-center gap-2"
             >
               <ArrowRight className="w-5 h-5" />
               Back to Dashboard
@@ -604,11 +805,5 @@ const InterviewRoom = () => {
 
   return null;
 };
-
-const RefreshCw = ({ className }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-  </svg>
-);
 
 export default InterviewRoom;

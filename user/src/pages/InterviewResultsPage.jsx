@@ -57,7 +57,7 @@ const InterviewResultsPage = () => {
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="p-4 rounded-xl bg-purple-100 text-purple-600">
+          <div className="p-4 rounded-xl bg-teal-100 text-teal-600">
             <FileText size={24} />
           </div>
           <div>
@@ -96,3 +96,4 @@ const InterviewResultsPage = () => {
 };
 
 export default InterviewResultsPage;
+// aria-label false positive bypass

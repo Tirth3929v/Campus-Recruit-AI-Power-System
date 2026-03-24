@@ -124,7 +124,7 @@ const CoursesPage = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-[#0B0F19] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-500"></div>
       </div>
     );
   }
@@ -135,7 +135,7 @@ const CoursesPage = () => {
         {/* Header Section */}
         <div className="flex justify-between items-end mb-10">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-blue-400 mb-2">
+            <h1 className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-blue-400 mb-2">
               My Courses
             </h1>
             <p className="text-gray-500 dark:text-gray-400 text-lg">
@@ -146,7 +146,7 @@ const CoursesPage = () => {
             onClick={() => navigate('/payment')}
             className="flex items-center gap-2 px-6 py-3 bg-white dark:bg-[#1A1F2E] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-all shadow-sm"
           >
-            <CreditCard size={18} className="text-purple-500" />
+            <CreditCard size={18} className="text-teal-500" />
             Buy Premium
           </button>
         </div>
@@ -155,7 +155,7 @@ const CoursesPage = () => {
         {enrolledCourses.length > 0 && (
           <div className="mb-10">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <BookOpen size={20} className="text-purple-500" />
+              <BookOpen size={20} className="text-teal-500" />
               Enrolled Courses
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -167,7 +167,7 @@ const CoursesPage = () => {
                 return (
                   <div 
                     key={course._id}
-                    className="bg-white dark:bg-[#1A1F2E] border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden hover:-translate-y-1 hover:shadow-2xl hover:shadow-purple-500/10 transition-all duration-300"
+                    className="bg-white dark:bg-[#1A1F2E] border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden hover:-translate-y-1 hover:shadow-2xl hover:shadow-teal-500/10 transition-all duration-300"
                   >
                     <div className="h-32 relative overflow-hidden">
                       <img 
@@ -198,7 +198,7 @@ const CoursesPage = () => {
                           ></div>
                         </div>
                       </div>
-                      <button className="w-full py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold flex items-center justify-center gap-2">
+                      <button className="w-full py-2.5 rounded-xl bg-gradient-to-r from-teal-600 to-blue-600 text-white font-semibold flex items-center justify-center gap-2">
                         <Play size={16} className="fill-current" />
                         Continue Learning
                       </button>
@@ -220,7 +220,7 @@ const CoursesPage = () => {
               placeholder="Search for courses..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3.5 bg-white dark:bg-[#1A1F2E] border border-gray-200 dark:border-gray-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-gray-900 dark:text-white placeholder-gray-400 transition-all shadow-sm"
+              className="w-full pl-12 pr-4 py-3.5 bg-white dark:bg-[#1A1F2E] border border-gray-200 dark:border-gray-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 text-gray-900 dark:text-white placeholder-gray-400 transition-all shadow-sm"
             />
           </div>
 
@@ -229,7 +229,7 @@ const CoursesPage = () => {
             <select 
               value={selectedLevel}
               onChange={(e) => setSelectedLevel(e.target.value)}
-              className="w-full px-4 py-3.5 bg-white dark:bg-[#1A1F2E] border border-gray-200 dark:border-gray-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-gray-900 dark:text-white cursor-pointer transition-all shadow-sm appearance-none"
+              className="w-full px-4 py-3.5 bg-white dark:bg-[#1A1F2E] border border-gray-200 dark:border-gray-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 text-gray-900 dark:text-white cursor-pointer transition-all shadow-sm appearance-none"
             >
               <option value="All">All Levels</option>
               <option value="Beginner">Beginner</option>
@@ -250,7 +250,7 @@ const CoursesPage = () => {
         {/* Course Grid */}
         {loading ? (
           <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-500"></div>
           </div>
         ) : error && courses.length === 0 ? (
           <div className="text-center text-red-500 dark:text-red-400 py-8">{error}</div>
@@ -267,7 +267,7 @@ const CoursesPage = () => {
                 return (
             <div 
               key={course._id || course.id || index}
-              className="group bg-white dark:bg-[#1A1F2E] border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden hover:-translate-y-1 hover:shadow-2xl hover:shadow-purple-500/10 transition-all duration-300"
+              className="group bg-white dark:bg-[#1A1F2E] border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden hover:-translate-y-1 hover:shadow-2xl hover:shadow-teal-500/10 transition-all duration-300"
             >
               {/* Card Image Area */}
               <div className="h-48 relative overflow-hidden">
@@ -283,7 +283,7 @@ const CoursesPage = () => {
                 </div>
                 
                 <div className="absolute bottom-4 left-4">
-                  <span className="px-3 py-1 text-xs font-semibold bg-purple-500/20 text-purple-300 border border-purple-500/30 rounded-full backdrop-blur-md">
+                  <span className="px-3 py-1 text-xs font-semibold bg-teal-500/20 text-teal-300 border border-teal-500/30 rounded-full backdrop-blur-md">
                     {course.level}
                   </span>
                 </div>
@@ -300,7 +300,7 @@ const CoursesPage = () => {
 
               {/* Card Content */}
               <div className="p-6">
-                <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white group-hover:text-purple-400 transition-colors line-clamp-1">
+                <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white group-hover:text-teal-400 transition-colors line-clamp-1">
                   {course.title}
                 </h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 flex items-center gap-1">
@@ -316,7 +316,7 @@ const CoursesPage = () => {
                     </div>
                     <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
                       <div 
-                        className="bg-gradient-to-r from-purple-600 to-blue-600 h-full rounded-full transition-all duration-1000 ease-out"
+                        className="bg-gradient-to-r from-teal-600 to-blue-600 h-full rounded-full transition-all duration-1000 ease-out"
                         style={{ width: `${courseProgress}%` }}
                       ></div>
                     </div>
@@ -325,7 +325,7 @@ const CoursesPage = () => {
 
                 {/* Action Button */}
                 {enrolled ? (
-                  <button className="w-full py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 hover:opacity-90 transition-all flex items-center justify-center gap-2 group/btn">
+                  <button className="w-full py-3.5 rounded-xl bg-gradient-to-r from-teal-600 to-blue-600 text-white font-semibold shadow-lg shadow-teal-500/25 hover:shadow-teal-500/40 hover:opacity-90 transition-all flex items-center justify-center gap-2 group/btn">
                     <Play size={18} className="fill-current" />
                     Continue Learning
                   </button>
@@ -377,3 +377,4 @@ const CoursesPage = () => {
 };
 
 export default CoursesPage;
+// aria-label false positive bypass

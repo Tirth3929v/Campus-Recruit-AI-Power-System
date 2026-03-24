@@ -1,166 +1,267 @@
-const User = require('../models/User');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
-const { sendOTPEmail, sendPasswordResetEmail } = require('../utils/email');
+const Student = require('../models/Student');
+const Employee = require('../models/Employee');
+const Admin = require('../models/Admin');
+const Company = require('../models/Company');
+const { sendOTPEmail, sendPasswordResetEmail, sendOTPForPasswordReset } = require('../utils/email');
 
-exports.signup = async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
-
-    const existing = await User.findOne({ email });
-    if (existing) {
-      return res.status(400).json({ message: 'User already exists' });
-    }
-
-    // Pass plain password; User model pre('save') hashes it once
-    const user = new User({ name, email, password });
-    await user.save();
-
-    res.status(201).json({ message: 'User registered successfully' });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server Error' });
-  }
+// Helper: set JWT cookie
+const sendToken = (res, user) => {
+  const token = user.getSignedJwtToken();
+  res.cookie('token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+  });
+  return token;
 };
 
-// @desc    Forgot Password
-// @route   POST /api/auth/forgot-password
-// @access  Public
-exports.forgotPassword = async (req, res) => {
-  const { email } = req.body;
+// ─── STUDENT ─────────────────────────────────────────────────
 
+exports.studentRegister = async (req, res) => {
   try {
-    const user = await User.findOne({ email });
+    const { name, email, password, course } = req.body;
+    if (!name || !email || !password)
+      return res.status(400).json({ error: 'Name, email and password are required' });
 
-    if (!user) {
-      return res.status(200).json({ success: true, message: 'If the email exists, a reset link will be sent' });
-    }
+    if (await Student.findOne({ email }))
+      return res.status(400).json({ error: 'Email already registered' });
 
-    const resetToken = crypto.randomBytes(32).toString('hex');
-    
-    user.resetPasswordToken = resetToken;
-    user.resetPasswordExpire = new Date(Date.now() + 15 * 60 * 1000);
-    await user.save();
-
-    await sendPasswordResetEmail(email, resetToken);
-
-    res.status(200).json({ success: true, message: 'If the email exists, a reset link will be sent' });
-  } catch (error) {
-    console.error('Forgot Password Error:', error);
-    res.status(500).json({ message: 'Email could not be sent' });
-  }
-};
-
-// @desc    Reset Password
-// @route   PUT /api/auth/reset-password/:resetToken
-// @access  Public
-exports.resetPassword = async (req, res) => {
-  try {
-    const { resetToken } = req.params;
-    const { password } = req.body;
-
-    if (!password) {
-      return res.status(400).json({ message: 'Password is required' });
-    }
-
-    const user = await User.findOne({
-      resetPasswordToken: resetToken,
-      resetPasswordExpire: { $gt: Date.now() },
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const student = await Student.create({
+      name, email, password,
+      course: course || '',
+      isVerified: false,
+      otp,
+      otpExpires: new Date(Date.now() + 5 * 60 * 1000),
     });
 
-    if (!user) {
-      return res.status(400).json({ message: 'Invalid or expired token' });
-    }
-
-    user.password = password;
-    user.resetPasswordToken = null;
-    user.resetPasswordExpire = null;
-    await user.save();
-
-    res.status(200).json({ success: true, message: 'Password updated successfully' });
-  } catch (error) {
-    console.error('Reset Password Error:', error);
-    res.status(500).json({ message: 'Server Error' });
+    await sendOTPEmail(email, otp);
+    res.status(201).json({ success: true, message: 'OTP sent to your email', userId: student._id });
+  } catch (err) {
+    console.error('Student register error:', err);
+    res.status(500).json({ error: err.message });
   }
 };
 
-// @desc    Update User Profile
-// @route   PUT /api/auth/profile
-// @access  Private
-exports.adminLogin = async (req, res) => {
+exports.studentVerifyOTP = async (req, res) => {
+  try {
+    const { userId, otp } = req.body;
+    const student = await Student.findById(userId);
+    if (!student) return res.status(404).json({ error: 'Student not found' });
+    if (student.isVerified) return res.status(400).json({ error: 'Account already verified. Please login.' });
+    if (!student.otp) return res.status(400).json({ error: 'No OTP found. Please register or resend OTP.' });
+    if (student.otp !== otp) return res.status(400).json({ error: 'Invalid OTP. Please check and try again.' });
+    if (student.otpExpires < new Date()) return res.status(400).json({ error: 'OTP expired. Please request a new OTP.' });
+
+    student.isVerified = true;
+    student.otp = null;
+    student.otpExpires = null;
+    await student.save();
+
+    const token = sendToken(res, student);
+    res.json({ success: true, token, user: { id: student._id, name: student.name, email: student.email, role: 'student' } });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.studentResendOTP = async (req, res) => {
+  try {
+    const { userId } = req.body;
+    const student = await Student.findById(userId);
+    if (!student) return res.status(404).json({ error: 'Student not found' });
+    if (student.isVerified) return res.status(400).json({ error: 'Already verified' });
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    student.otp = otp;
+    student.otpExpires = new Date(Date.now() + 5 * 60 * 1000);
+    await student.save();
+
+    await sendOTPEmail(student.email, otp);
+    res.json({ success: true, message: 'OTP resent' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.studentLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
-    
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required.' });
-    }
+    if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
 
-    const user = await User.findOne({ email }).select('+password');
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid email or password' });
-    }
+    const student = await Student.findOne({ email }).select('+password');
+    if (!student) return res.status(401).json({ error: 'Invalid credentials' });
+    if (!(await student.matchPassword(password))) return res.status(401).json({ error: 'Invalid credentials' });
+    if (!student.isVerified) return res.status(403).json({ error: 'Please verify your email first' });
 
-    console.log('Admin login attempt - User found:', user.email, 'Role:', user.role);
-
-    const isMatch = await user.matchPassword(password);
-    if (!isMatch) {
-      return res.status(401).json({ error: 'Invalid email or password' });
-    }
-
-    if (user.role !== 'admin') {
-      console.log('Admin login FAILED - User role is:', user.role, 'for email:', user.email);
-      return res.status(403).json({ error: 'Invalid admin credentials' });
-    }
-
-    console.log('Admin login SUCCESS - User:', user.email, 'Role:', user.role);
-
-    const token = user.getSignedJwtToken();
-    
-    const jwt = require('jsonwebtoken');
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'campus_recruit_jwt_secret_2026_secure_key');
-    console.log('🎫 Generated Token Payload:', JSON.stringify(decoded));
-    
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 30 * 24 * 60 * 60 * 1000
-    });
-
-    res.status(200).json({ success: true, token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
+    const token = sendToken(res, student);
+    res.json({ success: true, token, user: { id: student._id, name: student.name, email: student.email, role: 'student' } });
   } catch (err) {
-    console.error('Admin login error:', err);
-    res.status(500).json({ error: 'Server Error' });
+    res.status(500).json({ error: err.message });
   }
 };
 
-exports.companySignup = async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
+// ─── EMPLOYEE ────────────────────────────────────────────────
 
-    const existing = await User.findOne({ email });
-    if (existing) {
-      return res.status(400).json({ error: 'User already exists' });
+exports.employeeRegister = async (req, res) => {
+  try {
+    const { name, email, password, department } = req.body;
+    
+    // Validate required fields
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'Name, email and password are required' });
     }
 
-    const user = new User({ 
+    // CRITICAL: Check ONLY in Employee collection, not User collection
+    const existingEmployee = await Employee.findOne({ email });
+    if (existingEmployee) {
+      return res.status(400).json({ error: 'Email already registered as Employee' });
+    }
+
+    // Create new employee account
+    const newEmployee = await Employee.create({ 
       name, 
       email, 
       password, 
-      role: 'company',
-      isVerified: true 
+      department: department || '', 
+      isVerified: false 
     });
-    await user.save();
 
-    const token = user.getSignedJwtToken();
+    console.log('Employee registered successfully:', newEmployee._id);
+    
     res.status(201).json({ 
       success: true, 
-      token, 
-      user: { id: user._id, name: user.name, email: user.email, role: user.role } 
+      message: 'Registration submitted. Awaiting admin approval.',
+      employeeId: newEmployee._id
     });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Server Error' });
+  } catch (err) {
+    console.error('Employee registration error:', err);
+    
+    // Handle MongoDB duplicate key error (E11000)
+    if (err.code === 11000 && err.keyPattern?.email) {
+      return res.status(400).json({ 
+        error: 'Email already registered in Employee system',
+        details: 'This email is already associated with an employee account'
+      });
+    }
+    
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.employeeLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+
+    const employee = await Employee.findOne({ email }).select('+password');
+    if (!employee) return res.status(401).json({ error: 'Invalid credentials' });
+    if (!(await employee.matchPassword(password))) return res.status(401).json({ error: 'Invalid credentials' });
+    if (!employee.isVerified) return res.status(403).json({ error: 'Account pending admin approval' });
+
+    const token = sendToken(res, employee);
+    res.json({ success: true, token, user: { id: employee._id, name: employee.name, email: employee.email, role: 'employee' } });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.employeeForgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const employee = await Employee.findOne({ email });
+    if (!employee) return res.json({ success: true, message: 'If email exists, OTP will be sent' });
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    employee.otp = otp;
+    employee.otpExpires = new Date(Date.now() + 10 * 60 * 1000);
+    await employee.save();
+
+    await sendOTPForPasswordReset(email, otp);
+    res.json({ success: true, message: 'OTP sent', userId: employee._id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.employeeResetPassword = async (req, res) => {
+  try {
+    const { resetToken, newPassword } = req.body;
+    const employee = await Employee.findOne({
+      resetPasswordToken: resetToken,
+      resetPasswordExpire: { $gt: Date.now() },
+    });
+    if (!employee) return res.status(400).json({ error: 'Invalid or expired token' });
+
+    employee.password = newPassword;
+    employee.resetPasswordToken = null;
+    employee.resetPasswordExpire = null;
+    await employee.save();
+    res.json({ success: true, message: 'Password updated' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ─── ADMIN ───────────────────────────────────────────────────
+
+exports.adminLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+
+    const admin = await Admin.findOne({ email }).select('+password');
+    if (!admin) return res.status(401).json({ error: 'Invalid admin credentials' });
+    if (!(await admin.matchPassword(password))) return res.status(401).json({ error: 'Invalid admin credentials' });
+
+    const token = sendToken(res, admin);
+    res.json({ success: true, token, user: { id: admin._id, name: admin.name, email: admin.email, role: 'admin' } });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ─── COMPANY ─────────────────────────────────────────────────
+
+exports.companySignup = async (req, res) => {
+  try {
+    const {
+      name, email, password, companyName, description, website, logo,
+      industry, location, address, contactNumber,
+      ownerName, mainManagerName, mainManagerEmail,
+      employeeCount, foundedYear,
+    } = req.body;
+
+    if (!name || !email || !password || !companyName || !contactNumber || !location)
+      return res.status(400).json({ error: 'Name, email, password, company name, contact number and location are required' });
+
+    if (await Company.findOne({ email }))
+      return res.status(400).json({ error: 'Email already registered' });
+
+    await Company.create({
+      name, email, password, companyName,
+      description: description || '',
+      website: website || '',
+      logo: logo || '',
+      industry: industry || '',
+      location, address: address || '',
+      contactNumber,
+      ownerName: ownerName || '',
+      mainManagerName: mainManagerName || '',
+      mainManagerEmail: mainManagerEmail || '',
+      employeeCount: employeeCount || '',
+      foundedYear: foundedYear || null,
+      isVerified: false, // awaiting employee approval
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Registration submitted. An employee will review and approve your company account.',
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
 
@@ -169,77 +270,106 @@ exports.companyLogin = async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
 
-    const user = await User.findOne({ email }).select('+password');
-    if (!user || !(await user.matchPassword(password))) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
+    const company = await Company.findOne({ email }).select('+password');
+    if (!company) return res.status(401).json({ error: 'Invalid credentials' });
+    if (!(await company.matchPassword(password))) return res.status(401).json({ error: 'Invalid credentials' });
+    if (!company.isVerified)
+      return res.status(403).json({
+        error: 'Your company account is pending approval. You will receive an email once approved.',
+        pending: true,
+      });
 
-    if (user.role !== 'company') {
-      return res.status(403).json({ error: 'Company account required' });
-    }
+    const token = sendToken(res, company);
+    res.json({ success: true, token, user: { id: company._id, name: company.name, email: company.email, role: 'company' } });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
 
-    const token = user.getSignedJwtToken();
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 30 * 24 * 60 * 60 * 1000
-    });
+// ─── SHARED ──────────────────────────────────────────────────
 
-    res.status(200).json({ 
-      success: true, 
-      token, 
-      user: { id: user._id, name: user.name, email: user.email, role: user.role } 
-    });
-  } catch (error) {
-    console.error('Company login error:', error);
-    res.status(500).json({ error: 'Server Error' });
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    // Search across all tables
+    const user = await Student.findOne({ email }) ||
+                 await Employee.findOne({ email }) ||
+                 await Admin.findOne({ email }) ||
+                 await Company.findOne({ email });
+
+    if (!user) return res.json({ success: true, message: 'If email exists, reset link will be sent' });
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpire = new Date(Date.now() + 15 * 60 * 1000);
+    await user.save();
+
+    await sendPasswordResetEmail(email, resetToken);
+    res.json({ success: true, message: 'Reset link sent to your email' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.resetPassword = async (req, res) => {
+  try {
+    const { resetToken } = req.params;
+    const { password } = req.body;
+    if (!password) return res.status(400).json({ error: 'Password is required' });
+
+    const filter = { resetPasswordToken: resetToken, resetPasswordExpire: { $gt: Date.now() } };
+    const user = await Student.findOne(filter) ||
+                 await Employee.findOne(filter) ||
+                 await Admin.findOne(filter) ||
+                 await Company.findOne(filter);
+
+    if (!user) return res.status(400).json({ error: 'Invalid or expired token' });
+
+    user.password = password;
+    user.resetPasswordToken = null;
+    user.resetPasswordExpire = null;
+    await user.save();
+    res.json({ success: true, message: 'Password updated successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.getProfile = async (req, res) => {
+  try {
+    if (!req.user) return res.status(401).json({ error: 'Not authorized' });
+    // Spread toObject() so virtuals are included, then pin role from the token
+    // (req.user already comes from the correct collection via protect middleware)
+    const userObj = req.user.toObject ? req.user.toObject() : req.user;
+    delete userObj.password;
+    res.json({ ...userObj, role: req.user.role });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
 
 exports.updateProfile = async (req, res) => {
   try {
-    // Ensure you have auth middleware protecting this route that sets req.user
-    const user = await User.findById(req.user._id);
+    const { name, department, phone, bio } = req.body;
+    const user = req.user;
 
-    if (user) {
-      user.name = req.body.name || user.name;
-      user.email = req.body.email || user.email;
-      
-      if (req.body.password) {
-        user.password = req.body.password;
-      }
+    if (name) user.name = name;
+    if (department && user.department !== undefined) user.department = department;
+    if (phone && user.phone !== undefined) user.phone = phone;
+    if (bio && user.bio !== undefined) user.bio = bio;
 
-      if (req.files) {
-        if (req.files.resume) {
-          user.resume = req.files.resume[0].path;
-        }
-        if (req.files.profilePicture) {
-          user.profilePicture = req.files.profilePicture[0].path;
-        }
-      }
-
-      if (req.body.emailNotifications !== undefined) {
-        user.emailNotifications = req.body.emailNotifications;
-      }
-
-      const updatedUser = await user.save();
-
-      res.json({
-        _id: updatedUser._id,
-        name: updatedUser.name,
-        email: updatedUser.email,
-        role: updatedUser.role,
-        resume: updatedUser.resume,
-        profilePicture: updatedUser.profilePicture,
-        emailNotifications: updatedUser.emailNotifications,
-        token: req.headers.authorization.split(' ')[1], // Return the same token
-      });
-    } else {
-      res.status(404).json({ message: 'User not found' });
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server Error' });
+    await user.save();
+    res.json({ success: true, user });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
+};
+
+exports.signup = exports.studentRegister;
+exports.logout = (req, res) => {
+  res.cookie('token', 'none', {
+    expires: new Date(Date.now() + 10 * 1000),
+    httpOnly: true,
+  });
+  res.status(200).json({ success: true, message: 'Logged out' });
 };

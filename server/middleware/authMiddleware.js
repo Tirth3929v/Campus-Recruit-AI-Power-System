@@ -1,46 +1,109 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const User     = require('../models/User');
+const Student  = require('../models/Student');
+const Employee = require('../models/Employee');
+const Admin    = require('../models/Admin');
+const Company  = require('../models/Company');
 
-const protect = async (req, res, next) => {
-  let token;
+const JWT_SECRET = process.env.JWT_SECRET || 'campus_recruit_jwt_secret_2026_secure_key';
 
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
-  ) {
-    try {
-      token = req.headers.authorization.split(' ')[1];
+// role → primary collection
+const MODEL_MAP = {
+  admin:    Admin,
+  employee: Employee,
+  company:  Company,
+  student:  Student,
+};
 
-      console.log('🧑 TOKEN DECODED:', token.substring(0, 20) + '...');
-
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'campus_recruit_jwt_secret_2026_secure_key');
-
-      console.log('🔓 JWT Payload:', JSON.stringify(decoded));
-
-      req.user = await User.findById(decoded.id).select('-password');
-
-      console.log('✅ req.user:', req.user?.email, 'role:', req.user?.role);
-
-      next();
-    } catch (error) {
-      console.error('❌ Auth Error:', error.message);
-      res.status(401).json({ message: 'Not authorized, token failed' });
-    }
+// Extract Bearer token or cookie from request
+const extractToken = (req) => {
+  if (req.headers.authorization?.startsWith('Bearer ')) {
+    return req.headers.authorization.split(' ')[1];
   }
+  return req.cookies?.token || null;
+};
 
-  if (!token) {
-    res.status(401).json({ message: 'Not authorized, no token' });
+// ─── Core protect middleware ──────────────────────────────────
+const protect = async (req, res, next) => {
+  const token = extractToken(req);
+  if (!token) return res.status(401).json({ message: 'Not authorized, no token' });
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const role    = decoded.role?.toLowerCase();
+    const Model   = MODEL_MAP[role];
+
+    if (!Model) {
+      console.error(`Unknown role in token: ${role}`);
+      return res.status(401).json({ message: `Unknown role in token: ${role}` });
+    }
+
+    // Query the correct collection for this role
+    try {
+      req.user = await Model.findById(decoded.id).select('-password');
+    } catch (modelError) {
+      console.error(`Error querying ${role} model:`, modelError.message);
+      // Try User collection as fallback
+      req.user = await User.findById(decoded.id).select('-password');
+    }
+
+    // Fallback: student tokens issued by the legacy /api/auth/user-login route
+    // are stored in the `users` collection, not `students`
+    if (!req.user && role === 'student') {
+      req.user = await User.findById(decoded.id).select('-password');
+    }
+
+    // Final fallback: try User collection for any role
+    if (!req.user) {
+      console.log(`User not found in ${role} collection, trying User collection...`);
+      req.user = await User.findById(decoded.id).select('-password');
+    }
+
+    if (!req.user) {
+      console.error(`User ${decoded.id} not found in any collection`);
+      return res.status(401).json({ message: 'User not found' });
+    }
+
+    // Ensure role is set on user object
+    if (!req.user.role) {
+      req.user.role = role;
+    }
+
+    next();
+  } catch (err) {
+    console.error('Auth middleware error:', err.message);
+    console.error('Stack:', err.stack);
+    res.status(401).json({ message: 'Not authorized, token failed', error: err.message });
   }
 };
 
+// ─── Role guards (run AFTER protect) ─────────────────────────
 const adminOnly = (req, res, next) => {
-  console.log('🔐 Checking admin:', req.user?.role);
-
-  if (!req.user || req.user.role !== 'admin') {
+  if (req.user?.role?.toLowerCase() !== 'admin') {
     return res.status(403).json({ message: 'Admin access required' });
   }
-
   next();
 };
 
-module.exports = { protect, adminOnly };
+const employeeOnly = (req, res, next) => {
+  if (req.user?.role?.toLowerCase() !== 'employee') {
+    return res.status(403).json({ message: 'Employee access required' });
+  }
+  next();
+};
+
+const companyOnly = (req, res, next) => {
+  if (req.user?.role?.toLowerCase() !== 'company') {
+    return res.status(403).json({ message: 'Company access required' });
+  }
+  next();
+};
+
+const studentOnly = (req, res, next) => {
+  if (req.user?.role?.toLowerCase() !== 'student') {
+    return res.status(403).json({ message: 'Student access required' });
+  }
+  next();
+};
+
+module.exports = { protect, adminOnly, employeeOnly, companyOnly, studentOnly, extractToken, MODEL_MAP };

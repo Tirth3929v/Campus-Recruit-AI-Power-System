@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const passport = require('passport');
 const { signup, login, getProfile, logout } = require('../controllers/authController');
-const { verifyToken } = require('../middleware/authMiddleware');
+const { protect } = require('../middleware/authMiddleware');
 
 // @route   POST /auth/signup
 // @desc    Register user
@@ -17,12 +17,12 @@ router.post('/login', login);
 // @route   GET /auth/profile
 // @desc    Get user profile
 // @access  Private
-router.get('/profile', verifyToken, getProfile);
+router.get('/profile', protect, getProfile);
 
 // @route   POST /auth/logout
 // @desc    Logout user
 // @access  Private
-router.post('/logout', verifyToken, logout);
+router.post('/logout', protect, logout);
 
 // @route   GET /auth/google
 // @desc    Authenticate with Google

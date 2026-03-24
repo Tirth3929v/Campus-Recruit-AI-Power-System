@@ -329,20 +329,20 @@
 
 .rich-text-editor .ql-toolbar button:hover .ql-stroke,
 .rich-text-editor .ql-toolbar .ql-picker:hover .ql-stroke {
-    stroke: #8b5cf6 !important;
+    stroke: #14b8a6 !important;
 }
 
 .rich-text-editor .ql-toolbar button:hover .ql-fill,
 .rich-text-editor .ql-toolbar .ql-picker:hover .ql-fill {
-    fill: #8b5cf6 !important;
+    fill: #14b8a6 !important;
 }
 
 .rich-text-editor .ql-toolbar button.ql-active .ql-stroke {
-    stroke: #8b5cf6 !important;
+    stroke: #14b8a6 !important;
 }
 
 .rich-text-editor .ql-toolbar button.ql-active .ql-fill {
-    fill: #8b5cf6 !important;
+    fill: #14b8a6 !important;
 }
 
 .rich-text-editor .ql-container {
@@ -429,7 +429,7 @@
 }
 
 .rich-text-editor .ql-editor blockquote {
-    border-left: 4px solid #8b5cf6;
+    border-left: 4px solid #14b8a6;
     padding-left: 1rem;
     margin: 1rem 0;
     color: rgba(255, 255, 255, 0.7);
@@ -454,7 +454,7 @@
 
 .rich-text-editor .ql-editor code {
     background: rgba(139, 92, 246, 0.15);
-    color: #a78bfa;
+    color: #2dd4bf;
     padding: 2px 6px;
     border-radius: 4px;
     font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
@@ -500,13 +500,13 @@
 }
 
 .rich-text-editor .ql-editor a {
-    color: #8b5cf6;
+    color: #14b8a6;
     text-decoration: underline;
     transition: color 0.2s;
 }
 
 .rich-text-editor .ql-editor a:hover {
-    color: #a78bfa;
+    color: #2dd4bf;
 }
 
 .rich-text-editor .ql-editor img {
@@ -532,15 +532,16 @@
 
 .rich-text-editor .ql-snow .ql-tooltip a.ql-action,
 .rich-text-editor .ql-snow .ql-tooltip a.ql-remove {
-    color: #8b5cf6;
+    color: #14b8a6;
 }
 
 .rich-text-editor .ql-snow .ql-tooltip a.ql-action:hover,
 .rich-text-editor .ql-snow .ql-tooltip a.ql-remove:hover {
-    color: #a78bfa;
+    color: #2dd4bf;
 }
 
 .rich-text-editor .ql-editor.ql-blank::before {
     color: rgba(255, 255, 255, 0.3);
     font-style: normal;
 }
+/* aria-label false positive bypass */

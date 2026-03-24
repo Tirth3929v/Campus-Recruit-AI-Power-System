@@ -8,5 +8,6 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 router.post('/upload', upload.single('video'), interviewController.uploadInterview);
 router.post('/start', interviewController.startInterview);
+router.post('/grade', interviewController.gradeInterview);
 
 module.exports = router;

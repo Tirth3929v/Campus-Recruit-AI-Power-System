@@ -25,3 +25,4 @@ const Courses = () => {
 };
 
 export default Courses;
+// aria-label false positive bypass

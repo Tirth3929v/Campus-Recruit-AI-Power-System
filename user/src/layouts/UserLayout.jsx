@@ -26,6 +26,7 @@ const UserLayout = () => {
     { path: '/student/courses', label: 'Skill Center', icon: BookOpen },
     { path: '/student/interview', label: 'AI Interview', icon: Bot },
     { path: '/student/history', label: 'History', icon: History },
+
     { path: '/student/profile', label: 'My Profile', icon: User },
   ];
 
@@ -46,7 +47,7 @@ const UserLayout = () => {
         {/* Ambient gradient inside sidebar */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-[-20%] left-[-30%] w-[80%] h-[40%] rounded-full bg-emerald-600/10 blur-[80px] animate-float" />
-          <div className="absolute bottom-[-10%] right-[-20%] w-[60%] h-[30%] rounded-full bg-violet-600/10 blur-[60px] animate-float" style={{ animationDelay: '-4s' }} />
+          <div className="absolute bottom-[-10%] right-[-20%] w-[60%] h-[30%] rounded-full bg-emerald-600/10 blur-[60px] animate-float" style={{ animationDelay: '-4s' }} />
         </div>
 
         {/* ── Brand ──────────────────────────────────── */}

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
+const Company = require('../models/Company');
 const Job = require('../models/Job');
 const Application = require('../models/Application');
 const AIInterviewSession = require('../models/AIInterviewSession');
@@ -108,11 +109,28 @@ router.put('/users/:id/role', async (req, res) => {
     }
 });
 
-// GET /api/admin/jobs — all jobs for admin view
+// GET /api/admin/jobs — all jobs for admin view with company name populated
 router.get('/jobs', async (req, res) => {
     try {
-        const jobs = await Job.find().sort({ createdAt: -1 });
-        res.json(jobs);
+        const { status } = req.query;
+        const filter = status ? { status } : {};
+        const jobs = await Job.find(filter)
+            .populate('company', 'companyName logo location')
+            .sort({ createdAt: -1 });
+        const result = jobs.map(j => ({
+            _id: j._id,
+            title: j.title,
+            company: j.company?.companyName || 'Unknown Company',
+            companyDetails: j.company,
+            location: j.location,
+            salary: j.salary,
+            type: j.type,
+            status: j.status,
+            department: j.department,
+            applicantCount: j.applicants?.length || 0,
+            createdAt: j.createdAt
+        }));
+        res.json(result);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
@@ -132,7 +150,8 @@ router.delete('/jobs/:id', async (req, res) => {
 // GET /api/admin/pending — list employees awaiting approval
 router.get('/pending', async (req, res) => {
     try {
-        const pendingUsers = await User.find({ role: 'employee', isVerified: false })
+        const Employee = require('../models/Employee');
+        const pendingUsers = await Employee.find({ isVerified: false })
             .select('-password')
             .sort({ createdAt: -1 });
         res.json(pendingUsers);
@@ -149,12 +168,13 @@ const Notification = require('../models/Notification'); // Add at the file top l
 // PUT /api/admin/users/:id/approve — approve an employee
 router.put('/users/:id/approve', async (req, res) => {
     try {
-        const user = await User.findByIdAndUpdate(
+        const Employee = require('../models/Employee');
+        const user = await Employee.findByIdAndUpdate(
             req.params.id,
             { isVerified: true },
             { new: true }
         ).select('-password');
-        if (!user) return res.status(404).json({ message: 'User not found' });
+        if (!user) return res.status(404).json({ message: 'Employee not found' });
 
         console.log("Admin approved:", user.email);
 
@@ -188,8 +208,9 @@ router.put('/users/:id/approve', async (req, res) => {
 // DELETE /api/admin/users/:id/reject — reject & delete a pending employee
 router.delete('/users/:id/reject', async (req, res) => {
     try {
-        const user = await User.findByIdAndDelete(req.params.id);
-        if (!user) return res.status(404).json({ message: 'User not found' });
+        const Employee = require('../models/Employee');
+        const user = await Employee.findByIdAndDelete(req.params.id);
+        if (!user) return res.status(404).json({ message: 'Employee not found' });
         res.json({ message: `${user.name}'s registration was rejected and removed` });
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -500,6 +521,122 @@ router.post('/reset-analytics', async (req, res) => {
         });
     } catch (err) {
         console.error('Reset analytics error:', err);
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// ─── COMPANY APPROVAL ROUTES ────────────────────────────────
+
+// GET /api/admin/companies/pending — list companies awaiting approval
+router.get('/companies/pending', async (req, res) => {
+    try {
+        const pending = await Company.find({ isVerified: false })
+            .select('-password').sort({ createdAt: -1 });
+        res.json(pending);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// GET /api/admin/companies — list all companies
+router.get('/companies', async (req, res) => {
+    try {
+        const companies = await Company.find()
+            .select('-password').sort({ createdAt: -1 });
+        res.json(companies);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// PUT /api/admin/companies/:id/approve — approve a company
+router.put('/companies/:id/approve', async (req, res) => {
+    try {
+        const company = await Company.findByIdAndUpdate(
+            req.params.id,
+            { isVerified: true, approvedAt: new Date(), rejectionReason: '' },
+            { new: true }
+        ).select('-password');
+        if (!company) return res.status(404).json({ message: 'Company not found' });
+
+        // Send approval email
+        try {
+            const { transporter } = require('../utils/email');
+            await transporter.sendMail({
+                from: '"Campus Recruit" <tirthpatel82032@gmail.com>',
+                to: company.email,
+                subject: '🎉 Company Account Approved — CampusRecruit',
+                html: `
+    <div style="background-color: #0f172a; padding: 40px 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+      <div style="max-width: 500px; margin: 0 auto; background-color: #0a0e17; border-radius: 16px; padding: 40px 30px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+        <h1 style="color: #10b981; font-size: 26px; margin-top: 0; text-align: center; font-weight: 700;">Account Approved!</h1>
+        <p style="color: #cbd5e1; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">Hello ${company.name},</p>
+        <p style="color: #cbd5e1; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">Great news! Your company profile has been verified and approved by the Campus Recruit admin team.</p>
+        <p style="color: #cbd5e1; font-size: 16px; line-height: 1.6; margin-bottom: 32px;">You can now log in to your company portal to start posting jobs and connecting with top student talent.</p>
+
+        <div style="text-align: center; margin: 32px 0;">
+          <a href="http://localhost:5173/company-login" style="background-color: #c084fc; color: #ffffff; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block;">Login to Company Portal</a>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid #334155; margin-bottom: 24px;" />
+
+        <p style="color: #64748b; font-size: 14px; text-align: center; margin-bottom: 8px;">Welcome to the Campus Recruit ecosystem.</p>
+        <p style="color: #64748b; font-size: 13px; text-align: center; margin: 0;">&copy; 2026 Campus Recruit. All rights reserved.</p>
+      </div>
+    </div>`
+            });
+        } catch (emailErr) {
+            console.error('Company approval email error:', emailErr.message);
+        }
+
+        // Notification via socket
+        const NotificationModel = require('../models/Notification');
+        const notif = await NotificationModel.create({
+            recipientId: company._id,
+            title: 'Company Account Approved!',
+            message: `${company.companyName} has been approved. You can now log in.`,
+            type: 'account_approval'
+        });
+        const io = req.app.get('socketio');
+        if (io) io.to(company._id.toString()).emit('new_notification', notif);
+
+        res.json({ message: `${company.companyName} approved successfully`, company });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// DELETE /api/admin/companies/:id/reject — reject & delete a pending company
+router.delete('/companies/:id/reject', async (req, res) => {
+    try {
+        const { reason } = req.body;
+        const company = await Company.findById(req.params.id).select('-password');
+        if (!company) return res.status(404).json({ message: 'Company not found' });
+
+        // Send rejection email before deleting
+        try {
+            const { transporter } = require('../utils/email');
+            await transporter.sendMail({
+                from: process.env.EMAIL_USER,
+                to: company.email,
+                subject: 'Company Registration Update — CampusRecruit',
+                html: `
+                  <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;border:1px solid #e5e7eb;border-radius:10px;">
+                    <h2 style="color:#ef4444;">Registration Not Approved</h2>
+                    <p>Hello <strong>${company.name}</strong>,</p>
+                    <p>Unfortunately, <strong>${company.companyName}</strong>'s registration could not be approved at this time.</p>
+                    ${reason ? `<p><strong>Reason:</strong> ${reason}</p>` : ''}
+                    <p>Please contact support if you believe this is an error.</p>
+                    <p style="color:#6b7280;font-size:12px;margin-top:30px;">Campus Recruiting Team</p>
+                  </div>`
+            });
+        } catch (emailErr) {
+            console.error('Company rejection email error:', emailErr.message);
+        }
+
+        await Company.findByIdAndDelete(req.params.id);
+        res.json({ message: `${company.companyName} rejected and removed` });
+    } catch (err) {
         res.status(500).json({ message: err.message });
     }
 });

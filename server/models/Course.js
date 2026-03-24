@@ -49,7 +49,7 @@ const courseSchema = new mongoose.Schema({
   },
   image: {
     type: String,
-    default: 'https://via.placeholder.com/300'
+    default: 'https://placehold.co/300x200?text=Course'
   },
   price: {
     type: Number,
@@ -58,7 +58,7 @@ const courseSchema = new mongoose.Schema({
   },
   thumbnail: {
     type: String,
-    default: 'https://via.placeholder.com/300'
+    default: 'https://placehold.co/300x200?text=Course'
   },
   courseNotes: {
     type: String,
@@ -100,6 +100,46 @@ const courseSchema = new mongoose.Schema({
     order: {
       type: Number,
       required: true
+    }
+  }],
+  updateHistory: [{
+    updatedBy: {
+      type: String,
+      required: true
+    },
+    updatedByEmail: {
+      type: String,
+      required: true
+    },
+    updateType: {
+      type: String,
+      enum: ['edit', 'delete'],
+      required: true
+    },
+    updatedFields: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {}
+    },
+    employeeReason: {
+      type: String,
+      default: ''
+    },
+    adminResponse: {
+      type: String,
+      default: ''
+    },
+    reviewedBy: {
+      type: String,
+      default: ''
+    },
+    status: {
+      type: String,
+      enum: ['approved', 'rejected'],
+      required: true
+    },
+    updatedAt: {
+      type: Date,
+      default: Date.now
     }
   }]
 }, { timestamps: true });

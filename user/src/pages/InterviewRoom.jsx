@@ -187,10 +187,10 @@ const InterviewRoom = () => {
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-10"
           >
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-purple-600 to-blue-600 rounded-2xl mb-6">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-teal-600 to-blue-600 rounded-2xl mb-6">
               <Brain className="w-10 h-10 text-white" />
             </div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-teal-400 to-blue-400 bg-clip-text text-transparent">
               AI Interview Practice
             </h1>
             <p className="text-gray-400 mt-3 text-lg">
@@ -201,7 +201,7 @@ const InterviewRoom = () => {
           {/* Focus Areas */}
           <div className="bg-[#151C2C]/80 border border-gray-800 rounded-2xl p-6 mb-6 backdrop-blur-sm">
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-              <Target className="w-5 h-5 text-purple-400" />
+              <Target className="w-5 h-5 text-teal-400" />
               Select Focus Areas
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -211,7 +211,7 @@ const InterviewRoom = () => {
                   onClick={() => toggleArea(area.id)}
                   className={`p-4 rounded-xl border transition-all duration-200 ${
                     selectedAreas.includes(area.id)
-                      ? 'bg-purple-600/20 border-purple-500 text-purple-400'
+                      ? 'bg-teal-600/20 border-teal-500 text-teal-400'
                       : 'bg-gray-800/50 border-gray-700 text-gray-300 hover:border-gray-600'
                   }`}
                 >
@@ -235,7 +235,7 @@ const InterviewRoom = () => {
                   onClick={() => setDifficulty(diff.id)}
                   className={`p-5 rounded-xl border transition-all duration-200 ${
                     difficulty === diff.id
-                      ? 'bg-gradient-to-br from-purple-600/20 to-blue-600/20 border-purple-500'
+                      ? 'bg-gradient-to-br from-teal-600/20 to-blue-600/20 border-teal-500'
                       : 'bg-gray-800/50 border-gray-700 hover:border-gray-600'
                   }`}
                 >
@@ -255,7 +255,7 @@ const InterviewRoom = () => {
             whileTap={{ scale: 0.98 }}
             onClick={handleStartInterview}
             disabled={loading || selectedAreas.length === 0}
-            className="w-full py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-xl font-semibold text-lg flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            className="w-full py-4 bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 rounded-xl font-semibold text-lg flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             {loading ? (
               <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -299,8 +299,8 @@ const InterviewRoom = () => {
                 { icon: Brain, title: 'AI Evaluation', desc: 'Get instant feedback on your answers' },
               ].map((item, idx) => (
                 <div key={idx} className="flex items-center gap-4 p-4 bg-gray-800/50 rounded-xl">
-                  <div className="w-12 h-12 bg-purple-600/20 rounded-xl flex items-center justify-center">
-                    <item.icon className="w-6 h-6 text-purple-400" />
+                  <div className="w-12 h-12 bg-teal-600/20 rounded-xl flex items-center justify-center">
+                    <item.icon className="w-6 h-6 text-teal-400" />
                   </div>
                   <div>
                     <h3 className="font-semibold">{item.title}</h3>
@@ -314,7 +314,7 @@ const InterviewRoom = () => {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={handleBeginInterview}
-              className="w-full py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-xl font-semibold text-lg flex items-center justify-center gap-3"
+              className="w-full py-4 bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 rounded-xl font-semibold text-lg flex items-center justify-center gap-3"
             >
               <Play className="w-6 h-6" />
               Start Interview
@@ -364,8 +364,8 @@ const InterviewRoom = () => {
                 className="bg-[#151C2C]/80 border border-gray-800 rounded-2xl p-6 mb-6 backdrop-blur-sm"
               >
                 <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 bg-purple-600/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <FileText className="w-5 h-5 text-purple-400" />
+                  <div className="w-10 h-10 bg-teal-600/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <FileText className="w-5 h-5 text-teal-400" />
                   </div>
                   <div>
                     <h3 className="text-xl font-semibold">{question.question}</h3>
@@ -382,7 +382,7 @@ const InterviewRoom = () => {
                   value={answer}
                   onChange={(e) => setAnswer(e.target.value)}
                   placeholder="Type your answer here... (Press submit when ready)"
-                  className="w-full h-48 bg-gray-900/50 border border-gray-700 rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 resize-none"
+                  className="w-full h-48 bg-gray-900/50 border border-gray-700 rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none focus:border-teal-500 resize-none"
                   disabled={evaluation !== null}
                 />
 
@@ -390,12 +390,12 @@ const InterviewRoom = () => {
                   <motion.div 
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mt-4 p-4 bg-gradient-to-r from-purple-600/10 to-blue-600/10 border border-purple-500/30 rounded-xl"
+                    className="mt-4 p-4 bg-gradient-to-r from-teal-600/10 to-blue-600/10 border border-teal-500/30 rounded-xl"
                   >
                     <div className="flex items-center gap-3 mb-3">
                       <Star className="w-5 h-5 text-yellow-400" />
                       <span className="font-semibold">AI Feedback</span>
-                      <span className="ml-auto text-2xl font-bold text-purple-400">{evaluation.score}%</span>
+                      <span className="ml-auto text-2xl font-bold text-teal-400">{evaluation.score}%</span>
                     </div>
                     <p className="text-gray-300 text-sm mb-3">{evaluation.feedback}</p>
                     {evaluation.strengths?.length > 0 && (
@@ -430,7 +430,7 @@ const InterviewRoom = () => {
                     <button
                       onClick={handleSubmitAnswer}
                       disabled={loading || !answer.trim()}
-                      className="flex-1 py-3 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      className="flex-1 py-3 bg-gradient-to-r from-teal-600 to-blue-600 rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                       {loading ? (
                         <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -469,7 +469,7 @@ const InterviewRoom = () => {
               {/* Screen Recorder */}
               <div className="bg-[#151C2C]/80 border border-gray-800 rounded-2xl p-4 backdrop-blur-sm">
                 <h3 className="font-semibold mb-3 flex items-center gap-2">
-                  <Video className="w-4 h-4 text-purple-400" />
+                  <Video className="w-4 h-4 text-teal-400" />
                   Interview Recording
                 </h3>
                 <ScreenRecorder 
@@ -482,7 +482,7 @@ const InterviewRoom = () => {
               {/* Progress */}
               <div className="bg-[#151C2C]/80 border border-gray-800 rounded-2xl p-4 backdrop-blur-sm">
                 <h3 className="font-semibold mb-3 flex items-center gap-2">
-                  <Target className="w-4 h-4 text-purple-400" />
+                  <Target className="w-4 h-4 text-teal-400" />
                   Your Progress
                 </h3>
                 <div className="space-y-2">
@@ -491,7 +491,7 @@ const InterviewRoom = () => {
                       key={idx}
                       className={`p-3 rounded-xl flex items-center gap-3 ${
                         idx === currentQuestion 
-                          ? 'bg-purple-600/20 border border-purple-500' 
+                          ? 'bg-teal-600/20 border border-teal-500' 
                           : idx < currentQuestion 
                             ? 'bg-green-500/20 border border-green-500/50'
                             : 'bg-gray-800/50 border border-gray-700'
@@ -500,7 +500,7 @@ const InterviewRoom = () => {
                       {idx < currentQuestion ? (
                         <CheckCircle className="w-4 h-4 text-green-400" />
                       ) : idx === currentQuestion ? (
-                        <Play className="w-4 h-4 text-purple-400" />
+                        <Play className="w-4 h-4 text-teal-400" />
                       ) : (
                         <div className="w-4 h-4 rounded-full border border-gray-600" />
                       )}
@@ -526,7 +526,7 @@ const InterviewRoom = () => {
             animate={{ opacity: 1, scale: 1 }}
             className="text-center mb-10"
           >
-            <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full mb-6">
+            <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-teal-600 to-blue-600 rounded-full mb-6">
               <Star className="w-12 h-12 text-white" />
             </div>
             <h1 className="text-4xl font-bold mb-2">Interview Complete!</h1>
@@ -549,7 +549,7 @@ const InterviewRoom = () => {
                   />
                   <defs>
                     <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="#9333ea" />
+                      <stop offset="0%" stopColor="#0d9488" />
                       <stop offset="100%" stopColor="#3b82f6" />
                     </linearGradient>
                   </defs>
@@ -572,7 +572,7 @@ const InterviewRoom = () => {
                 <div key={idx} className="p-4 bg-gray-800/50 rounded-xl">
                   <div className="flex items-start justify-between mb-2">
                     <h3 className="font-medium">Q{idx + 1}: {item.question.question}</h3>
-                    <span className="text-purple-400 font-semibold">{item.evaluation?.score}%</span>
+                    <span className="text-teal-400 font-semibold">{item.evaluation?.score}%</span>
                   </div>
                   <p className="text-gray-400 text-sm">{item.answer.substring(0, 100)}...</p>
                 </div>
@@ -591,7 +591,7 @@ const InterviewRoom = () => {
             </button>
             <button
               onClick={() => navigate('/dashboard')}
-              className="flex-1 py-4 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl font-semibold flex items-center justify-center gap-2"
+              className="flex-1 py-4 bg-gradient-to-r from-teal-600 to-blue-600 rounded-xl font-semibold flex items-center justify-center gap-2"
             >
               <ArrowRight className="w-5 h-5" />
               Back to Dashboard

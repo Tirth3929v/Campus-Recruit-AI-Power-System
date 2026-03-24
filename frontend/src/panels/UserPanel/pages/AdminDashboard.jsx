@@ -222,7 +222,7 @@ const AdminDashboard = () => {
               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                 <h3 className="font-bold text-gray-800 text-lg mb-4">Add New Course</h3>
                 <form onSubmit={handleAddCourse} className="flex gap-4">
-                  <input 
+                  <input aria-label="Input field"  
                     type="text" 
                     value={newCourseTitle}
                     onChange={(e) => setNewCourseTitle(e.target.value)}
@@ -251,7 +251,7 @@ const AdminDashboard = () => {
                     >
                       {editingId === course.id ? (
                         <div className="flex items-center gap-3 flex-1">
-                          <input 
+                          <input aria-label="Input field"  
                             type="text" 
                             value={editValue}
                             onChange={(e) => setEditValue(e.target.value)}

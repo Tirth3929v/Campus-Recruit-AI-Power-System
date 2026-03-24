@@ -45,7 +45,7 @@ const MyLearningWidget = ({ data }) => {
                 <p className="text-gray-500 text-sm mb-6">You are not enrolled in any courses yet.</p>
                 <button
                     onClick={() => navigate('/courses')}
-                    className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-purple-500/20">
+                    className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-teal-500/20">
                     Browse Courses
                 </button>
             </div>

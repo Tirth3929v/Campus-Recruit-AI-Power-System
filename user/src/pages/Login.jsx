@@ -67,7 +67,7 @@ const Login = () => {
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-[#0B0F19] flex flex-col items-center justify-center text-gray-900 dark:text-white">
-        <Loader2 className="w-12 h-12 text-purple-500 animate-spin mb-4" />
+        <Loader2 className="w-12 h-12 text-teal-500 animate-spin mb-4" />
         <p className="text-gray-500 dark:text-gray-400 animate-pulse">Verifying session...</p>
       </div>
     );
@@ -100,9 +100,8 @@ const Login = () => {
       });
       const data = await res.json();
       if (res.ok) {
-        localStorage.clear();
+        localStorage.removeItem('userToken');
         if (data.token) localStorage.setItem('userToken', data.token);
-        localStorage.setItem('role', 'user');
         await checkAuth();
         navigate('/student/dashboard');
       } else {
@@ -126,11 +125,11 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0B0F19] flex font-sans selection:bg-purple-500/30 overflow-hidden">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0B0F19] flex font-sans selection:bg-teal-500/30 overflow-hidden">
 
       {/* ═══ Ambient Background ═════════════════════════════ */}
       <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute top-[-15%] left-[-10%] w-[50%] h-[50%] rounded-full bg-violet-500/10 dark:bg-violet-900/15 blur-[150px] animate-float" />
+        <div className="absolute top-[-15%] left-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-500/10 dark:bg-emerald-900/15 blur-[150px] animate-float" />
         <div className="absolute bottom-[-15%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-500/10 dark:bg-blue-900/15 blur-[150px] animate-float" style={{ animationDelay: '-3s' }} />
         <div className="absolute top-[40%] left-[50%] w-[30%] h-[30%] rounded-full bg-pink-500/5 dark:bg-pink-900/10 blur-[120px] animate-morph-blob" />
       </div>
@@ -147,7 +146,7 @@ const Login = () => {
           transition={{ delay: 0.3, duration: 0.8 }}
         >
           <div className="flex items-center gap-2 mb-8">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-violet-600 to-blue-600 flex items-center justify-center shadow-lg shadow-violet-500/30">
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-600 to-blue-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
               <Sparkles size={20} className="text-white" />
             </div>
             <span className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
@@ -173,7 +172,7 @@ const Login = () => {
               whileHover={{ x: 8, scale: 1.02 }}
               className="flex items-center gap-4 p-4 rounded-xl glass-card cursor-default group"
             >
-              <div className="p-3 rounded-xl bg-gradient-to-br from-violet-500/10 to-blue-500/10 text-violet-600 dark:text-violet-400 group-hover:scale-110 transition-transform">
+              <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-500/10 to-blue-500/10 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform">
                 <feature.icon size={22} />
               </div>
               <div>
@@ -195,7 +194,7 @@ const Login = () => {
         >
           {/* Mobile brand */}
           <div className="lg:hidden flex items-center gap-2 mb-6 justify-center">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-violet-600 to-blue-600 flex items-center justify-center shadow-lg shadow-violet-500/30">
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-emerald-600 to-blue-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
               <Sparkles size={16} className="text-white" />
             </div>
             <span className="text-xl font-bold text-gray-900 dark:text-white">
@@ -232,9 +231,9 @@ const Login = () => {
               transition={{ delay: 0.4 }} className="space-y-2">
               <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Email</label>
               <div className="relative group">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-purple-500 transition-colors" size={18} />
-                <input type="email" required autoComplete="email" placeholder="Enter your email"
-                  className={`w-full bg-white dark:bg-white/5 border ${errors.email ? 'border-red-500 dark:border-red-500' : 'border-gray-200 dark:border-white/10'} rounded-xl py-3.5 pl-11 pr-4 text-gray-900 dark:text-white focus:ring-2 ${errors.email ? 'focus:ring-red-500' : 'focus:ring-purple-500'} focus:border-transparent outline-none transition-all`}
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-teal-500 transition-colors" size={18} />
+                <input type="email" id="email" name="email" required autoComplete="email" placeholder="Enter your email"
+                  className={`w-full bg-white dark:bg-white/5 border ${errors.email ? 'border-red-500 dark:border-red-500' : 'border-gray-200 dark:border-white/10'} rounded-xl py-3.5 pl-11 pr-4 text-gray-900 dark:text-white focus:ring-2 ${errors.email ? 'focus:ring-red-500' : 'focus:ring-teal-500'} focus:border-transparent outline-none transition-all`}
                   value={formData.email}
                   onChange={handleEmailChange}
                   onBlur={() => handleBlur('email')} />
@@ -248,9 +247,9 @@ const Login = () => {
               transition={{ delay: 0.5 }} className="space-y-2">
               <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Password</label>
               <div className="relative group">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-purple-500 transition-colors" size={18} />
-                <input type="password" required autoComplete="current-password" placeholder="Enter your password"
-                  className={`w-full bg-white dark:bg-white/5 border ${errors.password ? 'border-red-500 dark:border-red-500' : 'border-gray-200 dark:border-white/10'} rounded-xl py-3.5 pl-11 pr-4 text-gray-900 dark:text-white focus:ring-2 ${errors.password ? 'focus:ring-red-500' : 'focus:ring-purple-500'} focus:border-transparent outline-none transition-all`}
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-teal-500 transition-colors" size={18} />
+                <input type="password" id="password" name="password" required autoComplete="current-password" placeholder="Enter your password"
+                  className={`w-full bg-white dark:bg-white/5 border ${errors.password ? 'border-red-500 dark:border-red-500' : 'border-gray-200 dark:border-white/10'} rounded-xl py-3.5 pl-11 pr-4 text-gray-900 dark:text-white focus:ring-2 ${errors.password ? 'focus:ring-red-500' : 'focus:ring-teal-500'} focus:border-transparent outline-none transition-all`}
                   value={formData.password}
                   onChange={handlePasswordChange}
                   onBlur={() => handleBlur('password')} />
@@ -259,7 +258,7 @@ const Login = () => {
                 <p className="text-red-500 text-xs mt-1">{errors.password}</p>
               )}
               <div className="flex justify-end">
-                <Link to="/forgot-password" className="text-xs text-purple-600 dark:text-purple-400 hover:text-purple-500 font-medium transition-colors">
+                <Link to="/forgot-password" className="text-xs text-teal-600 dark:text-teal-400 hover:text-teal-500 font-medium transition-colors">
                   Forgot Password?
                 </Link>
               </div>
@@ -292,7 +291,7 @@ const Login = () => {
             className="mt-8 text-center">
             <p className="text-gray-500 dark:text-gray-400 text-sm">
               Don't have an account?{' '}
-              <Link to="/register" className="text-purple-600 dark:text-purple-400 hover:text-purple-500 font-bold transition-colors">
+              <Link to="/register" className="text-teal-600 dark:text-teal-400 hover:text-teal-500 font-bold transition-colors">
                 Create Account
               </Link>
             </p>

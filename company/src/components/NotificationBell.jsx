@@ -17,27 +17,38 @@ const NotificationBell = ({ basePath = '' }) => {
     useEffect(() => {
         if (!user?._id) return;
 
-        // Fetch initial via API
         fetchNotifications();
 
-        // Connect socket
-        const socket = io('/', {
-            withCredentials: true
-        });
+        let socket;
+        try {
+            socket = io('http://localhost:5000', {
+                path: '/socket.io',
+                withCredentials: true,
+                reconnectionAttempts: 2,
+                reconnectionDelay: 5000,
+                timeout: 10000,
+                transports: ['polling', 'websocket']
+            });
 
-        socket.on('connect', () => {
-            socket.emit('join_room', { userId: user._id, role: user.role });
-        });
+            socket.on('connect', () => {
+                socket.emit('join_room', { userId: user._id, role: user.role });
+            });
 
-        socket.on('new_notification', (notif) => {
-            setNotifications(prev => [notif, ...prev]);
-            setUnreadCount(prev => prev + 1);
+            socket.on('connect_error', () => {});
 
-            // Optional: Show native browser notification or toast here
-        });
+            socket.on('new_notification', (notif) => {
+                setNotifications(prev => [notif, ...prev]);
+                setUnreadCount(prev => prev + 1);
+            });
+        } catch (err) {}
 
-        return () => socket.disconnect();
-    }, [user?._id]);
+        const pollInterval = setInterval(fetchNotifications, 30000);
+
+        return () => {
+            clearInterval(pollInterval);
+            if (socket?.connected) socket.disconnect();
+        };
+    }, [user?._id, user?.role]);
 
     useEffect(() => {
         const handleClickOutside = (e) => {

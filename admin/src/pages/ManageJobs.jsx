@@ -4,7 +4,7 @@ import { Briefcase, Trash2, Search, Loader2, AlertTriangle, CheckCircle2, MapPin
 
 const typeColors = {
   'Full-time': 'bg-blue-500/15 text-blue-400 border border-blue-500/20',
-  'Internship': 'bg-purple-500/15 text-purple-400 border border-purple-500/20',
+  'Internship': 'bg-teal-500/15 text-teal-400 border border-teal-500/20',
   'Part-time': 'bg-orange-500/15 text-orange-400 border border-orange-500/20',
   'Contract': 'bg-rose-500/15 text-rose-400 border border-rose-500/20',
 };
@@ -55,7 +55,7 @@ const ManageJobs = () => {
       let url = '';
       
       if (tab === 'pending') {
-        url = '/api/jobs/admin';
+        url = '/api/jobs/admin/pending';
       } else {
         url = `/api/jobs/admin/history?type=${tab}`;
       }
@@ -217,7 +217,7 @@ const ManageJobs = () => {
 
         <div className="relative">
           <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/25" />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search jobs..."
+          <input aria-label="Input field"  value={search} onChange={e => setSearch(e.target.value)} placeholder="Search jobs..."
             className="pl-9 pr-4 py-2.5 rounded-xl text-sm text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 w-64"
             style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }} />
         </div>
@@ -249,7 +249,7 @@ const ManageJobs = () => {
                 <span className={`text-xs font-bold px-2.5 py-1 rounded-full flex-shrink-0 ${
                   activeTab === 'approved' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20' :
                   activeTab === 'rejected' ? 'bg-red-500/15 text-red-400 border border-red-500/20' :
-                  'bg-purple-500/15 text-purple-400 border border-purple-500/20'
+                  'bg-teal-500/15 text-teal-400 border border-teal-500/20'
                 }`}>
                   <Clock size={10} className="inline mr-1" />
                   {activeTab === 'approved' ? 'Approved' : activeTab === 'rejected' ? 'Rejected' : 'Pending Review'}

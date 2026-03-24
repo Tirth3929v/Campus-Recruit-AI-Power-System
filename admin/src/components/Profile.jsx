@@ -21,7 +21,7 @@ const Profile = () => {
           className="bg-gray-800/50 border border-gray-700 rounded-3xl p-8 mb-8 backdrop-blur-xl"
         >
           <div className="flex flex-col md:flex-row items-center gap-8">
-            <div className="w-32 h-32 rounded-full bg-gradient-to-tr from-purple-500 to-blue-500 flex items-center justify-center text-4xl font-bold shadow-2xl shadow-purple-500/20">
+            <div className="w-32 h-32 rounded-full bg-gradient-to-tr from-teal-500 to-blue-500 flex items-center justify-center text-4xl font-bold shadow-2xl shadow-teal-500/20">
               {user?.name?.[0] || 'U'}
             </div>
             
@@ -39,7 +39,7 @@ const Profile = () => {
               </div>
             </div>
             
-            <button className="px-6 py-2.5 border border-purple-500 text-purple-400 rounded-xl hover:bg-purple-500/10 transition-colors">
+            <button className="px-6 py-2.5 border border-teal-500 text-teal-400 rounded-xl hover:bg-teal-500/10 transition-colors">
               Edit Profile
             </button>
           </div>
@@ -65,7 +65,7 @@ const Profile = () => {
               
               <div className="flex justify-between items-end">
                 <span className="text-xs font-mono text-gray-500">{cert.id_code}</span>
-                <button className="text-sm text-purple-400 hover:text-purple-300 font-medium">
+                <button className="text-sm text-teal-400 hover:text-teal-300 font-medium">
                   Download PDF
                 </button>
               </div>

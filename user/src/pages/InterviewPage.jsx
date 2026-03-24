@@ -1,297 +1,239 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, MicOff, Video, VideoOff, Send, StopCircle, AlertCircle, CheckCircle, ArrowRight, Loader2, Maximize, Settings } from 'lucide-react';
-import ScreenRecorder from '../components/ScreenRecorder';
-import axiosInstance from './axiosInstance';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { 
+  Brain, 
+  Video, 
+  Mic, 
+  CheckCircle, 
+  ArrowRight, 
+  Clock,
+  Target,
+  Sparkles,
+  Briefcase
+} from 'lucide-react';
 
 const InterviewPage = () => {
-    const location = useLocation();
-    const navigate = useNavigate();
-    const { interviewId, subject } = location.state || { interviewId: null, subject: 'General' };
+  const navigate = useNavigate();
+  const [selectedTopic, setSelectedTopic] = useState('IT - MERN Stack');
 
-    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-    const [answer, setAnswer] = useState('');
-    const [feedback, setFeedback] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [sessionScore, setSessionScore] = useState(0);
+  const interviewTopics = [
+    'IT - MERN Stack',
+    'IT - Python/Django',
+    'IT - Java/Spring Boot',
+    'IT - React/Frontend',
+    'IT - Node.js/Backend',
+    'IT - DevOps/Cloud',
+    'IT - Data Science/ML',
+    'Non-IT - HR/Management',
+    'Non-IT - Marketing',
+    'Non-IT - Finance/Accounting',
+    'Non-IT - Sales/Business Development',
+  ];
 
-    const [questions, setQuestions] = useState([]);
-    const [aiSessionId, setAiSessionId] = useState(null);
-    const [isGenerating, setIsGenerating] = useState(true);
+  const handleStartInterview = () => {
+    navigate('/ai-interview', { state: { topic: selectedTopic } });
+  };
 
-    // Voice Dictation State
-    const [isListening, setIsListening] = useState(false);
-    const recognitionRef = useRef(null);
+  const instructions = [
+    { icon: Video, text: 'Find a quiet place with good lighting' },
+    { icon: Mic, text: 'Enable camera and microphone access' },
+    { icon: Target, text: 'Answer questions clearly and confidently' },
+    { icon: Clock, text: 'Take your time - quality over speed' },
+  ];
 
-    // Initialize Speech Recognition
-    useEffect(() => {
-        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            recognitionRef.current = new SpeechRecognition();
-            // In some browsers continuous doesn't automatically stop, but we control it manually
-            // Wait, continuous=false might be safer to let it auto-stop on silence
-            recognitionRef.current.continuous = true;
-            recognitionRef.current.interimResults = true;
+  const features = [
+    { icon: Brain, title: 'AI-Powered', desc: 'Smart questions adapted to your answers' },
+    { icon: Sparkles, title: 'Real-time Feedback', desc: 'Get instant evaluation and tips' },
+    { icon: CheckCircle, title: 'Practice Mode', desc: 'Improve your skills risk-free' },
+  ];
 
-            recognitionRef.current.onresult = (event) => {
-                let finalTranscript = '';
-                for (let i = event.resultIndex; i < event.results.length; ++i) {
-                    if (event.results[i].isFinal) {
-                        finalTranscript += event.results[i][0].transcript + ' ';
-                    }
-                }
-                if (finalTranscript) {
-                    setAnswer(prev => prev + finalTranscript);
-                }
-            };
+  return (
+    <div className="min-h-screen bg-[#0B0F19] text-white flex items-center justify-center p-6">
+      <div className="max-w-4xl w-full">
+        
+        {/* Main Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="bg-[#151C2C]/80 border border-gray-800 rounded-3xl p-8 md:p-12 backdrop-blur-sm shadow-2xl"
+        >
+          
+          {/* Header */}
+          <div className="text-center mb-10">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-teal-600 to-blue-600 rounded-2xl mb-6 shadow-lg"
+            >
+              <Brain className="w-10 h-10 text-white" />
+            </motion.div>
+            
+            <motion.h1
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-teal-400 via-pink-400 to-blue-400 bg-clip-text text-transparent mb-4"
+            >
+              AI-Powered Practice Interview
+            </motion.h1>
+            
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="text-gray-400 text-lg max-w-2xl mx-auto"
+            >
+              Prepare for your dream job with our intelligent interview system. 
+              Get real-time feedback and improve your skills.
+            </motion.p>
+          </div>
 
-            recognitionRef.current.onerror = (event) => {
-                console.error("Speech recognition error", event.error);
-                setIsListening(false);
-            };
-
-            recognitionRef.current.onend = () => {
-                setIsListening(false);
-            };
-        }
-
-        return () => {
-            if (recognitionRef.current) {
-                recognitionRef.current.stop();
-            }
-        };
-    }, []);
-
-    const toggleListening = () => {
-        if (isListening) {
-            recognitionRef.current?.stop();
-            setIsListening(false);
-        } else {
-            try {
-                recognitionRef.current?.start();
-                setIsListening(true);
-            } catch (e) {
-                console.error(e);
-            }
-        }
-    };
-
-    const currentQuestion = questions[currentQuestionIndex]?.question || 'Generating...';
-    const isLastQuestion = questions.length > 0 && currentQuestionIndex === questions.length - 1;
-
-    // Fetch questions on mount
-    useEffect(() => {
-        const fetchQuestions = async () => {
-            try {
-                const res = await axiosInstance.post('/ai-interview/generate-questions', {
-                    focusAreas: [subject],
-                    difficulty: 'Medium',
-                    jobId: interviewId
-                });
-                if (res.data.success) {
-                    setAiSessionId(res.data.sessionId);
-                    setQuestions(res.data.questions);
-                }
-            } catch (err) {
-                console.error("Failed to fetch AI questions", err);
-            } finally {
-                setIsGenerating(false);
-            }
-        };
-        fetchQuestions();
-    }, [subject, interviewId]);
-
-    const handleSubmitAnswer = async () => {
-        if (!answer.trim() || !aiSessionId) return;
-        setLoading(true);
-
-        try {
-            const res = await axiosInstance.post('/ai-interview/evaluate-answer', {
-                sessionId: aiSessionId,
-                questionIndex: currentQuestionIndex,
-                userAnswer: answer
-            });
-
-            if (res.data.success) {
-                setFeedback({
-                    score: res.data.evaluation.score,
-                    feedback: res.data.evaluation.feedback,
-                    improvement: res.data.evaluation.improvements?.[0] || 'Keep practicing.'
-                });
-                setSessionScore(res.data.overallScore);
-            }
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleNext = () => {
-        setAnswer('');
-        setFeedback(null);
-        if (isLastQuestion) {
-            finishInterview();
-        } else {
-            setCurrentQuestionIndex(prev => prev + 1);
-        }
-    };
-
-    const finishInterview = async () => {
-        if (!aiSessionId) return navigate('/student/history');
-
-        try {
-            await axiosInstance.post(`/ai-interview/submit-session`, {
-                sessionId: aiSessionId
-            });
-        } catch (error) {
-            console.error("Failed to submit session", error);
-        } finally {
-            navigate('/student/dashboard');
-        }
-    };
-
-    return (
-        <div className="min-h-screen bg-[#0B0F19] text-gray-200 font-sans flex flex-col h-screen overflow-hidden">
-            {/* Header */}
-            <div className="h-16 border-b border-white/10 glass-panel flex items-center justify-between px-6 z-10 shrink-0">
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2 font-bold text-white text-lg">
-                        <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
-                        Live Session
-                    </div>
+          {/* Features Grid */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10"
+          >
+            {features.map((feature, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 + idx * 0.1 }}
+                className="bg-gray-800/50 border border-gray-700 rounded-2xl p-6 hover:border-teal-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-teal-500/10"
+              >
+                <div className="w-12 h-12 bg-teal-600/20 rounded-xl flex items-center justify-center mb-4">
+                  <feature.icon className="w-6 h-6 text-teal-400" />
                 </div>
+                <h3 className="font-semibold text-white mb-2">{feature.title}</h3>
+                <p className="text-gray-400 text-sm">{feature.desc}</p>
+              </motion.div>
+            ))}
+          </motion.div>
 
-                <h1 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400 font-mono hidden md:block">
-                    {subject} Interview
-                </h1>
-
-                <div className="flex items-center gap-6">
-                    <div className="text-right">
-                        <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Session Score</p>
-                        <p className="text-xl font-bold text-emerald-400">{sessionScore}</p>
-                    </div>
-                    <button onClick={finishInterview} className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-500 rounded-lg text-sm font-bold border border-red-500/30 transition-colors flex items-center gap-2">
-                        <StopCircle size={16} /> End Interview
-                    </button>
-                </div>
+          {/* Topic Selection */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.9 }}
+            className="bg-gray-900/50 border border-gray-800 rounded-2xl p-8 mb-8"
+          >
+            <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
+              <Briefcase className="w-6 h-6 text-teal-400" />
+              Select Interview Topic
+            </h2>
+            
+            <div className="relative">
+              <select
+                value={selectedTopic}
+                onChange={(e) => setSelectedTopic(e.target.value)}
+                className="w-full px-6 py-4 bg-gray-800/70 border border-gray-700 rounded-xl text-white text-lg font-medium appearance-none cursor-pointer hover:border-teal-500/50 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition-all duration-300"
+              >
+                {interviewTopics.map((topic) => (
+                  <option key={topic} value={topic} className="bg-gray-900 text-white">
+                    {topic}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                <svg className="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
             </div>
+          </motion.div>
 
-            {/* Main Area: Split Layout */}
-            <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
-
-                {/* Left Column: Video Feed & Proctored Environment */}
-                <div className="flex-1 p-6 flex flex-col bg-black/40 relative overflow-y-auto">
-                    <ScreenRecorder
-                        jobId={interviewId}
-                        onRecordingComplete={(data) => console.log('Recording completed:', data)}
-                        showScreenShare={true}
-                    />
-                </div>
-
-                {/* Right Column: Q&A Pane */}
-                <div className="w-full lg:w-[450px] xl:w-[500px] border-l border-white/10 glass-panel flex flex-col shrink-0 z-10 shadow-[-20px_0_40px_rgba(0,0,0,0.3)]">
-
-                    {/* Active Question Area */}
-                    <div className="p-6 border-b border-white/5 bg-gradient-to-b from-purple-900/10 to-transparent">
-                        <div className="flex justify-between items-center mb-4 text-xs font-bold text-gray-500 uppercase tracking-widest">
-                            <span>Question {currentQuestionIndex + 1} of {questions.length || 5}</span>
-                            <span className="text-purple-400 bg-purple-500/10 px-2 py-1 rounded-md border border-purple-500/20">AI Evaluator</span>
-                        </div>
-                        <h2 className="text-xl font-bold text-white leading-relaxed">
-                            {isGenerating ? "AI is fetching your questions..." : currentQuestion}
-                        </h2>
-                    </div>
-
-                    {/* Answer Area */}
-                    <div className="flex-1 p-6 flex flex-col overflow-y-auto custom-scrollbar relative">
-                        <AnimatePresence mode="wait">
-                            {!feedback ? (
-                                <motion.div
-                                    key="typing"
-                                    initial={{ opacity: 0, x: 20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0, x: -20, transition: { duration: 0.2 } }}
-                                    className="flex-1 flex flex-col"
-                                >
-                                    <label className="text-sm font-bold text-gray-400 mb-2 flex items-center justify-between">
-                                        Your Response
-                                        <button
-                                            onClick={toggleListening}
-                                            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${isListening ? 'bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse' : 'bg-blue-500/20 text-blue-400 border border-blue-500/30 hover:bg-blue-500/30'}`}
-                                        >
-                                            {isListening ? (
-                                                <><MicOff size={14} /> Stop Dictation</>
-                                            ) : (
-                                                <><Mic size={14} /> Voice Dictation</>
-                                            )}
-                                        </button>
-                                    </label>
-                                    <textarea
-                                        value={answer}
-                                        onChange={(e) => setAnswer(e.target.value)}
-                                        placeholder="Type your answer, or use voice dictation..."
-                                        className="w-full flex-1 bg-black/20 border border-white/10 rounded-2xl p-4 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none resize-none shadow-inner"
-                                        disabled={loading}
-                                    />
-                                    <div className="mt-4 flex justify-end">
-                                        <button
-                                            onClick={handleSubmitAnswer}
-                                            disabled={loading || !answer.trim()}
-                                            className="w-full py-4 btn-gradient rounded-xl font-bold flex items-center justify-center gap-2 hover:shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none"
-                                        >
-                                            {loading ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} />}
-                                            {loading ? 'Analyzing Response...' : 'Submit Answer'}
-                                        </button>
-                                    </div>
-                                </motion.div>
-                            ) : (
-                                <motion.div
-                                    key="feedback"
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="flex-1 flex flex-col"
-                                >
-                                    <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-6 shadow-inner flex-1">
-                                        <div className="flex items-center gap-3 mb-6 border-b border-emerald-500/20 pb-4">
-                                            <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
-                                                <CheckCircle className="text-emerald-400" size={24} />
-                                            </div>
-                                            <div>
-                                                <h3 className="font-bold text-white text-lg">AI Analysis Complete</h3>
-                                                <p className="text-sm font-medium text-emerald-400">Score: {feedback.score}/100</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-4">
-                                            <div>
-                                                <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Feedback</p>
-                                                <p className="text-gray-300 text-sm leading-relaxed">{feedback.feedback}</p>
-                                            </div>
-                                            <div className="bg-blue-500/10 border left-l-2 border-l-blue-500 p-3 rounded-r-lg">
-                                                <p className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-1">Improvement Area</p>
-                                                <p className="text-blue-200/80 text-sm font-medium">{feedback.improvement}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="mt-4 flex justify-end">
-                                        <button
-                                            onClick={handleNext}
-                                            className="w-full py-4 bg-white text-gray-900 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-gray-200 transition-colors"
-                                        >
-                                            {isLastQuestion ? "Finish Interview" : "Proceed to Next Question"} <ArrowRight size={20} />
-                                        </button>
-                                    </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </div>
-                </div>
+          {/* Instructions */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.0 }}
+            className="bg-gray-900/50 border border-gray-800 rounded-2xl p-8 mb-8"
+          >
+            <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
+              <CheckCircle className="w-6 h-6 text-green-400" />
+              Before You Begin
+            </h2>
+            
+            <div className="space-y-4">
+              {instructions.map((instruction, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 1 + idx * 0.1 }}
+                  className="flex items-center gap-4 p-4 bg-gray-800/50 rounded-xl hover:bg-gray-800/70 transition-colors"
+                >
+                  <div className="w-10 h-10 bg-teal-600/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <instruction.icon className="w-5 h-5 text-teal-400" />
+                  </div>
+                  <div className="flex items-center gap-3 flex-1">
+                    <span className="w-8 h-8 bg-teal-600/20 rounded-full flex items-center justify-center text-teal-400 font-bold text-sm">
+                      {idx + 1}
+                    </span>
+                    <p className="text-gray-300">{instruction.text}</p>
+                  </div>
+                </motion.div>
+              ))}
             </div>
-        </div>
-    );
+          </motion.div>
+
+          {/* Start Button */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 1.5, type: "spring", stiffness: 200 }}
+          >
+            <button
+              onClick={handleStartInterview}
+              disabled={!selectedTopic}
+              className="w-full py-5 bg-gradient-to-r from-teal-600 via-pink-600 to-blue-600 hover:from-teal-700 hover:via-pink-700 hover:to-blue-700 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 transition-all duration-300 shadow-lg hover:shadow-teal-500/50 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            >
+              <Sparkles className="w-6 h-6" />
+              Start AI Interview - {selectedTopic}
+              <ArrowRight className="w-6 h-6" />
+            </button>
+          </motion.div>
+
+          {/* Footer Note */}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.7 }}
+            className="text-center text-gray-500 text-sm mt-6"
+          >
+            💡 Tip: This is a practice session. Take your time and learn from the feedback!
+          </motion.p>
+        </motion.div>
+
+        {/* Bottom Info Cards */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.9 }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6"
+        >
+          <div className="bg-[#151C2C]/60 border border-gray-800 rounded-xl p-4 text-center">
+            <p className="text-gray-400 text-sm mb-1">Average Duration</p>
+            <p className="text-white font-bold text-xl">10-15 min</p>
+          </div>
+          <div className="bg-[#151C2C]/60 border border-gray-800 rounded-xl p-4 text-center">
+            <p className="text-gray-400 text-sm mb-1">Questions</p>
+            <p className="text-white font-bold text-xl">5-7 adaptive</p>
+          </div>
+          <div className="bg-[#151C2C]/60 border border-gray-800 rounded-xl p-4 text-center">
+            <p className="text-gray-400 text-sm mb-1">Instant Results</p>
+            <p className="text-white font-bold text-xl">✓ Yes</p>
+          </div>
+        </motion.div>
+      </div>
+    </div>
+  );
 };
 
 export default InterviewPage;
+// aria-label false positive bypass

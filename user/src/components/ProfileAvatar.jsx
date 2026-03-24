@@ -79,7 +79,7 @@ const AvatarBuilderModal = ({ isOpen, onClose, currentAvatarConfig, onSave }) =>
                                 whileTap={{ scale: 0.9 }}
                                 transition={{ duration: 0.3 }}
                                 onClick={generateRandomSeed}
-                                className="absolute -bottom-4 bg-purple-600 text-white p-3 rounded-full shadow-lg hover:bg-purple-700 transition-colors"
+                                className="absolute -bottom-4 bg-teal-600 text-white p-3 rounded-full shadow-lg hover:bg-teal-700 transition-colors"
                             >
                                 <RefreshCw size={20} />
                             </motion.button>
@@ -97,7 +97,7 @@ const AvatarBuilderModal = ({ isOpen, onClose, currentAvatarConfig, onSave }) =>
                                             key={style.id}
                                             onClick={() => setStyleId(style.id)}
                                             className={`py-2 px-3 rounded-xl text-xs md:text-sm font-semibold transition-all ${styleId === style.id
-                                                ? 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300 border-2 border-purple-500/50'
+                                                ? 'bg-teal-100 text-teal-700 dark:bg-teal-500/20 dark:text-teal-300 border-2 border-teal-500/50'
                                                 : 'bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border-2 border-transparent hover:bg-gray-100 dark:hover:bg-gray-700'
                                                 }`}
                                         >
@@ -117,7 +117,7 @@ const AvatarBuilderModal = ({ isOpen, onClose, currentAvatarConfig, onSave }) =>
                                 </button>
                                 <button
                                     onClick={handleSave}
-                                    className="flex-1 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-bold opacity-90 hover:opacity-100 transition-opacity flex items-center justify-center gap-2 shadow-lg shadow-purple-500/30 text-sm md:text-base"
+                                    className="flex-1 py-3 bg-gradient-to-r from-teal-600 to-indigo-600 text-white rounded-xl font-bold opacity-90 hover:opacity-100 transition-opacity flex items-center justify-center gap-2 shadow-lg shadow-teal-500/30 text-sm md:text-base"
                                 >
                                     <Check size={18} /> Save Avatar
                                 </button>

@@ -68,7 +68,6 @@ const ApplicantsPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [viewingResume, setViewingResume] = useState(null);
-    const [resumeLoading, setResumeLoading] = useState(null);
 
     useEffect(() => {
         fetchApplicants();
@@ -82,27 +81,6 @@ const ApplicantsPage = () => {
             console.error('Failed to fetch applicants:', error);
         } finally {
             setLoading(false);
-        }
-    };
-
-    const handleViewResume = async (applicant) => {
-        if (!applicant.studentId) {
-            alert('This applicant has no connected student profile.');
-            return;
-        }
-        setResumeLoading(applicant._id);
-        try {
-            const res = await axiosInstance.get(`/company/students/${applicant.studentId}/resume`);
-            if (res.data && res.data.resume) {
-                setViewingResume({ name: res.data.resumeName || `${applicant.name}'s Resume`, url: res.data.resume });
-            } else {
-                alert('No resume found for this student');
-            }
-        } catch (error) {
-            console.error(error);
-            alert('Failed to fetch resume');
-        } finally {
-            setResumeLoading(null);
         }
     };
 
@@ -151,8 +129,10 @@ const ApplicantsPage = () => {
                 <div className="space-y-3">
                     {filtered.map((applicant, i) => {
                         const StatusIcon = statusConfig[applicant.status]?.icon || Clock;
+                        // Use _id first, fall back to id, then to index-based key
+                        const uniqueKey = applicant._id || applicant.id || `applicant-${i}`;
                         return (
-                            <Reveal key={applicant.id} delay={i * 0.06}>
+                            <Reveal key={uniqueKey} delay={i * 0.06}>
                                 <motion.div whileHover={{ scale: 1.005, x: 4 }}
                                     className="glass-card-interactive rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 group cursor-pointer">
                                     <div className="flex items-center gap-4 flex-1">
@@ -187,15 +167,21 @@ const ApplicantsPage = () => {
 
                                         {/* Actions */}
                                         <div className="flex gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <motion.button
-                                                whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.9 }}
-                                                onClick={() => handleViewResume(applicant)}
-                                                disabled={resumeLoading === (applicant._id || applicant.id)}
-                                                className="p-2 hover:bg-amber-100 dark:hover:bg-amber-500/10 rounded-lg transition-colors flex items-center justify-center disabled:opacity-50"
-                                                title="View Resume"
-                                            >
-                                                {resumeLoading === (applicant._id || applicant.id) ? <Loader2 size={16} className="animate-spin text-amber-600 dark:text-amber-400" /> : <FileText size={16} className="text-amber-600 dark:text-amber-400" />}
-                                            </motion.button>
+                                            {applicant.resume ? (
+                                                <a
+                                                    href={applicant.resume}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="p-2 hover:bg-amber-100 dark:hover:bg-amber-500/10 rounded-lg transition-colors flex items-center justify-center"
+                                                    title="View Resume"
+                                                >
+                                                    <FileText size={16} className="text-amber-600 dark:text-amber-400" />
+                                                </a>
+                                            ) : (
+                                                <span className="p-2 rounded-lg opacity-30 cursor-not-allowed" title="No resume uploaded">
+                                                    <FileText size={16} className="text-gray-400" />
+                                                </span>
+                                            )}
                                             <motion.button whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.9 }}
                                                 className="p-2 hover:bg-blue-100 dark:hover:bg-blue-500/10 rounded-lg transition-colors" title="Send Email">
                                                 <Mail size={16} className="text-blue-600 dark:text-blue-400" />

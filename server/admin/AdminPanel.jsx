@@ -58,19 +58,19 @@ const AdminPanel = () => {
       {/* Sidebar */}
       <div className="w-64 bg-gray-800 border-r border-gray-700 p-6 flex flex-col">
         <h1 className="text-2xl font-bold text-white mb-8 flex items-center gap-2">
-          <LayoutDashboard className="text-purple-500" /> Admin
+          <LayoutDashboard className="text-teal-500" /> Admin
         </h1>
         
         <nav className="flex-1 space-y-2">
           <button 
             onClick={() => setActiveTab('users')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'users' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'}`}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'users' ? 'bg-teal-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'}`}
           >
             <Users size={20} /> Users
           </button>
           <button 
             onClick={() => setActiveTab('tickets')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'tickets' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'}`}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'tickets' ? 'bg-teal-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'}`}
           >
             <MessageSquare size={20} /> Support Tickets
           </button>
@@ -92,7 +92,7 @@ const AdminPanel = () => {
               placeholder="Search..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-xl py-2 pl-10 pr-4 text-sm text-white focus:ring-2 focus:ring-purple-500 outline-none"
+              className="w-full bg-gray-800 border border-gray-700 rounded-xl py-2 pl-10 pr-4 text-sm text-white focus:ring-2 focus:ring-teal-500 outline-none"
             />
           </div>
         </header>

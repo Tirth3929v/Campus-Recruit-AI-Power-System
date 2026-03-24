@@ -37,7 +37,7 @@ const MyProfile = () => {
         <div className="max-w-2xl space-y-6">
             <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }}>
                 <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                    <User size={22} className="text-purple-400" /> My Profile
+                    <User size={22} className="text-teal-400" /> My Profile
                 </h2>
                 <p className="text-white/30 text-sm mt-1">Manage your personal information</p>
             </motion.div>
@@ -66,7 +66,7 @@ const MyProfile = () => {
                         <label className="text-xs font-bold text-white/30 uppercase tracking-widest mb-1.5 block">Full Name</label>
                         <div className="relative">
                             <User size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" />
-                            <input type="text" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
+                            <input aria-label="Input field"  type="text" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
                                 className="w-full pl-10 pr-4 py-3 rounded-xl text-white placeholder-white/15 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
                                 style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
                                 placeholder="Your full name" />
@@ -77,7 +77,7 @@ const MyProfile = () => {
                         <label className="text-xs font-bold text-white/30 uppercase tracking-widest mb-1.5 block">Email</label>
                         <div className="relative">
                             <Mail size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/15" />
-                            <input type="email" value={user?.email || ''} disabled
+                            <input aria-label="Input field"  type="email" value={user?.email || ''} disabled
                                 className="w-full pl-10 pr-4 py-3 rounded-xl text-white/25 cursor-not-allowed"
                                 style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }} />
                         </div>
@@ -87,7 +87,7 @@ const MyProfile = () => {
                         <label className="text-xs font-bold text-white/30 uppercase tracking-widest mb-1.5 block">Department / Course</label>
                         <div className="relative">
                             <BookOpen size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" />
-                            <input type="text" value={form.course} onChange={e => setForm(p => ({ ...p, course: e.target.value }))}
+                            <input aria-label="Input field"  type="text" value={form.course} onChange={e => setForm(p => ({ ...p, course: e.target.value }))}
                                 className="w-full pl-10 pr-4 py-3 rounded-xl text-white placeholder-white/15 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
                                 style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
                                 placeholder="Your department or course" />

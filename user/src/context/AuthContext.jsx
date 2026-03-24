@@ -23,36 +23,35 @@ export const AuthProvider = ({ children }) => {
   const checkAuth = async () => {
     try {
       const token = localStorage.getItem('userToken');
-      
+
       if (!token || !isTokenValid(token)) {
         localStorage.removeItem('userToken');
-        localStorage.removeItem('role');
         setUser(null);
         setLoading(false);
         return;
       }
 
-      const headers = { Authorization: `Bearer ${token}` };
-      const res = await fetch('/api/currentuser', { credentials: 'include', headers });
-      
+      // /api/auth/profile uses the shared `protect` middleware which correctly
+      // resolves the user from the right collection (Student → User fallback)
+      const res = await fetch('/api/auth/profile', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
       if (res.ok) {
         const userData = await res.json();
-        if (userData && userData.email) {
+        if (userData?.email) {
           setUser(userData);
         } else {
           localStorage.removeItem('userToken');
-          localStorage.removeItem('role');
           setUser(null);
         }
       } else {
         localStorage.removeItem('userToken');
-        localStorage.removeItem('role');
         setUser(null);
       }
     } catch (error) {
-      console.error("Auth check failed", error);
+      console.error('Auth check failed', error);
       localStorage.removeItem('userToken');
-      localStorage.removeItem('role');
       setUser(null);
     } finally {
       setLoading(false);
@@ -63,10 +62,9 @@ export const AuthProvider = ({ children }) => {
     try {
       await fetch('/api/logout', { method: 'POST', credentials: 'include' });
     } catch (error) {
-      console.error("Logout API failed", error);
+      console.error('Logout API failed', error);
     }
     localStorage.removeItem('userToken');
-    localStorage.removeItem('role');
     setUser(null);
     window.location.href = '/login';
   };

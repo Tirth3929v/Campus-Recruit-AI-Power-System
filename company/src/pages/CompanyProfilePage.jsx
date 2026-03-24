@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { Building2, Mail, MapPin, Globe, Users, Save, Upload, Loader2, CheckCircle, X } from 'lucide-react';
 
@@ -19,24 +19,75 @@ const CompanyProfilePage = () => {
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState(null);
     const [formData, setFormData] = useState({
-        name: 'TechCorp Solutions',
-        email: 'hr@techcorp.com',
-        industry: 'Information Technology',
-        location: 'Bangalore, India',
-        website: 'https://techcorp.com',
-        employees: '500-1000',
-        description: 'Leading technology solutions provider specializing in cloud computing, AI/ML, and enterprise software development.',
+        name: '',
+        email: '',
+        industry: '',
+        location: '',
+        website: '',
+        employees: '',
+        description: '',
     });
+
+    // Load real company data on mount
+    useEffect(() => {
+        const loadProfile = async () => {
+            try {
+                const token = localStorage.getItem('companyToken');
+                const res = await fetch('/api/currentuser', {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setFormData({
+                        name: data.companyName || data.name || '',
+                        email: data.email || '',
+                        industry: data.industry || '',
+                        location: data.location || '',
+                        website: data.website || '',
+                        employees: data.employeeCount || '',
+                        description: data.description || '',
+                    });
+                }
+            } catch (err) {
+                console.error('Failed to load company profile', err);
+            }
+        };
+        loadProfile();
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSaving(true);
         setMessage(null);
-        // Simulate save
-        await new Promise(r => setTimeout(r, 1200));
-        setMessage({ type: 'success', text: 'Company profile updated!' });
-        setSaving(false);
-        setTimeout(() => setMessage(null), 4000);
+        try {
+            const token = localStorage.getItem('companyToken');
+            const res = await fetch('/api/company/profile', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    companyName: formData.name,
+                    industry: formData.industry,
+                    location: formData.location,
+                    website: formData.website,
+                    employeeCount: formData.employees,
+                    description: formData.description,
+                }),
+                credentials: 'include',
+            });
+            if (res.ok) {
+                setMessage({ type: 'success', text: 'Company profile updated!' });
+            } else {
+                setMessage({ type: 'error', text: 'Failed to update profile. Please try again.' });
+            }
+        } catch {
+            setMessage({ type: 'error', text: 'Network error. Please try again.' });
+        } finally {
+            setSaving(false);
+            setTimeout(() => setMessage(null), 4000);
+        }
     };
 
     return (
@@ -102,7 +153,7 @@ const CompanyProfilePage = () => {
                                     <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">{field.label}</label>
                                     <div className="relative group">
                                         <field.icon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-amber-500 transition-colors" size={16} />
-                                        <input type={field.type || 'text'} value={formData[field.key]}
+                                        <input aria-label="Input field"  type={field.type || 'text'} value={formData[field.key]}
                                             onChange={e => setFormData({ ...formData, [field.key]: e.target.value })}
                                             className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all" />
                                     </div>
@@ -123,7 +174,7 @@ const CompanyProfilePage = () => {
                             <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Company Logo</label>
                             <motion.div whileHover={{ scale: 1.01, borderColor: "rgba(245, 158, 11, 0.4)" }}
                                 className="border-2 border-dashed border-gray-200 dark:border-white/10 rounded-xl p-6 text-center hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-all relative cursor-pointer group">
-                                <input type="file" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                                <input aria-label="Input field"  type="file" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                                 <Upload className="mx-auto text-amber-500 group-hover:scale-110 transition-transform mb-2" size={28} />
                                 <p className="text-xs text-gray-500 font-medium">Click to upload logo (PNG, JPG)</p>
                             </motion.div>

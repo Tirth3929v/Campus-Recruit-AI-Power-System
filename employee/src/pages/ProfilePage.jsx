@@ -95,7 +95,7 @@ const ProfilePage = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <Loader2 className="animate-spin text-purple-500" size={40} />
+        <Loader2 className="animate-spin text-teal-500" size={40} />
       </div>
     );
   }
@@ -105,7 +105,7 @@ const ProfilePage = () => {
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-blue-400">
+            <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-blue-400">
               Profile Settings
             </h1>
             <p className="text-gray-400 mt-1">Manage your personal information and resume</p>
@@ -133,7 +133,7 @@ const ProfilePage = () => {
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Full Name</label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                  <input type="text" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-black/20 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white focus:ring-2 focus:ring-purple-500 outline-none" />
+                  <input aria-label="Input field"  type="text" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-black/20 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white focus:ring-2 focus:ring-teal-500 outline-none" />
                 </div>
               </div>
 
@@ -141,7 +141,7 @@ const ProfilePage = () => {
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Email (Read Only)</label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                  <input type="email" disabled value={formData.email} className="w-full bg-black/40 border border-white/5 rounded-xl py-3 pl-10 pr-4 text-gray-400 cursor-not-allowed" />
+                  <input aria-label="Input field"  type="email" disabled value={formData.email} className="w-full bg-black/40 border border-white/5 rounded-xl py-3 pl-10 pr-4 text-gray-400 cursor-not-allowed" />
                 </div>
               </div>
 
@@ -149,7 +149,7 @@ const ProfilePage = () => {
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Course / Major</label>
                 <div className="relative">
                   <BookOpen className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                  <input type="text" value={formData.course} onChange={e => setFormData({...formData, course: e.target.value})} className="w-full bg-black/20 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white focus:ring-2 focus:ring-purple-500 outline-none" />
+                  <input aria-label="Input field"  type="text" value={formData.course} onChange={e => setFormData({...formData, course: e.target.value})} className="w-full bg-black/20 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white focus:ring-2 focus:ring-teal-500 outline-none" />
                 </div>
               </div>
 
@@ -157,21 +157,21 @@ const ProfilePage = () => {
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Skills (Comma separated)</label>
                 <div className="relative">
                   <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                  <input type="text" value={formData.skills} onChange={e => setFormData({...formData, skills: e.target.value})} placeholder="React, Node.js, Java..." className="w-full bg-black/20 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white focus:ring-2 focus:ring-purple-500 outline-none" />
+                  <input aria-label="Input field"  type="text" value={formData.skills} onChange={e => setFormData({...formData, skills: e.target.value})} placeholder="React, Node.js, Java..." className="w-full bg-black/20 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white focus:ring-2 focus:ring-teal-500 outline-none" />
                 </div>
               </div>
             </div>
 
             <div className="space-y-2">
               <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Bio</label>
-              <textarea rows="4" value={formData.bio} onChange={e => setFormData({...formData, bio: e.target.value})} className="w-full bg-black/20 border border-white/10 rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-purple-500 outline-none resize-none" placeholder="Tell us about yourself..." />
+              <textarea rows="4" value={formData.bio} onChange={e => setFormData({...formData, bio: e.target.value})} className="w-full bg-black/20 border border-white/10 rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-teal-500 outline-none resize-none" placeholder="Tell us about yourself..." />
             </div>
 
             <div className="space-y-2">
               <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Resume Upload</label>
               <div className="border-2 border-dashed border-white/10 rounded-xl p-6 text-center hover:bg-white/5 transition-colors relative">
-                <input type="file" accept=".pdf,.doc,.docx" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                <Upload className="mx-auto text-purple-500 mb-2" size={32} />
+                <input aria-label="Input field"  type="file" accept=".pdf,.doc,.docx" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                <Upload className="mx-auto text-teal-500 mb-2" size={32} />
                 <p className="text-sm text-gray-300 font-medium">{formData.resumeName || "Click to upload resume (PDF/DOC)"}</p>
                 <p className="text-xs text-gray-500 mt-1">Max file size: 5MB</p>
               </div>
@@ -186,7 +186,7 @@ const ProfilePage = () => {
               )}
             </div>
 
-            <button type="submit" disabled={saving} className="w-full py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold rounded-xl shadow-lg shadow-purple-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+            <button type="submit" disabled={saving} className="w-full py-4 bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-500 hover:to-blue-500 text-white font-bold rounded-xl shadow-lg shadow-teal-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
               {saving ? <Loader2 className="animate-spin" size={20} /> : <><Save size={20} /> Save Changes</>}
             </button>
           </form>

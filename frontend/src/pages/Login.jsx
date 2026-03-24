@@ -54,7 +54,7 @@ const Login = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                <input 
+                <input aria-label="Input field"  
                   type="email" 
                   value={email}
                   autoComplete="email"
@@ -70,7 +70,7 @@ const Login = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                <input 
+                <input aria-label="Input field"  
                   type="password" 
                   value={password}
                   autoComplete="current-password"
@@ -84,7 +84,7 @@ const Login = () => {
 
             <div className="flex items-center justify-between text-sm">
               <label className="flex items-center text-gray-600 cursor-pointer">
-                <input type="checkbox" className="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                <input aria-label="Input field"  type="checkbox" className="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
                 Remember me
               </label>
               <a href="#" className="text-blue-600 hover:text-blue-700 font-medium">Forgot password?</a>

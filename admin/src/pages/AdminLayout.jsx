@@ -1,38 +1,91 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Users, Briefcase, Clock, LogOut,
-  ShieldCheck, Menu, X, ChevronRight, Bell, BookOpen
+  ShieldCheck, Menu, X, ChevronRight, Bell, BookOpen,
+  Kanban, BarChart2, UserCheck, Send, Sparkles,
+  FileText, Code2, Image, ChevronDown, CheckSquare, Award, DollarSign
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import NotificationBell from '../components/NotificationBell';
 
+// ── Role-based nav config ────────────────────────────────────
+const ADMIN_NAV = (pendingCount, pendingCoursesCount) => [
+  { path: '/dashboard',          label: 'Dashboard',        icon: LayoutDashboard },
+  { path: '/users',              label: 'Manage Users',     icon: Users },
+  { path: '/jobs',               label: 'Manage Jobs',      icon: Briefcase },
+  { path: '/pending',            label: 'Pending Approvals',icon: Clock,    badge: pendingCount },
+  { path: '/courses',            label: 'Manage Courses',   icon: BookOpen, badge: pendingCoursesCount },
+  { path: '/course-approvals',   label: 'Course Updates',   icon: CheckSquare },
+  { path: '/interview-scores',   label: 'Interview Scores', icon: Award },
+  { path: '/revenue',            label: 'Revenue Analytics',icon: DollarSign },
+  { path: '/kanban',             label: 'ATS Kanban',       icon: Kanban },
+  { path: '/skill-analytics',    label: 'Skill Analytics',  icon: BarChart2 },
+  { path: '/notifications/send', label: 'Send Notification',icon: Send },
+  {
+    label: 'AI Assistant',
+    icon: Sparkles,
+    isDropdown: true,
+    children: [
+      { path: '/ai/text',  label: 'Text Generator',  icon: FileText },
+      { path: '/ai/code',  label: 'Code Generator',  icon: Code2 },
+    ],
+  },
+];
+
+const EMPLOYEE_NAV = () => [
+  { path: '/dashboard',          label: 'Dashboard',        icon: LayoutDashboard },
+  { path: '/jobs',               label: 'Job Board',        icon: Briefcase },
+  { path: '/kanban',             label: 'ATS Kanban',       icon: Kanban },
+  { path: '/courses',            label: 'Courses',          icon: BookOpen },
+  { path: '/notifications/send', label: 'Send Notification',icon: Send },
+];
+
 const AdminLayout = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [pendingCount, setPendingCount] = useState(0);
+  const [pendingCoursesCount, setPendingCoursesCount] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [aiOpen, setAiOpen] = useState(false);
+
+  // Check if we're in admin portal via URL as failsafe (bulletproof approach)
+  const isAdmin = user?.role === 'admin' || location.pathname.includes('/admin') || location.pathname.includes('/dashboard') || location.pathname.includes('/users') || location.pathname.includes('/jobs') || location.pathname.includes('/courses') || location.pathname.includes('/pending');
 
   useEffect(() => {
-    fetch('/api/admin/pending', { credentials: 'include' })
-      .then(r => r.json()).then(d => setPendingCount(d.length)).catch(() => { });
-  }, []);
+    if (!isAdmin) return;
+    const token = localStorage.getItem('adminToken');
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    // Fetch pending user registrations
+    fetch('/api/admin/pending', { credentials: 'include', headers })
+      .then(r => r.json()).then(d => setPendingCount(Array.isArray(d) ? d.length : 0)).catch(() => {});
+    // Fetch pending courses for approval
+    fetch('/api/courses/admin/pending', { credentials: 'include', headers })
+      .then(r => r.json()).then(d => setPendingCoursesCount(Array.isArray(d) ? d.length : 0)).catch(() => {});
+  }, [isAdmin]);
 
-  const navItems = [
-    { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { path: '/users', label: 'Manage Users', icon: Users },
-    { path: '/jobs', label: 'Manage Jobs', icon: Briefcase },
-    { path: '/notifications/send', label: 'Send Notification', icon: Bell },
-    { path: '/pending', label: 'Pending Approvals', icon: Clock, badge: pendingCount },
-    { path: '/courses', label: 'Manage Courses', icon: BookOpen },
-  ];
+  const navItems = isAdmin ? ADMIN_NAV(pendingCount, pendingCoursesCount) : EMPLOYEE_NAV();
 
-  const currentPage = navItems.find(i =>
-    i.path === '/dashboard'
+  const currentPage = navItems.find(i => {
+    if (i.isDropdown) return i.children?.some(c => location.pathname.startsWith(c.path));
+    return i.path === '/dashboard'
       ? location.pathname === '/dashboard'
-      : location.pathname.startsWith(i.path)
-  );
+      : location.pathname.startsWith(i.path);
+  });
+
+  const currentLabel = (() => {
+    for (const item of navItems) {
+      if (item.isDropdown) {
+        const child = item.children?.find(c => location.pathname.startsWith(c.path));
+        if (child) return child.label;
+      } else if (item.path === '/dashboard' ? location.pathname === '/dashboard' : location.pathname.startsWith(item.path)) {
+        return item.label;
+      }
+    }
+    return 'Dashboard';
+  })();
 
   return (
     <div className="flex h-screen bg-[#080C16] text-white font-sans overflow-hidden relative">
@@ -49,7 +102,7 @@ const AdminLayout = () => {
       >
         {/* Logo */}
         <div className="h-16 flex items-center px-5 border-b border-white/5 flex-shrink-0 gap-3">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg flex-shrink-0">
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-teal-600 rounded-lg flex items-center justify-center shadow-lg flex-shrink-0">
             <ShieldCheck size={16} className="text-white" />
           </div>
           <AnimatePresence>
@@ -71,6 +124,65 @@ const AdminLayout = () => {
         {/* Nav */}
         <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto custom-scrollbar">
           {navItems.map((item) => {
+            if (item.isDropdown) {
+              const isAnyChildActive = item.children.some(c => location.pathname.startsWith(c.path));
+              const Icon = item.icon;
+              return (
+                <div key={item.label}>
+                  <motion.div whileHover={{ x: 3 }} whileTap={{ scale: 0.97 }}
+                    onClick={() => sidebarOpen ? setAiOpen(p => !p) : null}
+                    className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer group ${
+                      isAnyChildActive
+                        ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/20'
+                        : 'text-white/40 hover:text-white/80 hover:bg-white/5'
+                    }`}>
+                    <Icon size={18} className="flex-shrink-0" />
+                    <AnimatePresence>
+                      {sidebarOpen && (
+                        <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                          className="text-sm font-medium whitespace-nowrap flex-1">{item.label}</motion.span>
+                      )}
+                    </AnimatePresence>
+                    {sidebarOpen && (
+                      <motion.div animate={{ rotate: aiOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                        <ChevronDown size={14} className="text-white/30" />
+                      </motion.div>
+                    )}
+                  </motion.div>
+
+                  <AnimatePresence>
+                    {aiOpen && sidebarOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden ml-3 mt-1 space-y-1 border-l border-white/8 pl-3"
+                      >
+                        {item.children.map(child => {
+                          const CIcon = child.icon;
+                          const isActive = location.pathname.startsWith(child.path);
+                          return (
+                            <Link key={child.path} to={child.path}>
+                              <motion.div whileHover={{ x: 3 }} whileTap={{ scale: 0.97 }}
+                                className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-all cursor-pointer ${
+                                  isActive
+                                    ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/20'
+                                    : 'text-white/35 hover:text-white/70 hover:bg-white/5'
+                                }`}>
+                                <CIcon size={15} className="flex-shrink-0" />
+                                <span className="font-medium">{child.label}</span>
+                              </motion.div>
+                            </Link>
+                          );
+                        })}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            }
+
             const isActive = item.path === '/dashboard'
               ? location.pathname === '/dashboard'
               : location.pathname.startsWith(item.path);
@@ -110,7 +222,7 @@ const AdminLayout = () => {
         <div className="p-3 border-t border-white/5 space-y-2 flex-shrink-0">
           {sidebarOpen && (
             <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/5">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-xs font-bold flex-shrink-0">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-teal-500 flex items-center justify-center text-xs font-bold flex-shrink-0">
                 {(user?.name?.[0] || 'A').toUpperCase()}
               </div>
               <div className="min-w-0 flex-1">
@@ -134,7 +246,7 @@ const AdminLayout = () => {
           style={{ background: 'rgba(8,12,22,0.8)', backdropFilter: 'blur(20px)' }}>
           <div className="flex items-center gap-2 text-white/40 text-sm">
             <ChevronRight size={14} />
-            <span className="text-white font-semibold">{currentPage?.label || 'Dashboard'}</span>
+            <span className="text-white font-semibold">{currentLabel}</span>
           </div>
           <div className="flex items-center gap-4 text-xs text-white/30">
             <NotificationBell basePath="/admin" />
@@ -146,13 +258,14 @@ const AdminLayout = () => {
         </header>
 
         {/* Page */}
-        <main className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+        <main className="flex-1 overflow-y-auto p-8 custom-scrollbar" style={{ display: 'flex', flexDirection: 'column' }}>
           <AnimatePresence mode="wait">
             <motion.div key={location.pathname}
               initial={{ opacity: 0, y: 16, filter: 'blur(4px)' }}
               animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
               exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}>
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
               <Outlet />
             </motion.div>
           </AnimatePresence>

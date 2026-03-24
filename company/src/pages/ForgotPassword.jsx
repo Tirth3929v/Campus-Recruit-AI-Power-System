@@ -38,9 +38,9 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4 font-sans selection:bg-purple-500/30">
+    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4 font-sans selection:bg-teal-500/30">
       <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-purple-900/20 blur-[120px]" />
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-teal-900/20 blur-[120px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-900/20 blur-[120px]" />
       </div>
 
@@ -70,13 +70,13 @@ const ForgotPassword = () => {
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
                 <input 
                   type="email" required placeholder="Enter your email"
-                  className="w-full bg-gray-800/50 border border-gray-700 rounded-xl py-3 pl-10 pr-4 text-white focus:ring-2 focus:ring-purple-500 outline-none transition-all"
+                  className="w-full bg-gray-800/50 border border-gray-700 rounded-xl py-3 pl-10 pr-4 text-white focus:ring-2 focus:ring-teal-500 outline-none transition-all"
                   value={email} onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
             </div>
 
-            <button type="submit" disabled={loading} className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold rounded-xl shadow-lg shadow-purple-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+            <button type="submit" disabled={loading} className="w-full py-3.5 bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-500 hover:to-blue-500 text-white font-bold rounded-xl shadow-lg shadow-teal-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
               {loading ? 'Sending...' : <>Send Reset Link <ArrowRight size={18} /></>}
             </button>
           </form>

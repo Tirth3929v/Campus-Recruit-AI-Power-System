@@ -28,7 +28,7 @@ const CoursesPage = () => {
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('card');
-  const [paymentForm, setPaymentForm] = useState({ name: '', email: '', cardNumber: '', expiry: '', cvv: '', cardName: '', upiId: '', upiMobile: '', bankName: '', accountId: '' });
+  const [paymentForm, setPaymentForm] = useState({ name: '', cardNumber: '', expiry: '', cvv: '', cardName: '', upiId: '', upiMobile: '', bankName: '', accountId: '' });
   const [paymentLoading, setPaymentLoading] = useState(false);
   
   // Other states
@@ -126,17 +126,9 @@ const CoursesPage = () => {
       return;
     }
     
-    // Validate based on payment method
-    if (!paymentForm.name || !paymentForm.email) {
-      alert('Please fill in your name and email');
-      setPaymentLoading(false);
-      return;
-    }
-    
-    // Validate Gmail format
-    const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
-    if (!gmailRegex.test(paymentForm.email)) {
-      alert('Please enter a valid Gmail address');
+    // Validate name
+    if (!paymentForm.name) {
+      alert('Please fill in your name');
       setPaymentLoading(false);
       return;
     }
@@ -185,8 +177,7 @@ const CoursesPage = () => {
         body: JSON.stringify({
           courseId: selectedCourse._id,
           name: paymentForm.name,
-          email: paymentForm.email,
-          paymentMethod: paymentMethod,
+          paymentMethod: paymentMethod === 'upi' ? 'UPI' : paymentMethod === 'netbanking' ? 'Net Banking' : 'Credit Card',
           cardNumber: paymentMethod === 'card' ? paymentForm.cardNumber : '',
           expiry: paymentMethod === 'card' ? paymentForm.expiry : '',
           cvv: paymentMethod === 'card' ? paymentForm.cvv : '',
@@ -215,7 +206,7 @@ const CoursesPage = () => {
       console.log("Navigating to /course/player/", selectedCourse._id);
       
       setIsModalOpen(false);
-      setPaymentForm({ name: '', email: '', cardNumber: '', expiry: '', cvv: '', cardName: '', upiId: '', upiMobile: '', bankName: '', accountId: '' });
+      setPaymentForm({ name: '', cardNumber: '', expiry: '', cvv: '', cardName: '', upiId: '', upiMobile: '', bankName: '', accountId: '' });
       
       // Update enrolled courses
       setEnrolledCourseIds(prev => new Set([...prev, selectedCourse._id]));
@@ -342,7 +333,7 @@ const CoursesPage = () => {
                 <motion.p
                   initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.8, delay: 0.2 }}
-                  className="text-sm text-purple-400 mt-2"
+                  className="text-sm text-teal-400 mt-2"
                 >
                   {discountInfo.eligibleForDiscount 
                     ? `🎉 You've purchased ${discountInfo.paidCourseCount} paid courses! ${discountInfo.discountPercentage}% discount on your next course!`
@@ -361,12 +352,12 @@ const CoursesPage = () => {
               <input
                 id="courseSearch" name="courseSearch" type="text" placeholder="Search for courses..."
                 value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3.5 glass-card rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-purple-500 outline-none transition-all"
+                className="w-full pl-12 pr-4 py-3.5 glass-card rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-teal-500 outline-none transition-all"
               />
             </div>
             <div className="min-w-[200px] relative">
               <select id="courseLevelFilter" name="courseLevelFilter" value={selectedLevel} onChange={(e) => setSelectedLevel(e.target.value)}
-                className="w-full px-4 py-3.5 glass-card rounded-xl text-gray-900 dark:text-white cursor-pointer focus:ring-2 focus:ring-purple-500 outline-none appearance-none">
+                className="w-full px-4 py-3.5 glass-card rounded-xl text-gray-900 dark:text-white cursor-pointer focus:ring-2 focus:ring-teal-500 outline-none appearance-none">
                 <option value="All">All Levels</option>
                 <option value="Beginner">Beginner</option>
                 <option value="Intermediate">Intermediate</option>
@@ -382,7 +373,7 @@ const CoursesPage = () => {
           <Reveal delay={0.15}>
             <div className="mb-10">
               <div className="flex items-center gap-2 mb-4">
-                <GraduationCap className="text-purple-400" size={24} />
+                <GraduationCap className="text-teal-400" size={24} />
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">My Learning</h2>
                 <span className="text-sm text-gray-500">({myLearning.length} courses)</span>
               </div>
@@ -401,7 +392,7 @@ const CoursesPage = () => {
                   >
                     <div className="flex gap-4 p-4">
                       <img 
-                        src={enrolledCourse.thumbnail || "https://via.placeholder.com/100"} 
+                        src={enrolledCourse.thumbnail || "https://placehold.co/100x67?text=Course"} 
                         alt={enrolledCourse.title}
                         className="w-24 h-16 object-cover rounded-lg"
                       />
@@ -417,7 +408,7 @@ const CoursesPage = () => {
                           </div>
                           <div className="w-full bg-gray-700 rounded-full h-1.5">
                             <div 
-                              className="bg-gradient-to-r from-purple-500 to-blue-500 h-1.5 rounded-full"
+                              className="bg-gradient-to-r from-teal-500 to-blue-500 h-1.5 rounded-full"
                               style={{ width: `${enrolledCourse.progress}%` }}
                             />
                           </div>
@@ -466,7 +457,7 @@ const CoursesPage = () => {
                   {/* Card Image */}
                   <div className="h-48 relative overflow-hidden">
                     <img
-                      src={course.thumbnail || course.image || "https://via.placeholder.com/300"} 
+                      src={course.thumbnail || course.image || "https://placehold.co/300x200?text=Course"} 
                       alt={course.title || "Course"}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
                     />
@@ -475,7 +466,7 @@ const CoursesPage = () => {
                       <MoreVertical size={16} className="text-white" />
                     </div>
                     <div className="absolute bottom-4 left-4 flex gap-2">
-                      <span className="px-3 py-1 text-xs font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30 rounded-full backdrop-blur-md">
+                      <span className="px-3 py-1 text-xs font-bold bg-teal-500/20 text-teal-300 border border-teal-500/30 rounded-full backdrop-blur-md">
                         {course.level}
                       </span>
                       <span className={`px-3 py-1 text-xs font-bold rounded-full backdrop-blur-md ${
@@ -527,7 +518,7 @@ const CoursesPage = () => {
                             initial={{ width: 0 }}
                             animate={{ width: `${course.progress || 0}%` }}
                             transition={{ duration: 1.5, delay: 0.3 + index * 0.1, ease: [0.22, 1, 0.36, 1] }}
-                            className="bg-gradient-to-r from-violet-500 to-blue-500 h-full rounded-full shadow-lg shadow-violet-500/20"
+                            className="bg-gradient-to-r from-emerald-500 to-blue-500 h-full rounded-full shadow-lg shadow-emerald-500/20"
                           />
                         </div>
                       </div>
@@ -596,7 +587,7 @@ const CoursesPage = () => {
                 {discountInfo.eligibleForDiscount && (
                   <span className="text-lg text-gray-400 line-through">₹{selectedCourse.price}</span>
                 )}
-                <div className="text-2xl font-bold text-purple-600">
+                <div className="text-2xl font-bold text-teal-600">
                   ₹{getDisplayPrice(selectedCourse)}
                 </div>
                 {discountInfo.eligibleForDiscount && (
@@ -614,7 +605,7 @@ const CoursesPage = () => {
                 onClick={() => setPaymentMethod('card')}
                 className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
                   paymentMethod === 'card' 
-                    ? 'bg-purple-600 text-white' 
+                    ? 'bg-teal-600 text-white' 
                     : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                 }`}
               >
@@ -625,7 +616,7 @@ const CoursesPage = () => {
                 onClick={() => setPaymentMethod('upi')}
                 className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
                   paymentMethod === 'upi' 
-                    ? 'bg-purple-600 text-white' 
+                    ? 'bg-teal-600 text-white' 
                     : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                 }`}
               >
@@ -636,7 +627,7 @@ const CoursesPage = () => {
                 onClick={() => setPaymentMethod('netbanking')}
                 className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
                   paymentMethod === 'netbanking' 
-                    ? 'bg-purple-600 text-white' 
+                    ? 'bg-teal-600 text-white' 
                     : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                 }`}
               >
@@ -647,23 +638,12 @@ const CoursesPage = () => {
             <form onSubmit={handlePayment} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Full Name</label>
-                <input
+                <input aria-label="Input field" 
                   type="text"
                   value={paymentForm.name}
                   onChange={(e) => setPaymentForm({...paymentForm, name: e.target.value})}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 outline-none"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 outline-none"
                   placeholder="John Doe"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Gmail ID (Required)</label>
-                <input
-                  type="email"
-                  value={paymentForm.email}
-                  onChange={(e) => setPaymentForm({...paymentForm, email: e.target.value})}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 outline-none"
-                  placeholder="john@gmail.com"
                   required
                 />
               </div>
@@ -673,11 +653,11 @@ const CoursesPage = () => {
                 <>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Card Number</label>
-                    <input
+                    <input aria-label="Input field" 
                       type="text"
                       value={paymentForm.cardNumber}
                       onChange={(e) => setPaymentForm({...paymentForm, cardNumber: e.target.value})}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 outline-none"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 outline-none"
                       placeholder="1234 5678 9012 3456"
                       maxLength="19"
                       required
@@ -685,11 +665,11 @@ const CoursesPage = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name on Card</label>
-                    <input
+                    <input aria-label="Input field" 
                       type="text"
                       value={paymentForm.cardName}
                       onChange={(e) => setPaymentForm({...paymentForm, cardName: e.target.value})}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 outline-none"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 outline-none"
                       placeholder="John Doe"
                       required
                     />
@@ -697,11 +677,11 @@ const CoursesPage = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Expiry</label>
-                      <input
+                      <input aria-label="Input field" 
                         type="text"
                         value={paymentForm.expiry}
                         onChange={(e) => setPaymentForm({...paymentForm, expiry: e.target.value})}
-                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 outline-none"
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 outline-none"
                         placeholder="MM/YY"
                         maxLength="5"
                         required
@@ -709,11 +689,11 @@ const CoursesPage = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">CVV</label>
-                      <input
+                      <input aria-label="Input field" 
                         type="text"
                         value={paymentForm.cvv}
                         onChange={(e) => setPaymentForm({...paymentForm, cvv: e.target.value})}
-                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 outline-none"
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 outline-none"
                         placeholder="123"
                         maxLength="4"
                         required
@@ -728,22 +708,22 @@ const CoursesPage = () => {
                 <>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">UPI ID</label>
-                    <input
+                    <input aria-label="Input field" 
                       type="text"
                       value={paymentForm.upiId}
                       onChange={(e) => setPaymentForm({...paymentForm, upiId: e.target.value})}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 outline-none"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 outline-none"
                       placeholder="yourname@upi"
                     />
                   </div>
                   <div className="text-center text-gray-400 text-sm">- OR -</div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mobile Number</label>
-                    <input
+                    <input aria-label="Input field" 
                       type="text"
                       value={paymentForm.upiMobile}
                       onChange={(e) => setPaymentForm({...paymentForm, upiMobile: e.target.value})}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 outline-none"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 outline-none"
                       placeholder="9876543210"
                       maxLength="10"
                     />
@@ -759,7 +739,7 @@ const CoursesPage = () => {
                     <select
                       value={paymentForm.bankName}
                       onChange={(e) => setPaymentForm({...paymentForm, bankName: e.target.value})}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 outline-none"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 outline-none"
                       required
                     >
                       <option value="">Select Bank</option>
@@ -775,11 +755,11 @@ const CoursesPage = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Account ID</label>
-                    <input
+                    <input aria-label="Input field" 
                       type="text"
                       value={paymentForm.accountId}
                       onChange={(e) => setPaymentForm({...paymentForm, accountId: e.target.value})}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 outline-none"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 outline-none"
                       placeholder="1234567890"
                       required
                     />

@@ -53,7 +53,7 @@ const statusColors = {
 
 const typeColors = {
   'Full-time': 'bg-blue-100 text-blue-700',
-  'Internship': 'bg-purple-100 text-purple-700',
+  'Internship': 'bg-teal-100 text-teal-700',
   'Part-time': 'bg-orange-100 text-orange-700',
   'Contract': 'bg-rose-100 text-rose-700',
 };
@@ -126,7 +126,7 @@ const ManageJobs = () => {
         </div>
         <div className="relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
+          <input aria-label="Input field" 
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search jobs..."

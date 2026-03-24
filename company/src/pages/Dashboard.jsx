@@ -20,7 +20,7 @@ const mockData = {
   },
   stats: [
     { label: "Total Interviews", value: "12", icon: Activity, color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-100 dark:bg-blue-500/10" },
-    { label: "Average Score", value: "78%", icon: Target, color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-100 dark:bg-purple-500/10" },
+    { label: "Average Score", value: "78%", icon: Target, color: "text-teal-600 dark:text-teal-400", bg: "bg-teal-100 dark:bg-teal-500/10" },
     { label: "Global Rank", value: "Top 5%", icon: Trophy, color: "text-yellow-600 dark:text-yellow-400", bg: "bg-yellow-100 dark:bg-yellow-500/10" },
     { label: "Hours Practiced", value: "4.5 hrs", icon: Clock, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-100 dark:bg-emerald-500/10" }
   ],
@@ -45,7 +45,7 @@ const mockData = {
   ],
   studyResources: [
     { id: 1, title: "React Documentation", type: "Documentation", link: "https://react.dev", icon: BookOpen, color: "text-cyan-600 dark:text-cyan-400" },
-    { id: 2, title: "System Design Primer", type: "Guide", link: "https://github.com/donnemartin/system-design-primer", icon: Layers, color: "text-purple-600 dark:text-purple-400" },
+    { id: 2, title: "System Design Primer", type: "Guide", link: "https://github.com/donnemartin/system-design-primer", icon: Layers, color: "text-teal-600 dark:text-teal-400" },
     { id: 3, title: "JavaScript.info", type: "Tutorial", link: "https://javascript.info", icon: Code, color: "text-yellow-600 dark:text-yellow-400" },
     { id: 4, title: "Tech Interview Handbook", type: "Guide", link: "https://www.techinterviewhandbook.org", icon: Briefcase, color: "text-emerald-600 dark:text-emerald-400" },
   ]
@@ -115,15 +115,9 @@ const Dashboard = () => {
 
     const fetchData = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/dashboard', { credentials: 'include' });
-        if (res.ok) {
-          const result = await res.json();
-          setData(result);
-          if (result.user.weeklyGoal) setWeeklyGoal(result.user.weeklyGoal);
-        } else if (res.status === 401) {
-          logout();
-          navigate('/login');
-        }
+        // Company portal uses mock data - no backend dashboard endpoint needed
+        // If you need real data, create a separate /api/company/dashboard endpoint
+        console.log('Company dashboard loaded with mock data');
       } catch (error) {
         console.error("Failed to fetch dashboard data", error);
       }
@@ -210,11 +204,11 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-6 font-sans selection:bg-purple-500/30 overflow-x-hidden transition-colors duration-300">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-6 font-sans selection:bg-teal-500/30 overflow-x-hidden transition-colors duration-300">
         
         {/* Ambient Background Effects */}
         <div className="fixed inset-0 z-0 pointer-events-none">
-            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-purple-900/20 blur-[120px]" />
+            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-teal-900/20 blur-[120px]" />
             <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-900/20 blur-[120px]" />
         </div>
 
@@ -228,7 +222,7 @@ const Dashboard = () => {
                 >
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                            <Target className="text-purple-600 dark:text-purple-400" /> Set Weekly Goal
+                            <Target className="text-teal-600 dark:text-teal-400" /> Set Weekly Goal
                         </h3>
                         <button onClick={() => setShowGoalModal(false)} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
                             <X size={20} />
@@ -237,14 +231,14 @@ const Dashboard = () => {
                     <p className="text-gray-600 dark:text-gray-300 mb-6">How many mock interviews do you want to complete this week?</p>
                     
                     <div className="flex items-center gap-4 mb-8">
-                        <input 
+                        <input aria-label="Input field"  
                             type="range" min="1" max="20" value={weeklyGoal} 
                             onChange={(e) => setWeeklyGoal(parseInt(e.target.value))}
-                            className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-600"
+                            className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-teal-600"
                         />
-                        <span className="text-2xl font-bold text-purple-600 dark:text-purple-400 w-12 text-center">{weeklyGoal}</span>
+                        <span className="text-2xl font-bold text-teal-600 dark:text-teal-400 w-12 text-center">{weeklyGoal}</span>
                     </div>
-                    <button onClick={handleSaveGoal} className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl transition-all">Save Goal</button>
+                    <button onClick={handleSaveGoal} className="w-full py-3 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl transition-all">Save Goal</button>
                 </motion.div>
             </div>
         )}
@@ -334,7 +328,7 @@ const Dashboard = () => {
                         exit={{ opacity: 0, y: 20, scale: 0.9 }}
                         className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl w-80 sm:w-96 overflow-hidden flex flex-col h-[500px]"
                     >
-                        <div className="p-4 bg-purple-600 text-white flex justify-between items-center">
+                        <div className="p-4 bg-teal-600 text-white flex justify-between items-center">
                             <h3 className="font-bold flex items-center gap-2"><MessageCircle size={18} /> Live Support</h3>
                             <button onClick={() => setShowChat(false)} className="hover:bg-white/20 p-1 rounded-full transition-colors">
                                 <X size={18} />
@@ -351,7 +345,7 @@ const Dashboard = () => {
                                 <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                                     <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${
                                         msg.role === 'user' 
-                                            ? 'bg-purple-600 text-white rounded-br-none' 
+                                            ? 'bg-teal-600 text-white rounded-br-none' 
                                             : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-600 rounded-bl-none'
                                     }`}>
                                         <p>{msg.text}</p>
@@ -361,7 +355,7 @@ const Dashboard = () => {
                             {isLoading && (
                                 <div className="flex justify-start">
                                     <div className="bg-white dark:bg-gray-700 p-3 rounded-2xl rounded-bl-none border border-gray-200 dark:border-gray-600">
-                                        <Loader2 className="animate-spin w-4 h-4 text-purple-600" />
+                                        <Loader2 className="animate-spin w-4 h-4 text-teal-600" />
                                     </div>
                                 </div>
                             )}
@@ -374,12 +368,12 @@ const Dashboard = () => {
                                 placeholder="Type a message..." 
                                 value={chatInput}
                                 onChange={(e) => setChatInput(e.target.value)}
-                                className="flex-1 bg-gray-100 dark:bg-gray-700 border-none rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500 outline-none dark:text-white"
+                                className="flex-1 bg-gray-100 dark:bg-gray-700 border-none rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-teal-500 outline-none dark:text-white"
                             />
                             <button 
                                 type="submit" 
                                 disabled={!chatInput.trim()}
-                                className="p-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="p-2 bg-teal-600 hover:bg-teal-500 text-white rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <Send size={18} />
                             </button>
@@ -390,7 +384,7 @@ const Dashboard = () => {
 
             <button 
                 onClick={() => setShowChat(!showChat)}
-                className="p-4 bg-purple-600 hover:bg-purple-500 text-white rounded-full shadow-lg shadow-purple-500/30 transition-all hover:scale-110"
+                className="p-4 bg-teal-600 hover:bg-teal-500 text-white rounded-full shadow-lg shadow-teal-500/30 transition-all hover:scale-110"
             >
                 {showChat ? <X size={24} /> : <MessageCircle size={24} />}
             </button>
@@ -422,7 +416,7 @@ const Dashboard = () => {
                         placeholder="Search dashboard..." 
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
+                        className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all"
                     />
                 </div>
 
@@ -431,7 +425,7 @@ const Dashboard = () => {
                         onClick={() => setShowGoalModal(true)}
                         className="hidden md:flex items-center gap-2 px-4 py-2 bg-white dark:bg-white/10 border border-gray-200 dark:border-white/10 rounded-xl text-sm font-bold text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-white/20 transition-all"
                     >
-                        <Target size={16} className="text-purple-600 dark:text-purple-400" /> Set Goal
+                        <Target size={16} className="text-teal-600 dark:text-teal-400" /> Set Goal
                     </button>
 
                     <div className="text-right hidden sm:block">
@@ -502,7 +496,7 @@ const Dashboard = () => {
 
                     <button 
                         onClick={() => navigate('/student/profile')}
-                        className="p-2 rounded-full bg-gray-200 dark:bg-white/10 text-gray-700 dark:text-gray-200 hover:bg-purple-100 dark:hover:bg-purple-900/20 hover:text-purple-600 dark:hover:text-purple-400 transition-all"
+                        className="p-2 rounded-full bg-gray-200 dark:bg-white/10 text-gray-700 dark:text-gray-200 hover:bg-teal-100 dark:hover:bg-teal-900/20 hover:text-teal-600 dark:hover:text-teal-400 transition-all"
                         title="Profile Settings"
                     >
                         <User size={20} />
@@ -528,13 +522,13 @@ const Dashboard = () => {
 
             {/* A. Hero Section */}
             <motion.div variants={itemVariants} className="w-full">
-                <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900/40 dark:to-blue-900/40 border border-white/20 dark:border-white/10 p-8 backdrop-blur-md shadow-xl dark:shadow-2xl">
+                <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-teal-100 to-blue-100 dark:from-teal-900/40 dark:to-blue-900/40 border border-white/20 dark:border-white/10 p-8 backdrop-blur-md shadow-xl dark:shadow-2xl">
                     <div className="absolute top-0 right-0 p-4 opacity-10 rotate-12 transform translate-x-10 -translate-y-10">
                         <Rocket size={250} />
                     </div>
                     <div className="relative z-10">
                         <h2 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900 dark:text-white">
-                            Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600 dark:from-purple-400 dark:to-blue-400">{data?.user?.name || mockData.user.name}</span>!
+                            Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-blue-600 dark:from-teal-400 dark:to-blue-400">{data?.user?.name || mockData.user.name}</span>!
                         </h2>
                         <p className="text-xl text-gray-700 dark:text-gray-300 mb-6 max-w-2xl leading-relaxed">
                             You are <span className="text-emerald-600 dark:text-emerald-400 font-bold text-2xl">{data?.user?.readiness || mockData.user.readiness}%</span> ready for your dream job. 
@@ -545,7 +539,7 @@ const Dashboard = () => {
                         <div className="mb-8 max-w-md">
                             <div className="flex justify-between text-xs font-bold uppercase tracking-wider mb-2">
                                 <span className="text-gray-500 dark:text-gray-400">Weekly Goal Progress</span>
-                                <span className="text-purple-600 dark:text-purple-400">
+                                <span className="text-teal-600 dark:text-teal-400">
                                     {data?.interviewsThisWeek || 0} / {weeklyGoal} Interviews
                                 </span>
                             </div>
@@ -554,7 +548,7 @@ const Dashboard = () => {
                                     initial={{ width: 0 }}
                                     animate={{ width: `${Math.min(100, ((data?.interviewsThisWeek || 0) / weeklyGoal) * 100)}%` }}
                                     transition={{ duration: 1, ease: "easeOut" }}
-                                    className="h-full bg-gradient-to-r from-purple-600 to-blue-600 dark:from-purple-400 dark:to-blue-400"
+                                    className="h-full bg-gradient-to-r from-teal-600 to-blue-600 dark:from-teal-400 dark:to-blue-400"
                                 />
                             </div>
                             <p className="text-xs text-gray-500 mt-2">
@@ -583,7 +577,7 @@ const Dashboard = () => {
                             }}
                             className="group relative px-8 py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold rounded-xl overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_40px_rgba(139,92,246,0.5)]"
                         >
-                            <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 dark:from-purple-400 dark:to-blue-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                            <div className="absolute inset-0 bg-gradient-to-r from-teal-600 to-blue-600 dark:from-teal-400 dark:to-blue-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                             <span className="relative flex items-center gap-3 group-hover:text-white dark:group-hover:text-white transition-colors">
                                 <Rocket className="animate-bounce" /> Start New Interview
                             </span>
@@ -619,7 +613,7 @@ const Dashboard = () => {
                 {/* C. Skill Radar (Medium Card) */}
                 <motion.div variants={itemVariants} className="col-span-1 md:col-span-6 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl p-4 sm:p-6 backdrop-blur-md flex flex-col min-h-[300px] sm:min-h-[350px] shadow-sm">
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
-                        <Activity size={18} className="text-purple-600 dark:text-purple-400" /> Skill Analysis
+                        <Activity size={18} className="text-teal-600 dark:text-teal-400" /> Skill Analysis
                     </h3>
                     <div className="w-full h-[250px] sm:h-[300px] overflow-hidden">
                         <ResponsiveContainer width="100%" height="100%">
@@ -630,9 +624,9 @@ const Dashboard = () => {
                                 <Radar
                                     name={data?.user?.name || "Student"}
                                     dataKey="A"
-                                    stroke="#8b5cf6"
+                                    stroke="#14b8a6"
                                     strokeWidth={3}
-                                    fill="#8b5cf6"
+                                    fill="#14b8a6"
                                     fillOpacity={0.4}
                                 />
                             </RadarChart>
@@ -662,7 +656,7 @@ const Dashboard = () => {
                                         {index + 1}
                                     </div>
                                     <div>
-                                        <h4 className="font-bold text-gray-900 dark:text-white text-sm group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">{student.name}</h4>
+                                        <h4 className="font-bold text-gray-900 dark:text-white text-sm group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">{student.name}</h4>
                                         <p className="text-[10px] text-gray-500 uppercase tracking-wider">{student.course}</p>
                                     </div>
                                 </div>
@@ -688,7 +682,7 @@ const Dashboard = () => {
                         {filteredRecentActivity.map((activity) => (
                             <div key={activity.id} className="group flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 border border-gray-100 dark:border-white/5 hover:border-gray-200 dark:hover:border-white/20 transition-all cursor-pointer">
                                 <div className="flex items-center gap-4">
-                                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center text-blue-400 group-hover:text-white transition-colors">
+                                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500/20 to-teal-500/20 flex items-center justify-center text-blue-400 group-hover:text-white transition-colors">
                                         <FileText size={18} />
                                     </div>
                                     <div>
@@ -704,7 +698,7 @@ const Dashboard = () => {
                                     }`}>
                                         {activity.score}/100
                                     </span>
-                                    <button className="px-3 py-1.5 text-xs font-bold text-white bg-purple-600 hover:bg-purple-500 rounded-lg transition-all shadow-lg shadow-purple-500/20">
+                                    <button className="px-3 py-1.5 text-xs font-bold text-white bg-teal-600 hover:bg-teal-500 rounded-lg transition-all shadow-lg shadow-teal-500/20">
                                         View Report
                                     </button>
                                 </div>
@@ -750,7 +744,7 @@ const Dashboard = () => {
                             
                             return (
                                 <div key={day} className={`aspect-square flex flex-col items-center justify-center rounded-lg text-sm relative cursor-pointer transition-all ${
-                                    today ? 'bg-purple-600 text-white font-bold shadow-lg shadow-purple-500/30' : 
+                                    today ? 'bg-teal-600 text-white font-bold shadow-lg shadow-teal-500/30' : 
                                     'hover:bg-gray-100 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300'
                                 }`}>
                                     {day}

@@ -8,12 +8,13 @@ import {
     Rocket, Trophy, Target, Clock, Activity, FileText, Zap, Calendar, Crown,
     ChevronLeft, ChevronRight, BookOpen, Layers, Code, Briefcase,
     ExternalLink, X, MessageCircle, Send,
-    Loader2, Flame, Sparkles, TrendingUp, ArrowUpRight
+    Loader2, Flame, Sparkles, TrendingUp, ArrowUpRight, CalendarDays
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import StreakWidget from '../components/StreakWidget';
 import MyLearningWidget from '../components/MyLearningWidget';
+import axiosInstance from './axiosInstance';
 
 const iconMap = { Activity, Target, Trophy, Clock, Zap, BookOpen };
 const resourceIconMap = { BookOpen, Layers, Code, Briefcase };
@@ -21,7 +22,7 @@ const resourceIconMap = { BookOpen, Layers, Code, Briefcase };
 // Default fallback data (shown while loading)
 const defaultStats = [
     { label: "Total Interviews", value: 0, icon: "Activity", color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-100 dark:bg-blue-500/10", accent: "from-blue-500 to-cyan-500" },
-    { label: "Average Score", value: 0, suffix: "%", icon: "Target", color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-100 dark:bg-purple-500/10", accent: "from-purple-500 to-pink-500" },
+    { label: "Average Score", value: 0, suffix: "%", icon: "Target", color: "text-teal-600 dark:text-teal-400", bg: "bg-teal-100 dark:bg-teal-500/10", accent: "from-teal-500 to-pink-500" },
     { label: "Global Rank", value: "—", icon: "Trophy", color: "text-yellow-600 dark:text-yellow-400", bg: "bg-yellow-100 dark:bg-yellow-500/10", accent: "from-yellow-500 to-orange-500" },
     { label: "Hours Practiced", value: 0, suffix: " hrs", icon: "Clock", color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-100 dark:bg-emerald-500/10", accent: "from-emerald-500 to-teal-500" }
 ];
@@ -130,58 +131,94 @@ const Dashboard = () => {
         return day === today.getDate() && currentMonth.getMonth() === today.getMonth() && currentMonth.getFullYear() === today.getFullYear();
     };
 
+    // Events State for Schedule Widget
+    const [events, setEvents] = useState([]);
+    const [eventsLoading, setEventsLoading] = useState(true);
+    const [selectedDate, setSelectedDate] = useState(null);
+
+    // Fetch events for the Schedule widget
+    useEffect(() => {
+        const fetchEvents = async () => {
+            try {
+                const res = await axiosInstance.get('/events');
+                setEvents(res.data || []);
+            } catch (error) {
+                console.error('Failed to fetch events:', error);
+                setEvents([]);
+            } finally {
+                setEventsLoading(false);
+            }
+        };
+        fetchEvents();
+    }, []);
+
+    // Build events by date map
+    const eventsByDate = events.reduce((acc, ev) => {
+        const d = new Date(ev.date).toISOString().slice(0, 10);
+        if (!acc[d]) acc[d] = [];
+        acc[d].push(ev);
+        return acc;
+    }, {});
+
+    // Get current month's key for event lookup
+    const getMonthKey = (day) => {
+        const year = currentMonth.getFullYear();
+        const month = String(currentMonth.getMonth() + 1).padStart(2, '0');
+        const dayStr = String(day).padStart(2, '0');
+        return `${year}-${month}-${dayStr}`;
+    };
+
+    // Get selected date events
+    const selectedDateEvents = selectedDate ? (eventsByDate[selectedDate] || []) : [];
+
+    // Get upcoming event (next event from today)
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const upcomingEvent = [...events]
+        .sort((a, b) => new Date(a.date) - new Date(b.date))
+        .find(ev => new Date(ev.date).toISOString().slice(0, 10) >= todayStr);
+
     // Data fetching
     useEffect(() => {
         if (!user) return;
         const fetchData = async () => {
             try {
-                const res = await fetch('http://localhost:5000/api/dashboard', { credentials: 'include' });
-                if (res.ok) {
-                    const result = await res.json();
-                    setData(result);
-                    if (result.user?.weeklyGoal) setWeeklyGoal(result.user.weeklyGoal);
-                } else if (res.status === 401) { logout(); navigate('/login'); }
-            } catch (error) { console.error("Failed to fetch dashboard data", error); }
+                const res = await axiosInstance.get('/dashboard');
+                const result = res.data;
+                setData(result);
+                if (result.user?.weeklyGoal) setWeeklyGoal(result.user.weeklyGoal);
+            } catch (error) {
+                if (error.response?.status === 401) { logout(); navigate('/login'); }
+                console.error("Failed to fetch dashboard data", error);
+            }
         };
         fetchData();
 
         // Fetch last accessed course
         const fetchLastCourse = async () => {
             try {
-                const res = await fetch('http://localhost:5000/api/courses/last-course', { credentials: 'include' });
-                if (res.ok) {
-                    const courseData = await res.json();
-                    setLastCourse(courseData);
-                }
+                const res = await axiosInstance.get('/courses/last-course');
+                setLastCourse(res.data);
             } catch (error) { console.error("Failed to fetch last course", error); }
         };
         fetchLastCourse();
 
-        // Poll for real-time course updates
-        const pollInterval = setInterval(() => {
-            fetchLastCourse();
-        }, 5000);
-
         // Fetch study resources
         const fetchResources = async () => {
             try {
-                const res = await fetch('http://localhost:5000/api/resources');
-                if (res.ok) setStudyResources(await res.json() || []);
+                const res = await axiosInstance.get('/resources');
+                setStudyResources(res.data || []);
             } catch (error) { console.error("Failed to fetch resources", error); }
         };
         fetchResources();
 
-        return () => clearInterval(pollInterval);
+        return () => {};
     }, [user, logout, navigate]);
 
     useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [chatMessages, showChat]);
 
     const handleSaveGoal = async () => {
         try {
-            await fetch('http://localhost:5000/api/user/goal', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ weeklyGoal }), credentials: 'include'
-            });
+            await axiosInstance.post('/user/goal', { weeklyGoal });
             setShowGoalModal(false);
         } catch (e) { console.error(e); }
     };
@@ -194,14 +231,8 @@ const Dashboard = () => {
         setChatInput('');
         setIsLoading(true);
         try {
-            const res = await fetch('http://localhost:5000/api/chat', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: userMessage.text, history: chatMessages }),
-                credentials: 'include'
-            });
-            if (!res.ok) throw new Error(`Server Error: ${res.status}`);
-            const resData = await res.json();
-            setChatMessages(prev => [...prev, { role: 'model', text: resData.text }]);
+            const res = await axiosInstance.post('/chat', { message: userMessage.text, history: chatMessages });
+            setChatMessages(prev => [...prev, { role: 'model', text: res.data.text }]);
         } catch (e) {
             setChatMessages(prev => [...prev, { role: 'model', text: "⚠️ AI Offline. Please check if the backend server is running." }]);
         } finally { setIsLoading(false); }
@@ -222,7 +253,7 @@ const Dashboard = () => {
                         scale: [1, 1.2, 0.9, 1],
                     }}
                     transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute top-[-15%] left-[-10%] w-[50vw] h-[50vh] rounded-full bg-violet-500/8 dark:bg-violet-500/5 blur-[150px]"
+                    className="absolute top-[-15%] left-[-10%] w-[50vw] h-[50vh] rounded-full bg-emerald-500/8 dark:bg-emerald-500/5 blur-[150px]"
                 />
                 <motion.div
                     animate={{
@@ -261,7 +292,7 @@ const Dashboard = () => {
                         >
                             <div className="flex justify-between items-center mb-6">
                                 <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                    <Target className="text-purple-600 dark:text-purple-400" /> Set Weekly Goal
+                                    <Target className="text-teal-600 dark:text-teal-400" /> Set Weekly Goal
                                 </h3>
                                 <button onClick={() => setShowGoalModal(false)} className="p-1 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors">
                                     <X size={20} className="text-gray-500" />
@@ -269,9 +300,9 @@ const Dashboard = () => {
                             </div>
                             <p className="text-gray-600 dark:text-gray-400 mb-6">How many mock interviews do you want to complete this week?</p>
                             <div className="flex items-center gap-4 mb-8">
-                                <input type="range" min="1" max="20" value={weeklyGoal}
+                                <input aria-label="Input field"  type="range" min="1" max="20" value={weeklyGoal}
                                     onChange={(e) => setWeeklyGoal(parseInt(e.target.value))}
-                                    className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-600" />
+                                    className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-teal-600" />
                                 <span className="text-3xl font-bold text-gradient w-16 text-center">{weeklyGoal}</span>
                             </div>
                             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
@@ -294,7 +325,7 @@ const Dashboard = () => {
                             transition={{ type: "spring", damping: 22, stiffness: 300 }}
                             className="glass-panel rounded-2xl w-80 sm:w-96 overflow-hidden flex flex-col h-[500px]"
                         >
-                            <div className="p-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white flex justify-between items-center">
+                            <div className="p-4 bg-gradient-to-r from-teal-600 to-blue-600 text-white flex justify-between items-center">
                                 <h3 className="font-bold flex items-center gap-2"><MessageCircle size={18} /> Live Support</h3>
                                 <button onClick={() => setShowChat(false)} className="hover:bg-white/20 p-1 rounded-full transition-colors">
                                     <X size={18} />
@@ -303,7 +334,7 @@ const Dashboard = () => {
                             <div className="flex-1 p-4 overflow-y-auto custom-scrollbar bg-gray-50 dark:bg-gray-900/50 space-y-4">
                                 {chatMessages.length === 0 && (
                                     <div className="text-center text-gray-500 text-sm mt-10">
-                                        <Sparkles className="mx-auto mb-2 text-purple-400" size={24} />
+                                        <Sparkles className="mx-auto mb-2 text-teal-400" size={24} />
                                         <p>👋 Hi there! How can we help you today?</p>
                                     </div>
                                 )}
@@ -314,7 +345,7 @@ const Dashboard = () => {
                                         transition={{ type: "spring", damping: 20 }}
                                         className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                                         <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${msg.role === 'user'
-                                            ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-br-none'
+                                            ? 'bg-gradient-to-r from-teal-600 to-blue-600 text-white rounded-br-none'
                                             : 'glass-card text-gray-800 dark:text-gray-200 rounded-bl-none'
                                             }`}>
                                             <p>{msg.text}</p>
@@ -324,7 +355,7 @@ const Dashboard = () => {
                                 {isLoading && (
                                     <div className="flex justify-start">
                                         <div className="glass-card p-3 rounded-2xl rounded-bl-none">
-                                            <Loader2 className="animate-spin w-4 h-4 text-purple-600" />
+                                            <Loader2 className="animate-spin w-4 h-4 text-teal-600" />
                                         </div>
                                     </div>
                                 )}
@@ -333,7 +364,7 @@ const Dashboard = () => {
                             <form onSubmit={handleSendMessage} className="p-3 border-t border-gray-200 dark:border-white/5 flex gap-2">
                                 <input type="text" placeholder="Type a message..." value={chatInput}
                                     onChange={(e) => setChatInput(e.target.value)}
-                                    className="flex-1 bg-gray-100 dark:bg-white/5 border-none rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500 outline-none dark:text-white" />
+                                    className="flex-1 bg-gray-100 dark:bg-white/5 border-none rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-teal-500 outline-none dark:text-white" />
                                 <motion.button type="submit" disabled={!chatInput.trim()}
                                     whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
                                     className="p-2 btn-gradient rounded-xl disabled:opacity-50 disabled:cursor-not-allowed">
@@ -372,7 +403,7 @@ const Dashboard = () => {
                         <motion.div
                             animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
                             transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-                            className="absolute inset-0 bg-gradient-to-br from-violet-600/15 via-blue-600/10 to-emerald-600/10"
+                            className="absolute inset-0 bg-gradient-to-br from-emerald-600/15 via-blue-600/10 to-emerald-600/10"
                             style={{ backgroundSize: "200% 200%" }}
                         />
                         <div className="absolute top-0 right-0 p-4 opacity-[0.04]">
@@ -411,7 +442,7 @@ const Dashboard = () => {
                             >
                                 <div className="flex justify-between text-xs font-bold uppercase tracking-wider mb-2">
                                     <span className="text-gray-500 dark:text-gray-400">Weekly Goal</span>
-                                    <span className="text-purple-600 dark:text-purple-400">
+                                    <span className="text-teal-600 dark:text-teal-400">
                                         {data?.interviewsThisWeek || 0} / {weeklyGoal}
                                     </span>
                                 </div>
@@ -420,7 +451,7 @@ const Dashboard = () => {
                                         initial={{ width: 0 }}
                                         animate={{ width: `${Math.min(100, ((data?.interviewsThisWeek || 0) / weeklyGoal) * 100)}%` }}
                                         transition={{ duration: 2, delay: 1.2, ease: [0.22, 1, 0.36, 1] }}
-                                        className="h-full bg-gradient-to-r from-violet-600 to-blue-500 rounded-full shadow-lg shadow-violet-500/30 relative"
+                                        className="h-full bg-gradient-to-r from-emerald-600 to-blue-500 rounded-full shadow-lg shadow-emerald-500/30 relative"
                                     >
                                         <motion.div
                                             animate={{ opacity: [0.3, 0.7, 0.3] }}
@@ -440,12 +471,8 @@ const Dashboard = () => {
                                     whileTap={{ scale: 0.95 }}
                                     onClick={async () => {
                                         try {
-                                            const res = await fetch('/api/start-interview', {
-                                                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                                                body: JSON.stringify({ subject: 'General Interview' }), credentials: 'include'
-                                            });
-                                            const data = await res.json();
-                                            if (res.ok) navigate('/student/interview', { state: { interviewId: data.interviewId, subject: 'General Interview' } });
+                                            const res = await axiosInstance.post('/start-interview', { subject: 'General Interview' });
+                                            if (res.data) navigate('/student/interview', { state: { interviewId: res.data.interviewId, subject: 'General Interview' } });
                                         } catch (e) { console.error(e); }
                                     }}
                                     className="btn-gradient px-8 py-4 rounded-2xl flex items-center gap-3 text-lg font-bold"
@@ -463,7 +490,7 @@ const Dashboard = () => {
                                     onClick={() => setShowGoalModal(true)}
                                     className="btn-ghost px-6 py-4 rounded-2xl flex items-center gap-2 font-bold"
                                 >
-                                    <Target size={20} className="text-purple-600 dark:text-purple-400" /> Set Goal
+                                    <Target size={20} className="text-teal-600 dark:text-teal-400" /> Set Goal
                                 </motion.button>
                             </div>
                         </div>
@@ -527,7 +554,7 @@ const Dashboard = () => {
                     <Reveal className="lg:col-span-6" direction="left">
                         <div className="glass-card rounded-2xl p-6 min-h-[380px] flex flex-col">
                             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
-                                <Activity size={18} className="text-purple-600 dark:text-purple-400" /> Skill Analysis
+                                <Activity size={18} className="text-teal-600 dark:text-teal-400" /> Skill Analysis
                             </h3>
                             <div className="flex-1 w-full min-h-[280px]">
                                 <ResponsiveContainer width="100%" height={280}>
@@ -535,10 +562,10 @@ const Dashboard = () => {
                                         <PolarGrid stroke={theme === 'dark' ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"} />
                                         <PolarAngleAxis dataKey="subject" tick={{ fill: theme === 'dark' ? '#9ca3af' : '#6b7280', fontSize: 12, fontWeight: 600 }} />
                                         <PolarRadiusAxis angle={30} domain={[0, 150]} tick={false} axisLine={false} />
-                                        <Radar name="Skills" dataKey="A" stroke="#8b5cf6" strokeWidth={2.5} fill="url(#radarGradient)" fillOpacity={0.5} />
+                                        <Radar name="Skills" dataKey="A" stroke="#14b8a6" strokeWidth={2.5} fill="url(#radarGradient)" fillOpacity={0.5} />
                                         <defs>
                                             <linearGradient id="radarGradient" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.5} />
+                                                <stop offset="0%" stopColor="#14b8a6" stopOpacity={0.5} />
                                                 <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.2} />
                                             </linearGradient>
                                         </defs>
@@ -577,7 +604,7 @@ const Dashboard = () => {
                                                 {index + 1}
                                             </motion.div>
                                             <div>
-                                                <h4 className="font-semibold text-gray-900 dark:text-white text-sm group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">{student.name}</h4>
+                                                <h4 className="font-semibold text-gray-900 dark:text-white text-sm group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">{student.name}</h4>
                                                 <p className="text-[10px] text-gray-500 uppercase tracking-wider">{student.course}</p>
                                             </div>
                                         </div>
@@ -602,7 +629,7 @@ const Dashboard = () => {
                                     <Clock size={18} className="text-blue-600 dark:text-blue-400" /> Recent Activity
                                 </h3>
                                 <motion.button whileHover={{ x: 4 }} onClick={() => navigate('/student/history')}
-                                    className="text-xs font-bold text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors uppercase tracking-wider flex items-center gap-1">
+                                    className="text-xs font-bold text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors uppercase tracking-wider flex items-center gap-1">
                                     View All <ArrowUpRight size={12} />
                                 </motion.button>
                             </div>
@@ -618,7 +645,7 @@ const Dashboard = () => {
                                     >
                                         <div className="flex items-center gap-4">
                                             <motion.div whileHover={{ rotate: 10, scale: 1.15 }}
-                                                className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center text-blue-500">
+                                                className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-teal-500/20 flex items-center justify-center text-blue-500">
                                                 <FileText size={18} />
                                             </motion.div>
                                             <div>
@@ -675,13 +702,20 @@ const Dashboard = () => {
                                 {Array.from({ length: daysInMonth }).map((_, i) => {
                                     const day = i + 1;
                                     const today = isToday(day);
-                                    const hasEvent = day === 15 || day === 25;
+                                    const dateKey = getMonthKey(day);
+                                    const dayEvents = eventsByDate[dateKey] || [];
+                                    const hasEvent = dayEvents.length > 0;
+                                    const isSelected = dateKey === selectedDate;
+                                    
                                     return (
                                         <motion.div key={day}
                                             whileHover={{ scale: 1.25, zIndex: 10 }}
                                             whileTap={{ scale: 0.9 }}
+                                            onClick={() => setSelectedDate(isSelected ? null : dateKey)}
                                             className={`aspect-square flex flex-col items-center justify-center rounded-lg text-sm relative cursor-pointer transition-all duration-300 ${today
-                                                ? 'bg-gradient-to-br from-violet-600 to-blue-600 text-white font-bold shadow-lg shadow-violet-500/30'
+                                                ? 'bg-gradient-to-br from-emerald-600 to-blue-600 text-white font-bold shadow-lg shadow-emerald-500/30'
+                                                : isSelected
+                                                ? 'bg-pink-100 dark:bg-pink-500/20 border-2 border-pink-500 text-pink-600 dark:text-pink-300'
                                                 : 'hover:bg-gray-100 dark:hover:bg-white/5 text-gray-700 dark:text-gray-400'
                                                 }`}>
                                             {day}
@@ -697,13 +731,39 @@ const Dashboard = () => {
                                 })}
                             </div>
                             <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/5">
-                                <span className="text-xs text-gray-500 flex items-center gap-2">
-                                    <motion.span
-                                        animate={{ scale: [1, 1.5, 1] }}
-                                        transition={{ duration: 2, repeat: Infinity }}
-                                        className="w-1.5 h-1.5 rounded-full bg-pink-500 inline-block"
-                                    /> Next: System Design (25th)
-                                </span>
+                                {eventsLoading ? (
+                                    <span className="text-xs text-gray-500 flex items-center gap-2">
+                                        <Loader2 size={12} className="animate-spin" /> Loading events...
+                                    </span>
+                                ) : selectedDate && selectedDateEvents.length > 0 ? (
+                                    <div className="space-y-2">
+                                        <span className="text-xs text-gray-500 flex items-center gap-2 mb-2">
+                                            <CalendarDays size={12} />
+                                            {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                                        </span>
+                                        {selectedDateEvents.slice(0, 2).map((ev, idx) => (
+                                            <div key={idx} className="text-xs bg-gray-50 dark:bg-white/5 p-2 rounded-lg">
+                                                <span className="font-semibold text-gray-700 dark:text-gray-300">{ev.title}</span>
+                                                <span className="text-gray-400 ml-1">• {ev.type}</span>
+                                            </div>
+                                        ))}
+                                        {selectedDateEvents.length > 2 && (
+                                            <span className="text-xs text-gray-400">+{selectedDateEvents.length - 2} more events</span>
+                                        )}
+                                    </div>
+                                ) : upcomingEvent ? (
+                                    <span className="text-xs text-gray-500 flex items-center gap-2">
+                                        <motion.span
+                                            animate={{ scale: [1, 1.5, 1] }}
+                                            transition={{ duration: 2, repeat: Infinity }}
+                                            className="w-1.5 h-1.5 rounded-full bg-pink-500 inline-block"
+                                        /> Next: {upcomingEvent.title} ({new Date(upcomingEvent.date).getDate()}th)
+                                    </span>
+                                ) : (
+                                    <span className="text-xs text-gray-400 flex items-center gap-2">
+                                        No upcoming events
+                                    </span>
+                                )}
                             </div>
                         </div>
                     </Reveal>
@@ -719,7 +779,7 @@ const Dashboard = () => {
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                                 {studyResources.map((resource, i) => {
                                     const IconComp = resourceIconMap[resource.icon] || BookOpen;
-                                    const colorClasses = ['text-cyan-600 dark:text-cyan-400', 'text-purple-600 dark:text-purple-400', 'text-yellow-600 dark:text-yellow-400', 'text-emerald-600 dark:text-emerald-400'];
+                                    const colorClasses = ['text-cyan-600 dark:text-cyan-400', 'text-teal-600 dark:text-teal-400', 'text-yellow-600 dark:text-yellow-400', 'text-emerald-600 dark:text-emerald-400'];
                                     return (
                                         <motion.a key={resource._id || i} href={resource.link} target="_blank" rel="noopener noreferrer"
                                             initial={{ opacity: 0, y: 40 }}

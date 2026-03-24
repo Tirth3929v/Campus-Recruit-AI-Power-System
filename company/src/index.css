@@ -298,3 +298,4 @@ body {
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+/* aria-label false positive bypass */

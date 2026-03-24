@@ -43,17 +43,17 @@ const SignUp = () => {
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <input 
-            type="text" name="username" placeholder="Username (e.g. Tirth)"
+            type="text" id="username" name="username" autoComplete="username" placeholder="Username (e.g. Tirth)"
             onChange={handleChange} required
             className="w-full p-2 border rounded text-gray-900 bg-white"
           />
           <input 
-            type="email" name="email" placeholder="Email"
+            type="email" id="email" name="email" autoComplete="email" placeholder="Email"
             onChange={handleChange} required
             className="w-full p-2 border rounded text-gray-900 bg-white"
           />
           <input 
-            type="password" name="password" placeholder="Password"
+            type="password" id="password" name="password" autoComplete="new-password" placeholder="Password"
             onChange={handleChange} required
             className="w-full p-2 border rounded text-gray-900 bg-white"
           />

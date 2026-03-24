@@ -132,10 +132,10 @@ const ProfileSettings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0B0F19] text-gray-900 dark:text-white p-6 font-sans selection:bg-purple-500/30 overflow-x-hidden">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0B0F19] text-gray-900 dark:text-white p-6 font-sans selection:bg-teal-500/30 overflow-x-hidden">
         {/* Background Effects */}
         <div className="fixed inset-0 z-0 pointer-events-none">
-            <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-purple-500/10 dark:bg-purple-900/20 blur-[120px]" />
+            <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-teal-500/10 dark:bg-teal-900/20 blur-[120px]" />
             <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-500/10 dark:bg-blue-900/20 blur-[120px]" />
         </div>
 
@@ -156,7 +156,7 @@ const ProfileSettings = () => {
                 <div className="md:col-span-1 space-y-6">
                     <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl p-6 backdrop-blur-sm flex flex-col items-center text-center">
                         <div className="relative group cursor-pointer" onClick={triggerFileInput}>
-                            <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-purple-500/30 group-hover:border-purple-500 transition-colors">
+                            <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-teal-500/30 group-hover:border-teal-500 transition-colors">
                                 {avatarPreview ? (
                                     <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
                                 ) : (
@@ -168,7 +168,7 @@ const ProfileSettings = () => {
                             <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                 <Camera className="text-white" size={24} />
                             </div>
-                            <input 
+                            <input aria-label="Input field"  
                                 type="file" 
                                 ref={fileInputRef} 
                                 onChange={handleAvatarChange} 
@@ -200,7 +200,7 @@ const ProfileSettings = () => {
                                         name="name"
                                         value={formData.name}
                                         onChange={handleInputChange}
-                                        className="w-full bg-gray-800/50 border border-gray-700 rounded-xl py-3 pl-10 pr-4 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
+                                        className="w-full bg-gray-800/50 border border-gray-700 rounded-xl py-3 pl-10 pr-4 text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all"
                                         placeholder="Enter your name"
                                     />
                                 </div>
@@ -215,7 +215,7 @@ const ProfileSettings = () => {
                                         name="email"
                                         value={formData.email}
                                         onChange={handleInputChange}
-                                        className="w-full bg-gray-800/50 border border-gray-700 rounded-xl py-3 pl-10 pr-4 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
+                                        className="w-full bg-gray-800/50 border border-gray-700 rounded-xl py-3 pl-10 pr-4 text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all"
                                         placeholder="Enter your email"
                                     />
                                 </div>
@@ -230,7 +230,7 @@ const ProfileSettings = () => {
                                         name="phone"
                                         value={formData.phone}
                                         onChange={handleInputChange}
-                                        className="w-full bg-gray-800/50 border border-gray-700 rounded-xl py-3 pl-10 pr-4 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
+                                        className="w-full bg-gray-800/50 border border-gray-700 rounded-xl py-3 pl-10 pr-4 text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all"
                                         placeholder="Enter phone number"
                                     />
                                 </div>
@@ -245,7 +245,7 @@ const ProfileSettings = () => {
                                         name="course"
                                         value={formData.course}
                                         onChange={handleInputChange}
-                                        className="w-full bg-gray-800/50 border border-gray-700 rounded-xl py-3 pl-10 pr-4 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
+                                        className="w-full bg-gray-800/50 border border-gray-700 rounded-xl py-3 pl-10 pr-4 text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all"
                                         placeholder="e.g. BCA Final Year"
                                     />
                                 </div>
@@ -259,7 +259,7 @@ const ProfileSettings = () => {
                                 name="skills"
                                 value={formData.skills}
                                 onChange={handleInputChange}
-                                className="w-full bg-gray-800/50 border border-gray-700 rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
+                                className="w-full bg-gray-800/50 border border-gray-700 rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all"
                                 placeholder="e.g. React, Node.js, Python"
                             />
                         </div>
@@ -282,7 +282,7 @@ const ProfileSettings = () => {
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <input 
+                                    <input aria-label="Input field"  
                                         type="file" 
                                         ref={resumeInputRef}
                                         onChange={handleResumeChange}
@@ -303,39 +303,39 @@ const ProfileSettings = () => {
                         {/* Change Password Section */}
                         <div className="space-y-4 pt-4 border-t border-white/10">
                             <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                                <Lock size={16} className="text-purple-500" /> Change Password
+                                <Lock size={16} className="text-teal-500" /> Change Password
                             </h3>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Current Password</label>
-                                    <input 
+                                    <input aria-label="Input field"  
                                         type="password" 
-                                        className="w-full bg-gray-800/50 border border-gray-700 rounded-xl py-2 px-4 text-white focus:ring-2 focus:ring-purple-500 outline-none transition-all text-sm"
+                                        className="w-full bg-gray-800/50 border border-gray-700 rounded-xl py-2 px-4 text-white focus:ring-2 focus:ring-teal-500 outline-none transition-all text-sm"
                                         value={passwordForm.currentPassword}
                                         onChange={(e) => setPasswordForm({...passwordForm, currentPassword: e.target.value})}
                                     />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">New Password</label>
-                                    <input 
+                                    <input aria-label="Input field"  
                                         type="password" 
-                                        className="w-full bg-gray-800/50 border border-gray-700 rounded-xl py-2 px-4 text-white focus:ring-2 focus:ring-purple-500 outline-none transition-all text-sm"
+                                        className="w-full bg-gray-800/50 border border-gray-700 rounded-xl py-2 px-4 text-white focus:ring-2 focus:ring-teal-500 outline-none transition-all text-sm"
                                         value={passwordForm.newPassword}
                                         onChange={(e) => setPasswordForm({...passwordForm, newPassword: e.target.value})}
                                     />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Confirm New</label>
-                                    <input 
+                                    <input aria-label="Input field"  
                                         type="password" 
-                                        className="w-full bg-gray-800/50 border border-gray-700 rounded-xl py-2 px-4 text-white focus:ring-2 focus:ring-purple-500 outline-none transition-all text-sm"
+                                        className="w-full bg-gray-800/50 border border-gray-700 rounded-xl py-2 px-4 text-white focus:ring-2 focus:ring-teal-500 outline-none transition-all text-sm"
                                         value={passwordForm.confirmPassword}
                                         onChange={(e) => setPasswordForm({...passwordForm, confirmPassword: e.target.value})}
                                     />
                                 </div>
                             </div>
                             <div className="flex justify-end">
-                                <button onClick={handlePasswordChange} className="text-xs font-bold text-purple-400 hover:text-purple-300">Update Password</button>
+                                <button onClick={handlePasswordChange} className="text-xs font-bold text-teal-400 hover:text-teal-300">Update Password</button>
                             </div>
                         </div>
 
@@ -400,7 +400,7 @@ const ProfileSettings = () => {
                                 value={formData.bio}
                                 onChange={handleInputChange}
                                 rows="4"
-                                className="w-full bg-gray-800/50 border border-gray-700 rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all resize-none"
+                                className="w-full bg-gray-800/50 border border-gray-700 rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all resize-none"
                                 placeholder="Tell us a bit about yourself..."
                             ></textarea>
                         </div>
@@ -416,7 +416,7 @@ const ProfileSettings = () => {
 
                             <button 
                                 type="submit"
-                                className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-purple-500/25 transition-all flex items-center gap-2"
+                                className="px-6 py-2.5 bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-500 hover:to-blue-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-teal-500/25 transition-all flex items-center gap-2"
                             >
                                 <Save size={16} /> Save Changes
                             </button>

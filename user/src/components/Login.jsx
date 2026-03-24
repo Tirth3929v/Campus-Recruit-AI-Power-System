@@ -20,7 +20,7 @@ const Login = () => {
     setError('');
 
     try {
-      const res = await fetch('/api/auth/user-login', {
+      const res = await fetch('/api/student/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -30,7 +30,7 @@ const Login = () => {
       const data = await res.json();
 
       if (res.ok) {
-        if (data.token) localStorage.setItem('token', data.token);
+        if (data.token) localStorage.setItem('studentToken', data.token);
         window.location.href = '/student/dashboard';
       } else {
         setError(data.error || 'Login failed');
@@ -43,9 +43,9 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4 font-sans selection:bg-purple-500/30">
+    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4 font-sans selection:bg-teal-500/30">
       <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-purple-900/20 blur-[120px]" />
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-teal-900/20 blur-[120px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-900/20 blur-[120px]" />
       </div>
 
@@ -73,7 +73,7 @@ const Login = () => {
               <input 
                 type="email" 
                 required
-                className="w-full bg-gray-800/50 border border-gray-700 rounded-xl py-3 pl-10 pr-4 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
+                className="w-full bg-gray-800/50 border border-gray-700 rounded-xl py-3 pl-10 pr-4 text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all"
                 placeholder="Enter your email"
                 value={formData.email}
                 onChange={(e) => setFormData({...formData, email: e.target.value})}
@@ -88,7 +88,7 @@ const Login = () => {
               <input 
                 type="password" 
                 required
-                className="w-full bg-gray-800/50 border border-gray-700 rounded-xl py-3 pl-10 pr-4 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
+                className="w-full bg-gray-800/50 border border-gray-700 rounded-xl py-3 pl-10 pr-4 text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all"
                 placeholder="Enter your password"
                 value={formData.password}
                 onChange={(e) => setFormData({...formData, password: e.target.value})}
@@ -98,15 +98,15 @@ const Login = () => {
 
           <div className="flex items-center justify-between">
             <label className="flex items-center gap-2 cursor-pointer">
-              <input 
+              <input aria-label="Input field"  
                 type="checkbox"
-                className="w-4 h-4 rounded border-gray-700 bg-gray-800 text-purple-600 focus:ring-purple-500 focus:ring-offset-gray-900"
+                className="w-4 h-4 rounded border-gray-700 bg-gray-800 text-teal-600 focus:ring-teal-500 focus:ring-offset-gray-900"
                 checked={formData.rememberMe}
                 onChange={(e) => setFormData({...formData, rememberMe: e.target.checked})}
               />
               <span className="text-sm text-gray-400">Remember me</span>
             </label>
-            <Link to="/forgot-password" className="text-xs text-purple-400 hover:text-purple-300 transition-colors">
+            <Link to="/forgot-password" className="text-xs text-teal-400 hover:text-teal-300 transition-colors">
               Forgot Password?
             </Link>
           </div>
@@ -114,7 +114,7 @@ const Login = () => {
           <button 
             type="submit" 
             disabled={loading}
-            className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold rounded-xl shadow-lg shadow-purple-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full py-3.5 bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-500 hover:to-blue-500 text-white font-bold rounded-xl shadow-lg shadow-teal-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {loading ? 'Signing in...' : <><LogIn size={18} /> Sign In</>}
           </button>
@@ -123,7 +123,7 @@ const Login = () => {
         <div className="mt-8 text-center">
           <p className="text-gray-400 text-sm">
             Don't have an account?{' '}
-            <Link to="/register" className="text-purple-400 hover:text-purple-300 font-bold transition-colors">
+            <Link to="/register" className="text-teal-400 hover:text-teal-300 font-bold transition-colors">
               Create Account
             </Link>
           </p>

@@ -2,10 +2,11 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  CheckCircle, FileText, ChevronLeft, ChevronRight,
-  Award, Lock, Download, Eye, Play, BookOpen, Clock, User, Star, MessageSquare, Brain, ArrowUp, ArrowDown
+  CheckCircle, FileText, ChevronRight,
+  Award, Lock, Download, Eye, BookOpen, Clock, User, Star, MessageSquare, Brain, ArrowUp, ArrowDown, ChevronLeft, Play
 } from 'lucide-react';
 import CourseTest from '../components/CourseTest';
+import axiosInstance from '../pages/axiosInstance';
 
 const CourseViewer = () => {
   const { courseId } = useParams();
@@ -47,16 +48,9 @@ const CourseViewer = () => {
     const fetchCourse = async () => {
       try {
         console.log("Fetching course data for courseId:", courseId);
-        const res = await fetch(`/api/courses/${courseId}/with-progress`, { 
-          credentials: 'include' 
-        });
+        const res = await axiosInstance.get(`/courses/${courseId}/with-progress`);
         
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.message || 'Failed to fetch course');
-        }
-        
-        const data = await res.json();
+        const data = res.data;
         console.log("Course data received:", data);
         console.log("PDF URL:", data.course?.pdfUrl, "pdfFile:", data.course?.pdfFile, "courseNotes:", data.course?.courseNotes);
         setCourse(data.course);
@@ -70,17 +64,13 @@ const CourseViewer = () => {
         
         if (data.enrollment?.completed) {
           try {
-            const mcqRes = await fetch(`/api/courses/${courseId}/mcq-status`, { 
-              credentials: 'include' 
-            });
-            const mcqData = await mcqRes.json();
+            const mcqRes = await axiosInstance.get(`/courses/${courseId}/mcq-status`);
+            const mcqData = mcqRes.data;
             setMcqCompleted(mcqData.mcqCompleted || false);
             setMcqScore(mcqData.mcqScore || 0);
             
-            const ratingRes = await fetch(`/api/courses/${courseId}/rating`, { 
-              credentials: 'include' 
-            });
-            const ratingData = await ratingRes.json();
+            const ratingRes = await axiosInstance.get(`/courses/${courseId}/rating`);
+            const ratingData = ratingRes.data;
             if (ratingData.rating) {
               setHasRated(true);
               setUserRating(ratingData.rating.rating);
@@ -97,7 +87,7 @@ const CourseViewer = () => {
         setLoading(false);
       } catch (err) {
         console.error('Error loading course:', err);
-        setError(err.message);
+        setError(err.response?.data?.message || err.message || 'Failed to fetch course');
         setLoading(false);
       }
     };
@@ -107,12 +97,7 @@ const CourseViewer = () => {
     // Track last accessed course
     const trackLastCourse = async () => {
       try {
-        await fetch('/api/courses/last-course', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ courseId })
-        });
+        await axiosInstance.post('/courses/last-course', { courseId });
       } catch (err) {
         console.error('Failed to track last course:', err);
       }
@@ -126,13 +111,11 @@ const CourseViewer = () => {
     
     const fetchReviews = async () => {
       try {
-        const res = await fetch(`/api/courses/${courseId}/ratings`);
-        if (res.ok) {
-          const data = await res.json();
-          setReviews(data.ratings || []);
-          setAverageRating(data.averageRating || 0);
-          setTotalRatings(data.totalRatings || 0);
-        }
+        const res = await axiosInstance.get(`/courses/${courseId}/ratings`);
+        const data = res.data;
+        setReviews(data.ratings || []);
+        setAverageRating(data.averageRating || 0);
+        setTotalRatings(data.totalRatings || 0);
       } catch (err) {
         console.error('Error fetching reviews:', err);
       }
@@ -146,12 +129,7 @@ const CourseViewer = () => {
     if (!courseId) return;
     
     try {
-      await fetch(`/api/courses/${courseId}/save-progress`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ lessonIndex })
-      });
+      await axiosInstance.put(`/courses/${courseId}/save-progress`, { lessonIndex });
     } catch (err) {
       console.error('Auto-save failed:', err);
     }
@@ -181,7 +159,7 @@ const CourseViewer = () => {
   if (loading) return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center">
       <div className="text-center">
-        <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
         <p className="text-white/60">Loading course...</p>
       </div>
     </div>
@@ -192,7 +170,7 @@ const CourseViewer = () => {
       <p className="text-red-400 mb-4">{error}</p>
       <button 
         onClick={() => navigate('/student/courses')}
-        className="px-6 py-2 bg-purple-600 rounded-xl font-semibold"
+        className="px-6 py-2 bg-teal-600 rounded-xl font-semibold"
       >
         Back to Courses
       </button>
@@ -220,46 +198,29 @@ const CourseViewer = () => {
     console.log("Marking lesson complete:", currentLesson.chapterId);
     
     try {
-      const res = await fetch(`/api/courses/${courseId}/progress`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ 
-          chapterId: currentLesson.chapterId,
-          chapterIndex: activeLessonIndex
-        })
+      const res = await axiosInstance.put(`/courses/${courseId}/progress`, { 
+        chapterId: currentLesson.chapterId,
+        chapterIndex: activeLessonIndex
       });
 
-      console.log("Progress response:", res.status);
+      const data = res.data;
+      console.log("Progress data:", data);
+      setEnrollment(data.enrollment);
+      setUnlockedLessons(data.unlockedLessons);
       
-      if (res.ok) {
-        const data = await res.json();
-        console.log("Progress data:", data);
-        setEnrollment(data.enrollment);
-        setUnlockedLessons(data.unlockedLessons);
-        
-        // Re-track last course after progress update
-        try {
-          await fetch('/api/courses/last-course', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ courseId })
-          });
-        } catch (trackErr) {
-          console.error('Failed to re-track last course:', trackErr);
-        }
-        
-        if (data.enrollment?.completed && !mcqCompleted) {
-          setShowTestSection(true);
-        }
-        
-        if (data.nextLessonIndex !== null && data.nextLessonIndex !== undefined) {
-          setActiveLessonIndex(data.nextLessonIndex);
-        }
-      } else {
-        const err = await res.json();
-        console.error("Progress error:", err);
+      // Re-track last course after progress update
+      try {
+        await axiosInstance.post('/courses/last-course', { courseId });
+      } catch (trackErr) {
+        console.error('Failed to re-track last course:', trackErr);
+      }
+      
+      if (data.enrollment?.completed && !mcqCompleted) {
+        setShowTestSection(true);
+      }
+      
+      if (data.nextLessonIndex !== null && data.nextLessonIndex !== undefined) {
+        setActiveLessonIndex(data.nextLessonIndex);
       }
     } catch (err) {
       console.error('Progress update failed:', err);
@@ -295,31 +256,22 @@ const CourseViewer = () => {
     
     setRatingSubmitting(true);
     try {
-      const res = await fetch(`/api/courses/${courseId}/rate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ 
-          rating: userRating,
-          feedback: ratingFeedback
-        })
+      const res = await axiosInstance.post(`/courses/${courseId}/rate`, { 
+        rating: userRating,
+        feedback: ratingFeedback
       });
       
-      const data = await res.json();
-      if (res.ok) {
-        setHasRated(true);
-        setShowRatingModal(false);
-        setShowTestSection(true);
-        setReviews(data.ratings || reviews);
-        setAverageRating(data.averageRating || averageRating);
-        setTotalRatings(data.totalRatings || totalRatings);
-        alert('Thank you for your rating!');
-      } else {
-        alert(data.message || 'Failed to submit rating');
-      }
+      const data = res.data;
+      setHasRated(true);
+      setShowRatingModal(false);
+      setShowTestSection(true);
+      setReviews(data.ratings || reviews);
+      setAverageRating(data.averageRating || averageRating);
+      setTotalRatings(data.totalRatings || totalRatings);
+      alert('Thank you for your rating!');
     } catch (err) {
       console.error('Rating submission error:', err);
-      alert('Failed to submit rating');
+      alert(err.response?.data?.message || 'Failed to submit rating');
     } finally {
       setRatingSubmitting(false);
     }
@@ -409,13 +361,8 @@ const CourseViewer = () => {
     const downloadUrl = getDownloadUrl(pdfUrl);
     if (downloadUrl) {
       try {
-        const response = await fetch(downloadUrl, {
-          credentials: 'include'
-        });
-        if (!response.ok) {
-          throw new Error('Download failed');
-        }
-        const blob = await response.blob();
+        const response = await axiosInstance.get(downloadUrl, { responseType: 'blob' });
+        const blob = response.data;
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
@@ -463,7 +410,7 @@ const CourseViewer = () => {
               initial={{ width: 0 }}
               animate={{ width: `${progressPercent}%` }}
               transition={{ duration: 0.5 }}
-              className="h-full bg-gradient-to-r from-purple-500 to-blue-500 rounded-full"
+              className="h-full bg-gradient-to-r from-teal-500 to-blue-500 rounded-full"
             />
           </div>
         </div>
@@ -495,7 +442,7 @@ const CourseViewer = () => {
         <aside className="w-80 bg-gray-800 border-r border-gray-700 overflow-y-auto hidden lg:block order-1">
           <div className="p-4">
             <h3 className="font-bold text-white mb-4 flex items-center gap-2">
-              <BookOpen size={18} className="text-purple-400" />
+              <BookOpen size={18} className="text-teal-400" />
               Course Content
             </h3>
             
@@ -507,7 +454,7 @@ const CourseViewer = () => {
               </div>
               <div className="h-2 bg-gray-600 rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-gradient-to-r from-purple-500 to-blue-500 rounded-full"
+                  className="h-full bg-gradient-to-r from-teal-500 to-blue-500 rounded-full"
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
@@ -528,7 +475,7 @@ const CourseViewer = () => {
                     disabled={!isUnlocked}
                     className={`w-full text-left p-3 rounded-xl transition-all flex items-center gap-3 ${
                       isActive 
-                        ? 'bg-purple-600/20 border border-purple-500/30' 
+                        ? 'bg-teal-600/20 border border-teal-500/30' 
                         : isUnlocked 
                           ? 'bg-gray-700/50 hover:bg-gray-700 border border-transparent'
                           : 'bg-gray-800/50 opacity-60 cursor-not-allowed'
@@ -538,7 +485,7 @@ const CourseViewer = () => {
                       isLessonCompleted 
                         ? 'bg-green-500/20 text-green-400' 
                         : isUnlocked 
-                          ? 'bg-purple-500/20 text-purple-400'
+                          ? 'bg-teal-500/20 text-teal-400'
                           : 'bg-gray-600 text-gray-400'
                     }`}>
                       {isLessonCompleted ? (
@@ -574,13 +521,13 @@ const CourseViewer = () => {
               transition={{ duration: 0.3 }}
             >
               <div className="course-sections">
-                {/* TOP SECTION: 40% Course Details | 60% Video */}
-                <div className="grid grid-cols-1 xl:grid-cols-5 gap-6 mb-8">
-                  {/* Left: Course Details - 40% (2/5) */}
-                  <div className="xl:col-span-2">
+                {/* TOP SECTION: FULL WIDTH - Course Details */}
+                <div className="grid grid-cols-1 gap-6 mb-8">
+                  {/* Left: Course Details - Full Width */}
+                  <div className="xl:col-span-5">
                     <div className="bg-gray-800/50 border border-gray-700 rounded-2xl p-6 h-full">
                       <div className="mb-4">
-                        <span className="text-xs font-medium text-purple-400 uppercase tracking-wider">Current Lesson</span>
+                        <span className="text-xs font-medium text-teal-400 uppercase tracking-wider">Current Lesson</span>
                         <h2 className="text-2xl md:text-3xl font-bold text-white mt-1">{currentLesson?.title || 'Untitled Lesson'}</h2>
                       </div>
                       
@@ -628,81 +575,6 @@ const CourseViewer = () => {
                       )}
                     </div>
                   </div>
-
-                  {/* Right: Video Section - 60% (3/5) */}
-                  <div className="xl:col-span-3">
-                    {youtubeUrl ? (
-                      <div className="rounded-2xl overflow-hidden bg-gray-800 border border-gray-700">
-                        {!showVideo ? (
-                          <div 
-                            className="relative aspect-video cursor-pointer group"
-                            onClick={() => setShowVideo(true)}
-                          >
-                            <img 
-                              src={youtubeThumbnail} 
-                              alt="Video thumbnail"
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                e.target.style.display = 'none';
-                                setShowVideo(true);
-                              }}
-                            />
-                            <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors flex items-center justify-center">
-                              <div className="w-20 h-20 rounded-full bg-red-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                                <Play size={32} className="text-white ml-1" fill="white" />
-                              </div>
-                            </div>
-                            <div className="absolute bottom-4 left-4 right-4">
-                              <p className="text-white font-semibold text-lg drop-shadow-lg">{currentLesson?.title}</p>
-                              <p className="text-white/80 text-sm drop-shadow">Click to play video</p>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="relative aspect-video bg-black">
-                            {!videoError ? (
-                              <iframe
-                                width="100%"
-                                height="100%"
-                                src={youtubeUrl}
-                                title="Course Video"
-                                frameBorder="0"
-                                className="absolute inset-0 w-full h-full"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                allowFullScreen
-                                onError={() => setVideoError(true)}
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-gray-800">
-                                <div className="text-center">
-                                  <p className="text-white/60 mb-2">Video unavailable</p>
-                                  <a 
-                                    href={currentLesson.videoUrl} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="text-purple-400 hover:text-purple-300 text-sm"
-                                  >
-                                    Open in YouTube
-                                  </a>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="aspect-video bg-gray-800 border border-gray-700 rounded-2xl flex items-center justify-center">
-                        <p className="text-gray-500">No video available</p>
-                      </div>
-                    )}
-                    {showVideo && youtubeUrl && (
-                      <button 
-                        onClick={() => setShowVideo(false)}
-                        className="mt-3 text-sm text-gray-400 hover:text-white flex items-center gap-1 transition-colors"
-                      >
-                        <ChevronLeft size={16} /> Back to preview
-                      </button>
-                    )}
-                  </div>
                 </div>
 
                 {/* MIDDLE SECTION: FULL WIDTH - Course Notes + Lesson Progress Merged */}
@@ -711,7 +583,7 @@ const CourseViewer = () => {
                     {/* Course Notes Section */}
                     <div className="mb-8 pb-8 border-b border-gray-700">
                       <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                        <FileText size={18} className="text-purple-400" />
+                        <FileText size={18} className="text-teal-400" />
                         Course Notes
                       </h3>
                       
@@ -722,7 +594,7 @@ const CourseViewer = () => {
                               <div className="flex flex-wrap gap-2">
                                 <button 
                                   onClick={() => handleViewPDF(course.pdfUrl || course.pdfFile)}
-                                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-purple-600/20 text-purple-400 border border-purple-600/30 rounded-lg hover:bg-purple-600/30 transition-colors text-sm"
+                                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-teal-600/20 text-teal-400 border border-teal-600/30 rounded-lg hover:bg-teal-600/30 transition-colors text-sm"
                                 >
                                   <Eye size={14} />
                                   View PDF
@@ -742,7 +614,7 @@ const CourseViewer = () => {
                             <div className="flex flex-wrap gap-2">
                               <button 
                                 onClick={() => handleViewPDF(course.courseNotes)}
-                                className="inline-flex items-center gap-2 px-3 py-1.5 bg-purple-600/20 text-purple-400 border border-purple-600/30 rounded-lg hover:bg-purple-600/30 transition-colors text-sm"
+                                className="inline-flex items-center gap-2 px-3 py-1.5 bg-teal-600/20 text-teal-400 border border-teal-600/30 rounded-lg hover:bg-teal-600/30 transition-colors text-sm"
                               >
                                 <Eye size={14} />
                                 View PDF
@@ -786,7 +658,7 @@ const CourseViewer = () => {
                     {/* Lesson Progress Section */}
                     <div className="mb-6">
                       <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                        <Award size={18} className="text-purple-400" />
+                        <Award size={18} className="text-teal-400" />
                         Lesson Progress
                       </h3>
                       
@@ -800,7 +672,7 @@ const CourseViewer = () => {
                             initial={{ width: 0 }}
                             animate={{ width: `${progressPercent}%` }}
                             transition={{ duration: 0.5 }}
-                            className="h-full bg-gradient-to-r from-purple-500 to-blue-500 rounded-full"
+                            className="h-full bg-gradient-to-r from-teal-500 to-blue-500 rounded-full"
                           />
                         </div>
                         <p className="text-xs text-gray-500 mt-2">{completedLessons} of {totalLessons} lessons completed</p>
@@ -825,7 +697,7 @@ const CourseViewer = () => {
                         disabled={!isLessonUnlocked}
                         className={`px-8 py-3 rounded-xl font-bold shadow-lg transition-all flex items-center gap-2 ${
                           isLessonUnlocked 
-                            ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white shadow-purple-500/25'
+                            ? 'bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-500 hover:to-blue-500 text-white shadow-teal-500/25'
                             : 'bg-gray-700 text-gray-500 cursor-not-allowed'
                         }`}
                       >
@@ -846,7 +718,7 @@ const CourseViewer = () => {
                     onClick={() => setShowReviews(!showReviews)}
                     className="flex items-center gap-2 text-lg font-bold text-white mb-4"
                   >
-                    <MessageSquare size={20} className="text-purple-400" />
+                    <MessageSquare size={20} className="text-teal-400" />
                     Course Reviews ({totalRatings})
                   </button>
                   
@@ -861,7 +733,7 @@ const CourseViewer = () => {
                         {reviews.map((review, index) => (
                           <div key={index} className="bg-gray-800/30 border border-gray-700 rounded-xl p-4">
                             <div className="flex items-center gap-3 mb-2">
-                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center font-bold">
+                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-500 to-blue-500 flex items-center justify-center font-bold">
                                 {review.userId?.name?.charAt(0) || 'U'}
                               </div>
                               <div>
@@ -895,16 +767,16 @@ const CourseViewer = () => {
                     <motion.div 
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="bg-gradient-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/30 rounded-2xl p-6 text-center"
+                      className="bg-gradient-to-r from-teal-600/20 to-blue-600/20 border border-teal-500/30 rounded-2xl p-6 text-center"
                     >
-                      <Brain size={48} className="mx-auto text-purple-400 mb-3" />
+                      <Brain size={48} className="mx-auto text-teal-400 mb-3" />
                       <h3 className="text-xl font-bold text-white mb-2">Course Knowledge Test</h3>
                       <p className="text-gray-400 mb-4 max-w-md mx-auto">
                         Test your knowledge with 10 questions. You have 1 minute to complete the test.
                       </p>
                       <button
                         onClick={() => setShowCourseTest(true)}
-                        className="px-8 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold rounded-xl hover:from-purple-500 hover:to-blue-500 transition-all flex items-center gap-2 mx-auto"
+                        className="px-8 py-3 bg-gradient-to-r from-teal-600 to-blue-600 text-white font-bold rounded-xl hover:from-teal-500 hover:to-blue-500 transition-all flex items-center gap-2 mx-auto"
                       >
                         <Brain size={20} />
                         Start MCQ Test
@@ -932,7 +804,7 @@ const CourseViewer = () => {
                         {!hasRated && (
                           <button
                             onClick={() => setShowRatingModal(true)}
-                            className="px-8 py-3 bg-gradient-to-r from-yellow-600 to-purple-600 text-white font-bold rounded-xl hover:from-yellow-500 hover:to-purple-500 transition-all flex items-center gap-2"
+                            className="px-8 py-3 bg-gradient-to-r from-yellow-600 to-teal-600 text-white font-bold rounded-xl hover:from-yellow-500 hover:to-teal-500 transition-all flex items-center gap-2"
                           >
                             <Star size={20} />
                             Rate Course
@@ -950,7 +822,7 @@ const CourseViewer = () => {
                   <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-gradient-to-r from-yellow-600/20 to-purple-600/20 border border-yellow-500/30 rounded-2xl p-6 text-center"
+                    className="bg-gradient-to-r from-yellow-600/20 to-teal-600/20 border border-yellow-500/30 rounded-2xl p-6 text-center"
                   >
                     <Award size={48} className="mx-auto text-yellow-400 mb-3" />
                     <h3 className="text-xl font-bold text-white mb-2">Rate This Course</h3>
@@ -959,7 +831,7 @@ const CourseViewer = () => {
                     </p>
                     <button
                       onClick={() => setShowRatingModal(true)}
-                      className="px-8 py-3 bg-gradient-to-r from-yellow-600 to-purple-600 text-white font-bold rounded-xl hover:from-yellow-500 hover:to-purple-500 transition-all flex items-center gap-2 mx-auto"
+                      className="px-8 py-3 bg-gradient-to-r from-yellow-600 to-teal-600 text-white font-bold rounded-xl hover:from-yellow-500 hover:to-teal-500 transition-all flex items-center gap-2 mx-auto"
                     >
                       <Star size={20} />
                       Give Rating
@@ -978,7 +850,7 @@ const CourseViewer = () => {
                   Leave Course
                 </button>
               </div>
-              </div>
+            </div>
             </motion.div>
           </div>
         </main>
@@ -988,14 +860,14 @@ const CourseViewer = () => {
       <div className="fixed right-6 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-30">
         <button 
           onClick={scrollToTop}
-          className="w-12 h-12 rounded-full bg-gray-800 border border-gray-700 text-white shadow-lg hover:bg-purple-600 hover:border-purple-500 transition-all flex items-center justify-center"
+          className="w-12 h-12 rounded-full bg-gray-800 border border-gray-700 text-white shadow-lg hover:bg-teal-600 hover:border-teal-500 transition-all flex items-center justify-center"
           title="Scroll to top"
         >
           <ArrowUp size={20} />
         </button>
         <button 
           onClick={scrollToBottom}
-          className="w-12 h-12 rounded-full bg-gray-800 border border-gray-700 text-white shadow-lg hover:bg-purple-600 hover:border-purple-500 transition-all flex items-center justify-center"
+          className="w-12 h-12 rounded-full bg-gray-800 border border-gray-700 text-white shadow-lg hover:bg-teal-600 hover:border-teal-500 transition-all flex items-center justify-center"
           title="Scroll to bottom"
         >
           <ArrowDown size={20} />
@@ -1051,7 +923,7 @@ const CourseViewer = () => {
                 value={ratingFeedback}
                 onChange={(e) => setRatingFeedback(e.target.value)}
                 placeholder="Share your experience with this course..."
-                className="w-full px-4 py-3 rounded-xl bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 outline-none resize-none"
+                className="w-full px-4 py-3 rounded-xl bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:ring-2 focus:ring-teal-500 outline-none resize-none"
                 rows={3}
               />
             </div>
@@ -1068,7 +940,7 @@ const CourseViewer = () => {
                 type="button"
                 onClick={handleSubmitRating}
                 disabled={userRating === 0 || ratingSubmitting}
-                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold disabled:opacity-50 hover:from-purple-500 hover:to-blue-500 transition-all"
+                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-teal-600 to-blue-600 text-white font-bold disabled:opacity-50 hover:from-teal-500 hover:to-blue-500 transition-all"
               >
                 {ratingSubmitting ? 'Submitting...' : 'Submit Rating'}
               </button>

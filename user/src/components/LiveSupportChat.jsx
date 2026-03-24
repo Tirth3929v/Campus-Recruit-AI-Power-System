@@ -38,7 +38,7 @@ const LiveSupportChat = () => {
                         className="mb-4 w-80 h-96 glass-panel rounded-2xl flex flex-col overflow-hidden border border-white/10 shadow-2xl"
                     >
                         {/* Header */}
-                        <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 flex justify-between items-center">
+                        <div className="bg-gradient-to-r from-blue-600 to-teal-600 p-4 flex justify-between items-center">
                             <div className="flex items-center gap-2 text-white">
                                 <MessageCircle size={20} />
                                 <span className="font-semibold">AI Assistant</span>
@@ -59,17 +59,17 @@ const LiveSupportChat = () => {
 
                         {/* Input Area */}
                         <div className="p-3 border-t border-white/10 bg-[#0B0F19] flex gap-2">
-                            <input
+                            <input aria-label="Input field" 
                                 type="text"
                                 value={message}
                                 onChange={(e) => setMessage(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                                 placeholder="Ask me anything..."
-                                className="flex-1 bg-white/5 border border-white/10 rounded-full px-4 py-2 text-sm text-gray-200 focus:outline-none focus:border-purple-500"
+                                className="flex-1 bg-white/5 border border-white/10 rounded-full px-4 py-2 text-sm text-gray-200 focus:outline-none focus:border-teal-500"
                             />
                             <button
                                 onClick={handleSend}
-                                className="bg-purple-600 hover:bg-purple-500 text-white p-2 rounded-full transition-colors flex items-center justify-center"
+                                className="bg-teal-600 hover:bg-teal-500 text-white p-2 rounded-full transition-colors flex items-center justify-center"
                             >
                                 <Send size={18} className="translate-x-[1px]" />
                             </button>
@@ -82,7 +82,7 @@ const LiveSupportChat = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-14 h-14 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition-all"
+                className="w-14 h-14 bg-gradient-to-r from-blue-600 to-teal-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-teal-500/30 hover:shadow-teal-500/50 transition-all"
             >
                 {isOpen ? <X size={24} /> : <MessageCircle size={24} />}
             </motion.button>

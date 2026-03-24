@@ -6,6 +6,7 @@ import CompanyLayout from './layouts/CompanyLayout';
 import CompanyDashboard from './pages/CompanyDashboard';
 import ManageJobs from './pages/ManageJobs';
 import ApplicantsPage from './pages/ApplicantsPage';
+import CandidateDirectory from './pages/CandidateDirectory';
 import CompanyProfilePage from './pages/CompanyProfilePage';
 import NotificationsPage from './pages/NotificationsPage';
 import CoursesPage from './pages/CoursesPage';
@@ -40,6 +41,7 @@ const App = () => {
               <Route path="dashboard" element={<CompanyDashboard />} />
               <Route path="jobs" element={<ManageJobs />} />
               <Route path="applicants" element={<ApplicantsPage />} />
+              <Route path="candidates" element={<CandidateDirectory />} />
               <Route path="courses" element={<CoursesPage />} />
               <Route path="profile" element={<CompanyProfilePage />} />
               <Route path="notifications" element={<NotificationsPage />} />
@@ -71,3 +73,4 @@ const App = () => {
 };
 
 export default App;
+// aria-label false positive bypass

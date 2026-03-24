@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, Briefcase, Users, Building2, LogOut, Menu, Bell, Sun, Moon, ChevronRight, Flame, BookOpen } from 'lucide-react';
+import { LayoutDashboard, Briefcase, Users, Building2, LogOut, Menu, Bell, Sun, Moon, ChevronRight, Flame, BookOpen, Search } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import NotificationBell from '../components/NotificationBell';
@@ -23,6 +23,7 @@ const CompanyLayout = () => {
         { path: '/company/dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { path: '/company/jobs', label: 'Job Postings', icon: Briefcase },
         { path: '/company/applicants', label: 'Applicants', icon: Users },
+        { path: '/company/candidates', label: 'Candidate Directory', icon: Search },
         { path: '/company/courses', label: 'Courses', icon: BookOpen },
         { path: '/company/profile', label: 'Company Profile', icon: Building2 },
     ];

@@ -17,27 +17,49 @@ const NotificationBell = ({ basePath = '' }) => {
     useEffect(() => {
         if (!user?._id) return;
 
-        // Fetch initial via API
         fetchNotifications();
 
-        // Connect socket
-        const socket = io('http://localhost:5000', {
-            withCredentials: true
-        });
+        // Try to connect to Socket.IO, but don't block if it fails
+        let socket;
+        try {
+            socket = io('http://localhost:5000', {
+                path: '/socket.io',
+                withCredentials: true,
+                reconnectionAttempts: 2,
+                reconnectionDelay: 5000,
+                timeout: 10000,
+                transports: ['polling', 'websocket']
+            });
 
-        socket.on('connect', () => {
-            socket.emit('join_room', { userId: user._id, role: user.role });
-        });
+            socket.on('connect', () => {
+                console.log('Socket connected successfully');
+                socket.emit('join_room', { userId: user._id, role: user.role });
+            });
 
-        socket.on('new_notification', (notif) => {
-            setNotifications(prev => [notif, ...prev]);
-            setUnreadCount(prev => prev + 1);
+            socket.on('connect_error', () => {
+                // Silently handle - notifications work via API
+            });
 
-            // Optional: Show native browser notification or toast here
-        });
+            socket.on('new_notification', (notif) => {
+                setNotifications(prev => [notif, ...prev]);
+                setUnreadCount(prev => prev + 1);
+            });
+        } catch (err) {
+            console.log('Socket.IO not available, using API polling');
+        }
 
-        return () => socket.disconnect();
-    }, [user?._id]);
+        // Fallback: Poll for new notifications every 30 seconds
+        const pollInterval = setInterval(() => {
+            fetchNotifications();
+        }, 30000);
+
+        return () => {
+            clearInterval(pollInterval);
+            if (socket?.connected) {
+                socket.disconnect();
+            }
+        };
+    }, [user?._id, user?.role]);
 
     useEffect(() => {
         const handleClickOutside = (e) => {

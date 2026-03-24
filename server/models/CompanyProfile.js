@@ -11,8 +11,7 @@ const companyProfileSchema = new mongoose.Schema({
   companyName: {
     type: String,
     required: [true, 'Please add a company name'],
-    trim: true,
-    unique: true
+    trim: true
   },
   description: {
     type: String,
@@ -31,7 +30,7 @@ const companyProfileSchema = new mongoose.Schema({
   },
   logo: {
     type: String,
-    default: 'https://via.placeholder.com/150' // Default placeholder if no logo uploaded
+    default: 'https://placehold.co/150x150?text=Company' // Default placeholder if no logo uploaded
   },
   industry: {
     type: String

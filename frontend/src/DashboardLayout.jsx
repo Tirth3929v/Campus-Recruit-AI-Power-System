@@ -1,9 +1,13 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Home, Briefcase, Code, Bot, User, LogOut } from 'lucide-react';
 
 const DashboardLayout = () => {
+  useEffect(() => {
+    document.title = 'Campus Recruiting AI Assistant';
+  }, []);
+
   const location = useLocation();
 
   const navItems = [
@@ -61,9 +65,9 @@ const DashboardLayout = () => {
       <div className="flex-1 flex flex-col h-full overflow-hidden relative">
         {/* Top Header */}
         <header className="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-8 shadow-sm z-10">
-          <h1 className="text-xl font-semibold text-gray-800">
+          <h2 className="text-xl font-semibold text-gray-800">
             {navItems.find(i => i.path === location.pathname)?.label || 'Dashboard'}
-          </h1>
+          </h2>
           
           <div className="flex items-center gap-4">
              <div className="text-right hidden sm:block">

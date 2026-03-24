@@ -70,7 +70,7 @@ const EmployeeLayout = () => {
                 <p className="text-sm font-semibold text-gray-800">Sarah Recruiter</p>
                 <p className="text-xs text-gray-500">HR Manager</p>
              </div>
-             <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-lg ring-2 ring-white">
+             <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-indigo-500 to-teal-600 flex items-center justify-center text-white font-bold shadow-lg ring-2 ring-white">
                SR
              </div>
           </div>

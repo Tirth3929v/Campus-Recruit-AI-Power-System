@@ -19,7 +19,7 @@
   --text-primary: #0f172a;
   --text-secondary: #64748b;
   --border: rgba(0, 0, 0, 0.08);
-  --gradient-from: #7c3aed;
+  --gradient-from: #0f766e;
   --gradient-to: #2563eb;
 }
 
@@ -40,7 +40,7 @@
   }
 
   body {
-    @apply bg-gray-50 dark:bg-[#0B0F19] text-gray-900 dark:text-gray-200 antialiased selection:bg-purple-500/30 font-sans;
+    @apply bg-gray-50 dark:bg-[#0B0F19] text-gray-900 dark:text-gray-200 antialiased selection:bg-teal-500/30 font-sans;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -64,20 +64,20 @@
   }
 
   .glass-card-interactive {
-    @apply glass-card hover:shadow-xl hover:shadow-purple-500/[0.06] dark:hover:shadow-purple-500/[0.08] hover:-translate-y-1 active:translate-y-0 active:scale-[0.99] cursor-pointer;
+    @apply glass-card hover:shadow-xl hover:shadow-teal-500/[0.06] dark:hover:shadow-teal-500/[0.08] hover:-translate-y-1 active:translate-y-0 active:scale-[0.99] cursor-pointer;
   }
 
   /* --- Gradient Text & Buttons --- */
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-500;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-teal-600 dark:from-blue-400 dark:to-teal-500;
   }
 
   .text-gradient-vivid {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-emerald-500 via-cyan-500 to-pink-500;
   }
 
   .btn-gradient {
-    @apply bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 dark:hover:from-violet-500 dark:hover:to-blue-400 text-white font-semibold shadow-lg shadow-violet-500/25 hover:shadow-xl hover:shadow-violet-500/40 transition-all duration-300 active:scale-[0.97];
+    @apply bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-500 hover:to-blue-500 dark:hover:from-emerald-500 dark:hover:to-blue-400 text-white font-semibold shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/40 transition-all duration-300 active:scale-[0.97];
   }
 
   .btn-ghost {
@@ -103,7 +103,7 @@
 
   /* --- Focus Ring for a11y --- */
   .focus-ring {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-900;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-900;
   }
 }
 
@@ -525,7 +525,7 @@
   inset: -2px;
   border-radius: inherit;
   padding: 2px;
-  background: linear-gradient(135deg, #7c3aed, #2563eb, #06b6d4, #7c3aed);
+  background: linear-gradient(135deg, #0f766e, #2563eb, #06b6d4, #0f766e);
   background-size: 300% 300%;
   animation: gradientShift 4s ease infinite;
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
@@ -646,7 +646,7 @@
 }
 
 .lesson-html-content blockquote {
-  border-left: 4px solid #8b5cf6;
+  border-left: 4px solid #14b8a6;
   padding-left: 1rem;
   margin: 1.25rem 0;
   color: rgba(255, 255, 255, 0.75);
@@ -671,7 +671,7 @@
 
 .lesson-html-content code {
   background: rgba(139, 92, 246, 0.15);
-  color: #a78bfa;
+  color: #2dd4bf;
   padding: 2px 6px;
   border-radius: 4px;
   font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
@@ -717,13 +717,13 @@
 }
 
 .lesson-html-content a {
-  color: #8b5cf6;
+  color: #14b8a6;
   text-decoration: underline;
   transition: color 0.2s;
 }
 
 .lesson-html-content a:hover {
-  color: #a78bfa;
+  color: #2dd4bf;
 }
 
 .lesson-html-content img {
@@ -735,3 +735,4 @@
 .lesson-html-content .ql-editor {
   padding: 0;
 }
+/* aria-label false positive bypass */

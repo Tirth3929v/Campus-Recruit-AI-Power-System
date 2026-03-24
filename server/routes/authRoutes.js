@@ -1,37 +1,45 @@
 const express = require('express');
 const router = express.Router();
+const auth = require('../controllers/authController');
+const resume = require('../controllers/resumeController');
+const { protect, studentOnly } = require('../middleware/authMiddleware');
+const { uploadResume } = require('../middleware/uploadMiddleware');
 
-// ✅ ADMIN LOGIN ROUTE LOADED
-console.log('✅ AuthRoutes loaded - /api/auth/admin-login available');
-const multer = require('multer');
-const path = require('path');
-const authController = require('../controllers/authController');
-const { adminLogin } = authController;
-const { protect } = require('../middleware/authMiddleware');
+// ── Student ──────────────────────────────────────────────────
+router.post('/student/register', auth.studentRegister);
+router.post('/student/verify-otp', auth.studentVerifyOTP);
+router.post('/student/resend-otp', auth.studentResendOTP);
+router.post('/student/login', auth.studentLogin);
+// Legacy alias for user portal
+router.post('/user-login', auth.studentLogin);
 
-// Configure Multer for file upload
-const storage = multer.diskStorage({
-  destination(req, file, cb) {
-    cb(null, 'uploads/'); // Ensure this folder exists in your server root
-  },
-  filename(req, file, cb) {
-    cb(null, `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`);
-  },
-});
+// ── Employee ─────────────────────────────────────────────────
+router.post('/employee/register', auth.employeeRegister);
+router.post('/employee/login', auth.employeeLogin);
+router.post('/employee/forgot-password', auth.employeeForgotPassword);
+router.post('/employee/reset-password', auth.employeeResetPassword);
 
-const upload = multer({ storage });
+// ── Admin ────────────────────────────────────────────────────
+router.post('/admin/login', auth.adminLogin);
+// Keep old path working too
+router.post('/admin-login', auth.adminLogin);
 
-router.post('/signup', authController.signup);
+// ── Company ──────────────────────────────────────────────────
+router.post('/company/register', auth.companySignup);
+router.post('/company/login', auth.companyLogin);
 
-router.post('/forgot-password', authController.forgotPassword);
+// ── Shared ───────────────────────────────────────────────────
+router.post('/forgot-password', auth.forgotPassword);
+router.put('/reset-password/:resetToken', auth.resetPassword);
+router.get('/profile', protect, auth.getProfile);
+router.put('/profile', protect, auth.updateProfile);
+router.post('/logout', auth.logout);
 
-router.put('/reset-password/:resetToken', authController.resetPassword);
+// ── Resume ───────────────────────────────────────────────────
+router.post('/resume/upload', protect, studentOnly, uploadResume.single('resume'), resume.uploadResume);
+router.get('/resume/me', protect, studentOnly, resume.getResume);
 
-router.post('/admin-login', adminLogin);
-
-router.put('/profile', protect, upload.fields([
-  { name: 'resume', maxCount: 1 },
-  { name: 'profilePicture', maxCount: 1 }
-]), authController.updateProfile);
+// Legacy aliases (keep old frontends working)
+router.post('/signup', auth.studentRegister);
 
 module.exports = router;

@@ -48,7 +48,7 @@ const PaymentPage = () => {
           <div className="lg:col-span-2">
             <div className="glass-panel rounded-2xl p-6 md:p-8 shadow-sm">
               <h1 className="text-2xl font-bold mb-6 flex items-center gap-2 text-white">
-                <CreditCard className="text-purple-400" />
+                <CreditCard className="text-teal-400" />
                 Secure Checkout
               </h1>
 
@@ -60,7 +60,7 @@ const PaymentPage = () => {
                       type="text"
                       required
                       placeholder="John Doe"
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-purple-500 text-white placeholder-gray-500 transition-all"
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-teal-500 text-white placeholder-gray-500 transition-all"
                     />
                   </div>
 
@@ -71,7 +71,7 @@ const PaymentPage = () => {
                         type="text"
                         required
                         placeholder="0000 0000 0000 0000"
-                        className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-purple-500 text-white placeholder-gray-500 transition-all"
+                        className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-teal-500 text-white placeholder-gray-500 transition-all"
                       />
                       <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                     </div>
@@ -84,7 +84,7 @@ const PaymentPage = () => {
                         type="text"
                         required
                         placeholder="MM/YY"
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-purple-500 text-white placeholder-gray-500 transition-all"
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-teal-500 text-white placeholder-gray-500 transition-all"
                       />
                     </div>
                     <div>
@@ -93,7 +93,7 @@ const PaymentPage = () => {
                         type="text"
                         required
                         placeholder="123"
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-purple-500 text-white placeholder-gray-500 transition-all"
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-teal-500 text-white placeholder-gray-500 transition-all"
                       />
                     </div>
                   </div>
@@ -107,7 +107,7 @@ const PaymentPage = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-4 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold text-lg shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 hover:opacity-90 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full py-4 rounded-xl bg-gradient-to-r from-teal-600 to-blue-600 text-white font-bold text-lg shadow-lg shadow-teal-500/25 hover:shadow-teal-500/40 hover:opacity-90 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {loading ? (
                     <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -153,9 +153,9 @@ const PaymentPage = () => {
                 </div>
               </div>
 
-              <div className="bg-purple-500/10 border border-purple-500/20 p-4 rounded-xl">
-                <h4 className="font-bold text-sm text-purple-400 mb-1">100% Money Back Guarantee</h4>
-                <p className="text-xs text-purple-300/80">If you're not satisfied with the course, we'll refund you within 30 days.</p>
+              <div className="bg-teal-500/10 border border-teal-500/20 p-4 rounded-xl">
+                <h4 className="font-bold text-sm text-teal-400 mb-1">100% Money Back Guarantee</h4>
+                <p className="text-xs text-teal-300/80">If you're not satisfied with the course, we'll refund you within 30 days.</p>
               </div>
             </div>
           </div>

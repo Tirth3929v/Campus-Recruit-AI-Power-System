@@ -270,7 +270,7 @@ const ScreenRecorder = ({
           <button
             onClick={startRecording}
             disabled={recordingStatus === 'starting'}
-            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold rounded-xl transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 text-white font-semibold rounded-xl transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {recordingStatus === 'starting' ? (
               <>

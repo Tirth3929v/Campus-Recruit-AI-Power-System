@@ -42,7 +42,7 @@ const AdminLogin = () => {
       }
 
       // Store token and navigate to admin panel
-      if (data.token) localStorage.setItem('token', data.token);
+      if (data.token) localStorage.setItem('adminToken', data.token);
       navigate('/admin');
     } catch (err) {
       setError('Failed to connect to the server. Please try again.');
