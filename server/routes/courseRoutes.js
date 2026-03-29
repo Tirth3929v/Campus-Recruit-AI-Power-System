@@ -69,16 +69,29 @@ const uploadCoursePdf = multer({
 
 // Custom verify token middleware for these specific routes
 const verifyAuthToken = (req, res, next) => {
-  let token = req.cookies?.token;
-  if (!token && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+  let token = null;
+  
+  // Prioritize Authorization header (usually from localStorage adminToken/userToken)
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
     token = req.headers.authorization.split(' ')[1];
+  } else if (req.cookies?.token) {
+    // Fallback to cookie
+    token = req.cookies.token;
   }
 
-  if (!token) return res.status(401).json({ error: 'Access denied' });
+  if (!token) return res.status(401).json({ error: 'Access denied - No token provided' });
+  
   try {
-    req.user = jwt.verify(token, process.env.JWT_SECRET || 'campus_recruit_jwt_secret_2026_secure_key');
+    const secret = process.env.JWT_SECRET || 'campus_recruit_jwt_secret_2026_secure_key';
+    const decoded = jwt.verify(token, secret);
+    req.user = decoded;
+    
+    // Add logging to identify role conflicts
+    console.log(`🔐 [Auth] User: ${decoded.email}, Role: ${decoded.role}, URL: ${req.originalUrl}`);
+    
     next();
   } catch (err) {
+    console.error('JWT Verification Error in courseRoutes:', err.message);
     res.status(401).json({ error: 'Invalid token' });
   }
 };

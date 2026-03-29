@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
+const Employee = require('../models/Employee');
 const Company = require('../models/Company');
 const Job = require('../models/Job');
 const Application = require('../models/Application');
@@ -10,7 +11,10 @@ const Course = require('../models/Course');
 const Enrollment = require('../models/Enrollment');
 const Rating = require('../models/Rating');
 const Purchase = require('../models/Purchase');
-const { sendAccountApprovalEmail } = require('../utils/email');
+const Notification = require('../models/Notification');
+const StudentProfile = require('../models/StudentProfile');
+const { sendAccountApprovalEmail, transporter } = require('../utils/email');
+const adminController = require('../controllers/adminController');
 
 // GET /api/admin/dashboard — real aggregate counts
 router.get('/dashboard', async (req, res) => {
@@ -150,7 +154,6 @@ router.delete('/jobs/:id', async (req, res) => {
 // GET /api/admin/pending — list employees awaiting approval
 router.get('/pending', async (req, res) => {
     try {
-        const Employee = require('../models/Employee');
         const pendingUsers = await Employee.find({ isVerified: false })
             .select('-password')
             .sort({ createdAt: -1 });
@@ -160,15 +163,12 @@ router.get('/pending', async (req, res) => {
     }
 });
 
-const Notification = require('../models/Notification'); // Add at the file top level via replacement context
-
-// ...
-// Actually setting the require at the top of the file would be better, but I'll inline require or just replace the whole route. Let me replace the route and require Notification inside the route to avoid importing issues.
+// GET /api/admin/employees — list all employees (verified & unverified) for management
+router.get('/employees', adminController.getEmployees);
 
 // PUT /api/admin/users/:id/approve — approve an employee
 router.put('/users/:id/approve', async (req, res) => {
     try {
-        const Employee = require('../models/Employee');
         const user = await Employee.findByIdAndUpdate(
             req.params.id,
             { isVerified: true },
@@ -187,8 +187,7 @@ router.put('/users/:id/approve', async (req, res) => {
         }
 
         // Automated notification
-        const NotificationModel = require('../models/Notification');
-        const notif = await NotificationModel.create({
+        const notif = await Notification.create({
             recipientId: user._id,
             title: 'Account Approved!',
             message: 'Your employee account has been approved by an admin. You can now log in.',
@@ -208,7 +207,6 @@ router.put('/users/:id/approve', async (req, res) => {
 // DELETE /api/admin/users/:id/reject — reject & delete a pending employee
 router.delete('/users/:id/reject', async (req, res) => {
     try {
-        const Employee = require('../models/Employee');
         const user = await Employee.findByIdAndDelete(req.params.id);
         if (!user) return res.status(404).json({ message: 'Employee not found' });
         res.json({ message: `${user.name}'s registration was rejected and removed` });
@@ -220,8 +218,6 @@ router.delete('/users/:id/reject', async (req, res) => {
 router.get('/students/:id/resume', async (req, res) => {
     try {
         const studentId = req.params.id;
-        const StudentProfile = require('../models/StudentProfile');
-
         const profile = await StudentProfile.findOne({ user: studentId }).select('resume resumeName -_id');
 
         if (!profile || !profile.resume) {
@@ -561,9 +557,8 @@ router.put('/companies/:id/approve', async (req, res) => {
 
         // Send approval email
         try {
-            const { transporter } = require('../utils/email');
             await transporter.sendMail({
-                from: '"Campus Recruit" <tirthpatel82032@gmail.com>',
+                from: `"Campus Recruit" <${process.env.EMAIL_USER}>`,
                 to: company.email,
                 subject: '🎉 Company Account Approved — CampusRecruit',
                 html: `
@@ -590,8 +585,7 @@ router.put('/companies/:id/approve', async (req, res) => {
         }
 
         // Notification via socket
-        const NotificationModel = require('../models/Notification');
-        const notif = await NotificationModel.create({
+        const notif = await Notification.create({
             recipientId: company._id,
             title: 'Company Account Approved!',
             message: `${company.companyName} has been approved. You can now log in.`,
@@ -615,20 +609,23 @@ router.delete('/companies/:id/reject', async (req, res) => {
 
         // Send rejection email before deleting
         try {
-            const { transporter } = require('../utils/email');
             await transporter.sendMail({
-                from: process.env.EMAIL_USER,
+                from: `"Campus Recruit" <${process.env.EMAIL_USER}>`,
                 to: company.email,
-                subject: 'Company Registration Update — CampusRecruit',
+                subject: 'Company Registration Update — Campus Recruit',
                 html: `
-                  <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;border:1px solid #e5e7eb;border-radius:10px;">
-                    <h2 style="color:#ef4444;">Registration Not Approved</h2>
-                    <p>Hello <strong>${company.name}</strong>,</p>
-                    <p>Unfortunately, <strong>${company.companyName}</strong>'s registration could not be approved at this time.</p>
-                    ${reason ? `<p><strong>Reason:</strong> ${reason}</p>` : ''}
-                    <p>Please contact support if you believe this is an error.</p>
-                    <p style="color:#6b7280;font-size:12px;margin-top:30px;">Campus Recruiting Team</p>
-                  </div>`
+    <div style="background-color: #0f172a; padding: 40px 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+      <div style="max-width: 500px; margin: 0 auto; background-color: #0a0e17; border-radius: 16px; padding: 40px 30px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+        <h1 style="color: #ef4444; font-size: 26px; margin-top: 0; text-align: center; font-weight: 700;">Registration Not Approved</h1>
+        <p style="color: #cbd5e1; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">Hello ${company.name},</p>
+        <p style="color: #cbd5e1; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">Unfortunately, <strong style="color: #f1f5f9;">${company.companyName}</strong>'s registration could not be approved at this time.</p>
+        ${reason ? `<div style="background-color: #1e1b4b; border-radius: 12px; padding: 20px 24px; margin: 24px 0;"><p style="color: #fca5a5; font-size: 15px; margin: 0;"><strong style="color: #fecaca;">Reason:</strong> ${reason}</p></div>` : ''}
+        <p style="color: #cbd5e1; font-size: 16px; line-height: 1.6; margin-bottom: 32px;">Please contact our support team if you believe this is an error or if you'd like to reapply after addressing the concerns.</p>
+        <hr style="border: none; border-top: 1px solid #334155; margin-bottom: 24px;" />
+        <p style="color: #64748b; font-size: 14px; text-align: center; margin-bottom: 8px;">Thank you for your interest in Campus Recruit.</p>
+        <p style="color: #64748b; font-size: 13px; text-align: center; margin: 0;">&copy; ${new Date().getFullYear()} Campus Recruit. All rights reserved.</p>
+      </div>
+    </div>`
             });
         } catch (emailErr) {
             console.error('Company rejection email error:', emailErr.message);

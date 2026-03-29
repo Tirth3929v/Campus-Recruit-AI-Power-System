@@ -107,17 +107,35 @@ exports.studentLogin = async (req, res) => {
 
 exports.employeeRegister = async (req, res) => {
   try {
-    const { name, email, password, department } = req.body;
+    console.log('📝 Incoming Employee Registration Request:', req.body.email);
+    const { name, email, password, department, role } = req.body;
     
     // Validate required fields
     if (!name || !email || !password) {
-      return res.status(400).json({ error: 'Name, email and password are required' });
+      return res.status(400).json({ 
+        success: false,
+        error: 'Missing required fields',
+        message: 'Name, email and password are required' 
+      });
     }
 
-    // CRITICAL: Check ONLY in Employee collection, not User collection
+    // Role check (Enforce 'employee' if provided, although handled by Model default)
+    if (role && role !== 'employee') {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Invalid role',
+        message: `Role '${role}' is not allowed for this registration endpoint.` 
+      });
+    }
+
+    // CRITICAL: Check existing in Employee collection
     const existingEmployee = await Employee.findOne({ email });
     if (existingEmployee) {
-      return res.status(400).json({ error: 'Email already registered as Employee' });
+      return res.status(400).json({ 
+        success: false,
+        error: 'Email already registered',
+        message: 'This email is already associated with an employee account. Please log in.' 
+      });
     }
 
     // Create new employee account
@@ -129,27 +147,33 @@ exports.employeeRegister = async (req, res) => {
       isVerified: false 
     });
 
-    console.log('Employee registered successfully:', newEmployee._id);
+    console.log('✅ Employee registered successfully:', newEmployee._id);
     
     res.status(201).json({ 
       success: true, 
-      message: 'Registration submitted. Awaiting admin approval.',
+      message: 'Registration submitted successfully! Your account is now pending administrator approval.',
       employeeId: newEmployee._id
     });
   } catch (err) {
-    console.error('Employee registration error:', err);
+    console.error('❌ Employee registration error:', err);
     
     // Handle MongoDB duplicate key error (E11000)
-    if (err.code === 11000 && err.keyPattern?.email) {
+    if (err.code === 11000) {
       return res.status(400).json({ 
-        error: 'Email already registered in Employee system',
-        details: 'This email is already associated with an employee account'
+        success: false,
+        error: 'Duplicate Data',
+        message: 'Email already registered in Employee system.'
       });
     }
     
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ 
+      success: false,
+      error: 'Server Error',
+      message: err.message 
+    });
   }
 };
+
 
 exports.employeeLogin = async (req, res) => {
   try {

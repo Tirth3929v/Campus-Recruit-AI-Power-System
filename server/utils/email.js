@@ -1,7 +1,8 @@
 const nodemailer = require('nodemailer');
 
-const EMAIL = process.env.EMAIL_USER;
-const PASS  = process.env.EMAIL_PASS;
+const EMAIL  = process.env.EMAIL_USER;
+const PASS   = process.env.EMAIL_PASS;
+const SENDER = `"Campus Recruit" <${EMAIL}>`;
 
 if (!EMAIL || !PASS) {
   console.warn('⚠️  EMAIL_USER or EMAIL_PASS missing in .env — emails will not send');
@@ -22,9 +23,9 @@ transporter.verify((error, success) => {
 
 const sendOTPEmail = async (userEmail, otp) => {
   const mailOptions = {
-    from: EMAIL,
+    from: SENDER,
     to: userEmail,
-    subject: 'Verify Your Account',
+    subject: 'Verify Your Account — Campus Recruit',
     html: `
       <div style="background-color: #0f172a; padding: 40px 20px; font-family: sans-serif;">
         <div style="max-width: 500px; margin: 0 auto; background-color: #0a0e17; border-radius: 16px; padding: 40px 30px;">
@@ -52,9 +53,9 @@ const sendPasswordResetEmail = async (userEmail, resetToken) => {
   const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password/${resetToken}`;
   
   const mailOptions = {
-    from: EMAIL,
+    from: SENDER,
     to: userEmail,
-    subject: 'Reset Your Password',
+    subject: 'Reset Your Password — Campus Recruit',
     html: `
       <div style="background-color: #0f172a; padding: 40px 20px; font-family: sans-serif;">
         <div style="max-width: 500px; margin: 0 auto; background-color: #0a0e17; border-radius: 16px; padding: 40px 30px;">
@@ -85,9 +86,9 @@ const sendAccountApprovalEmail = async (userEmail, userName) => {
   const loginUrl = 'http://localhost:5176/login';
   
   const mailOptions = {
-    from: EMAIL,
+    from: SENDER,
     to: userEmail,
-    subject: 'Account Approved',
+    subject: '🎉 Account Approved — Campus Recruit',
     html: `
       <div style="background-color: #0f172a; padding: 40px 20px; font-family: sans-serif;">
         <div style="max-width: 500px; margin: 0 auto; background-color: #0a0e17; border-radius: 16px; padding: 40px 30px;">
@@ -113,9 +114,9 @@ const sendAccountApprovalEmail = async (userEmail, userName) => {
 
 const sendOTPForPasswordReset = async (userEmail, otp) => {
   const mailOptions = {
-    from: EMAIL,
+    from: SENDER,
     to: userEmail,
-    subject: 'Password Reset OTP',
+    subject: 'Password Reset OTP — Campus Recruit',
     html: `
       <div style="background-color: #0f172a; padding: 40px 20px; font-family: sans-serif;">
         <div style="max-width: 500px; margin: 0 auto; background-color: #0a0e17; border-radius: 16px; padding: 40px 30px;">
@@ -144,9 +145,9 @@ const sendPaymentSuccessEmail = async (userEmail, userName, courseTitle, price =
   const formattedPrice = typeof price === 'number' ? `₹${price}` : price;
   
   const mailOptions = {
-    from: EMAIL,
+    from: SENDER,
     to: userEmail,
-    subject: 'Course Purchase Confirmation',
+    subject: 'Course Purchase Confirmation — Campus Recruit',
     html: `
       <div style="background-color: #0f172a; padding: 40px 20px; font-family: sans-serif;">
         <div style="max-width: 500px; margin: 0 auto; background-color: #0a0e17; border-radius: 16px; padding: 40px 30px;">

@@ -25,6 +25,7 @@ import CompanyApprovals from './pages/CompanyApprovals';
 import TextGenerator from './pages/TextGenerator';
 import CodeGenerator from './pages/CodeGenerator';
 import CourseUpdateManager from './pages/CourseUpdateManager';
+import EmployeeTasks from './pages/EmployeeTasks';
 
 const App = () => {
   return (
@@ -57,6 +58,7 @@ const App = () => {
               <Route path="ai/text" element={<TextGenerator />} />
               <Route path="ai/code" element={<CodeGenerator />} />
               <Route path="course-updates" element={<CourseUpdateManager />} />
+              <Route path="tasks" element={<EmployeeTasks />} />
               <Route path="profile" element={<MyProfile />} />
             </Route>
 

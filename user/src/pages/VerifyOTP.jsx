@@ -40,7 +40,7 @@ const VerifyOTP = () => {
     setError('');
 
     try {
-      const res = await fetch('/api/student/verify-otp', {
+      const res = await fetch('/api/auth/student/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, otp }),
@@ -72,7 +72,7 @@ const VerifyOTP = () => {
     setError('');
 
     try {
-      const res = await fetch('/api/student/resend-otp', {
+      const res = await fetch('/api/auth/student/resend-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId }),

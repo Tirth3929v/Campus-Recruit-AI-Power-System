@@ -28,6 +28,7 @@ const Enrollment = require('./models/Enrollment');
 const { sendOTPEmail, sendAccountApprovalEmail, sendOTPForPasswordReset } = require('./utils/email');
 
 const app = express();
+const authController = require('./controllers/authController');
 const PORT = process.env.PORT || 5000;
 // Triggering nodemon restart to re-establish MongoDB connection
 
@@ -45,7 +46,6 @@ app.use(cors({
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cookieParser());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Initialize Gemini
@@ -104,9 +104,11 @@ const startServer = async (port = PORT) => {
 
 // ─── Auth Middleware ──────────────────────────────────────────
 const verifyToken = (req, res, next) => {
-    let token = req.cookies.token;
-    if (!token && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+    let token = null;
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
         token = req.headers.authorization.split(' ')[1];
+    } else if (req.cookies.token) {
+        token = req.cookies.token;
     }
 
     if (!token) return res.status(401).json({ error: 'Access denied - No token provided' });
@@ -941,31 +943,8 @@ app.post('/api/auth/employee-reset-password', async (req, res) => {
     }
 });
 
-// 4b. Employee Registration (creates a pending account, awaiting admin approval)
-app.post('/api/employee/register', async (req, res) => {
-    try {
-        const Employee = require('./models/Employee');
-        const { name, email, password, department } = req.body;
-        if (!name || !email || !password) {
-            return res.status(400).json({ error: 'Please provide name, email and password' });
-        }
-        const existing = await Employee.findOne({ email });
-        if (existing) return res.status(400).json({ error: 'Email already in use' });
-
-        await Employee.create({
-            name,
-            email,
-            password,
-            department: department || '',
-            isVerified: false // Pending admin approval
-        });
-
-        res.status(201).json({ success: true, message: 'Registration request submitted. An admin will review your account.' });
-    } catch (err) {
-        console.error('Employee register error:', err);
-        res.status(500).json({ error: err.message || 'Server error' });
-    }
-});
+// 4b. Employee Registration (using unified controller)
+app.post('/api/employee/register', authController.employeeRegister);
 
 // 5. Weekly Goal
 app.post('/api/user/goal', verifyToken, async (req, res) => {
@@ -1024,6 +1003,12 @@ app.post('/api/interviews/legacy', async (req, res) => {
 });
 
 // ─── Mount Route Files ───────────────────────────────────────
+const taskRoutes = require('./routes/taskRoutes');
+app.use('/api/tasks', taskRoutes);
+
+// Diagnostic test route
+app.get('/api/tasks-test', (req, res) => res.json({ status: 'Tasks route mounted correctly' }));
+
 const interviewRoutes = require('./routes/interviewRoutes');
 app.use('/api/interviews', interviewRoutes);
 
@@ -1073,6 +1058,7 @@ app.use('/api/payments', paymentRoutes);
 
 const financialAnalyticsRoutes = require('./routes/financialAnalyticsRoutes');
 app.use('/api/admin/analytics', financialAnalyticsRoutes);
+
 
 // Multer error handler (must be after all routes)
 app.use((err, req, res, next) => {

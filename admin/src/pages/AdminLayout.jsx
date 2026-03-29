@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Users, Briefcase, Clock, LogOut,
   ShieldCheck, Menu, X, ChevronRight, Bell, BookOpen,
   Kanban, BarChart2, UserCheck, Send, Sparkles,
-  FileText, Code2, Image, ChevronDown, CheckSquare, Award, DollarSign
+  FileText, Code2, Image, ChevronDown, CheckSquare, Award, DollarSign, ClipboardList, Loader2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import NotificationBell from '../components/NotificationBell';
@@ -17,10 +17,10 @@ const ADMIN_NAV = (pendingCount, pendingCoursesCount) => [
   { path: '/jobs',               label: 'Manage Jobs',      icon: Briefcase },
   { path: '/pending',            label: 'Pending Approvals',icon: Clock,    badge: pendingCount },
   { path: '/courses',            label: 'Manage Courses',   icon: BookOpen, badge: pendingCoursesCount },
-  { path: '/course-approvals',   label: 'Course Updates',   icon: CheckSquare },
+  { path: '/course-updates',     label: 'Course Updates',   icon: CheckSquare },
   { path: '/interview-scores',   label: 'Interview Scores', icon: Award },
   { path: '/revenue',            label: 'Revenue Analytics',icon: DollarSign },
-  { path: '/kanban',             label: 'ATS Kanban',       icon: Kanban },
+  { path: '/tasks',              label: 'Task Manager',     icon: ClipboardList },
   { path: '/skill-analytics',    label: 'Skill Analytics',  icon: BarChart2 },
   { path: '/notifications/send', label: 'Send Notification',icon: Send },
   {
@@ -37,7 +37,7 @@ const ADMIN_NAV = (pendingCount, pendingCoursesCount) => [
 const EMPLOYEE_NAV = () => [
   { path: '/dashboard',          label: 'Dashboard',        icon: LayoutDashboard },
   { path: '/jobs',               label: 'Job Board',        icon: Briefcase },
-  { path: '/kanban',             label: 'ATS Kanban',       icon: Kanban },
+  { path: '/tasks',              label: 'Task Manager',     icon: ClipboardList },
   { path: '/courses',            label: 'Courses',          icon: BookOpen },
   { path: '/notifications/send', label: 'Send Notification',icon: Send },
 ];
@@ -45,14 +45,14 @@ const EMPLOYEE_NAV = () => [
 const AdminLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
   const [pendingCount, setPendingCount] = useState(0);
   const [pendingCoursesCount, setPendingCoursesCount] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [aiOpen, setAiOpen] = useState(false);
 
-  // Check if we're in admin portal via URL as failsafe (bulletproof approach)
-  const isAdmin = user?.role === 'admin' || location.pathname.includes('/admin') || location.pathname.includes('/dashboard') || location.pathname.includes('/users') || location.pathname.includes('/jobs') || location.pathname.includes('/courses') || location.pathname.includes('/pending');
+  // Strictly trust the User context role (Fixes the sidebar switching glitch)
+  const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -86,6 +86,14 @@ const AdminLayout = () => {
     }
     return 'Dashboard';
   })();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-[#080C16] text-white">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-[#080C16] text-white font-sans overflow-hidden relative">

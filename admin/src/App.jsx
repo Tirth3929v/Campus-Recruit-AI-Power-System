@@ -19,7 +19,7 @@ import SendNotification from './pages/SendNotification';
 import ManageCourses from './pages/ManageCourses';
 import TextGenerator from './pages/TextGenerator';
 import CodeGenerator from './pages/CodeGenerator';
-import ATSKanban from './pages/ATSKanban';
+import TaskManager from './pages/TaskManager';
 import SkillAnalytics from './pages/SkillAnalytics';
 import CourseUpdateApprovals from './pages/CourseUpdateApprovals';
 import InterviewScores from './pages/InterviewScores';
@@ -44,11 +44,11 @@ const App = () => {
                 <Route path="jobs" element={<ManageJobs />} />
                 <Route path="candidates" element={<ManageCandidates />} />
                 <Route path="pending" element={<PendingApprovals />} />
-                <Route path="kanban" element={<ATSKanban />} />
+                <Route path="tasks" element={<TaskManager />} />
                 <Route path="skill-analytics" element={<SkillAnalytics />} />
                 <Route path="notifications/send" element={<SendNotification />} />
                 <Route path="courses" element={<ManageCourses />} />
-                <Route path="course-approvals" element={<CourseUpdateApprovals />} />
+                <Route path="course-updates" element={<CourseUpdateApprovals />} />
                 <Route path="interview-scores" element={<InterviewScores />} />
                 <Route path="revenue" element={<RevenueDashboard />} />
                 <Route path="ai/text"  element={<TextGenerator />} />

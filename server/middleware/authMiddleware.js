@@ -79,10 +79,13 @@ const protect = async (req, res, next) => {
 
 // ─── Role guards (run AFTER protect) ─────────────────────────
 const adminOnly = (req, res, next) => {
-  if (req.user?.role?.toLowerCase() !== 'admin') {
-    return res.status(403).json({ message: 'Admin access required' });
-  }
-  next();
+    if (req.user && req.user.role === 'admin') {
+        next();
+    } else {
+        const userRole = req.user ? req.user.role : 'None';
+        console.warn(`🚫 [Admin Guard] Access Denied for ${req.user?.email || 'Unknown'}. Role: ${userRole}, URL: ${req.originalUrl}`);
+        res.status(403).json({ error: 'Not authorized as an admin' });
+    }
 };
 
 const employeeOnly = (req, res, next) => {

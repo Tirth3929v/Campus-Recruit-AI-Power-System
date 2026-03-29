@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
+import axios from 'axios';
 import { User, Mail, Lock, Building2, ArrowRight, ShieldCheck, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 
 const SuccessScreen = () => (
@@ -55,25 +56,45 @@ const EmployeeRegister = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (formData.password.length < 6) { setError('Password must be at least 6 characters'); return; }
+        
+        // Basic frontend validation
+        if (formData.password.length < 6) { 
+            setError('Password must be at least 6 characters'); 
+            return; 
+        }
+
         setLoading(true);
         setError('');
+
         try {
-            const res = await fetch('/api/employee/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify(formData),
+            // Explicitly include role: 'employee' in the payload as requested
+            const payload = { ...formData, role: 'employee' };
+
+            // Using unified AUTH endpoint for employee registration
+            const response = await axios.post('/api/auth/employee/register', payload, {
+                withCredentials: true
             });
-            const data = await res.json();
-            if (!res.ok) { setError(data.error || 'Registration failed'); return; }
+
+            // If we reach here, the request was successful
+            console.log("Registration request successful:", response.data);
             setSuccess(true);
-        } catch {
-            setError('Failed to connect to server');
+        } catch (error) {
+            // Strict Error UI: Use the requested alert format for developer-friendly debugging
+            const errorMessage = error.response?.data?.message || JSON.stringify(error.response?.data) || "Registration Failed";
+            
+            console.error("Registration failed:", error.response?.data || error.message);
+            setError(errorMessage);
+            
+            // Alert user of the exact reason (e.g., "Email already in use")
+            alert(errorMessage);
+            
+            // Ensure success state stays false (Critical: DO NOT set success=true on failure)
+            setSuccess(false);
         } finally {
             setLoading(false);
         }
     };
+
 
     return (
         <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 relative overflow-hidden">

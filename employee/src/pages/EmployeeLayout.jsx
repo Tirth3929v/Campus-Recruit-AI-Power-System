@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, BookOpen, Briefcase, User, LogOut, ChevronRight, Bell, 
-  CalendarDays, Building2, Sparkles, FileText, Code2, ChevronDown, Edit3 
+  CalendarDays, Building2, Sparkles, FileText, Code2, ChevronDown, Edit3, ClipboardList
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import NotificationBell from '../components/NotificationBell';
@@ -17,6 +17,7 @@ const EmployeeLayout = () => {
         { path: '/employee', label: 'Dashboard', icon: LayoutDashboard, exact: true },
         { path: '/employee/jobs', label: 'Job Board', icon: Briefcase },
         { path: '/employee/courses', label: 'Courses', icon: BookOpen },
+        { path: '/employee/tasks', label: 'My Tasks', icon: ClipboardList },
         { path: '/employee/course-updates', label: 'Update Courses', icon: Edit3 },
         { path: '/employee/notifications/send', label: 'Send Notification', icon: Bell },
         { path: '/employee/calendar', label: 'Calendar', icon: CalendarDays },
